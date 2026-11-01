@@ -8,7 +8,7 @@
 PRODUCT_NAME = ayaat_quran_majeed
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.ayaatQuranMajeed
+PRODUCT_BUNDLE_IDENTIFIER = com.quran.ayaatquranmajeed
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.

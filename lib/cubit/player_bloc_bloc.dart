@@ -119,30 +119,6 @@ class PlayerBlocBloc extends Bloc<PlayerBlocEvent, PlayerBlocState> {
           await safeDir.create(recursive: true);
         }
 
-        // 🧠 طلب صلاحيات التخزين حسب نظام التشغيل
-        // if (Platform.isAndroid) {
-        //   if (await Permission.manageExternalStorage.isGranted ||
-        //       await Permission.storage.isGranted ||
-        //       await Permission.mediaLibrary.isGranted ||
-        //       await Permission.videos.isGranted ||
-        //       await Permission.photos.isGranted) {
-        //     print('✅ Storage permission already granted');
-        //   } else {
-        //     final statuses = await [
-        //       Permission.manageExternalStorage,
-        //       Permission.storage,
-        //       Permission.mediaLibrary,
-        //     ].request();
-
-        //     if (statuses.values.any((status) => status.isGranted)) {
-        //       print('✅ Permission granted');
-        //     } else {
-        //       print('❌ Permission denied');
-        //       await openAppSettings();
-        //       return;
-        //     }
-        //   }
-        // }
 
         final fullSuraFilePath =
             '${safeDir.path}/${event.reciter.name}-${event.moshaf.id}-${getSurahNameArabic(int.parse(event.suraNumber))}.mp3';
