@@ -1,0 +1,312 @@
+// ignore_for_file: unnecessary_null_comparison, avoid_print
+
+import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
+import 'package:ayaat_quran_majeed/main.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:quran/quran.dart';
+import 'package:quran/reciters.dart';
+
+part 'quran_page_player_event.dart';
+part 'quran_page_player_state.dart';
+
+class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerState> {
+  QuranPagePlayerBloc() : super(QuranPagePlayerInitial()) {
+    on<QuranPagePlayerEvent>((event, emit) async {
+      if (event is PlayFromVerse) {
+        final player = audioPlayer;
+
+        try {
+          // 🔹 Verify reciter
+          final reciterMatch = reciters.firstWhere(
+            (element) => element["identifier"] == event.reciterIdentifier,
+            orElse: () => null,
+          );
+          if (reciterMatch == null) {
+            Fluttertoast.showToast(msg: "reciterNotFound".tr());
+            return;
+          }
+
+          // 🔹 Get audio URL for specific verse
+          final verseUrl = getAudioURLByVerse(
+            event.surahNumber,
+            event.verse,
+            event.reciterIdentifier,
+          );
+
+          print('🎧 Playing verse from URL: $verseUrl');
+
+          // 🔹 Configure audio session
+          final session = await AudioSession.instance;
+          await session.configure(const AudioSessionConfiguration.music());
+
+          // 🔹 Handle playback
+          player.playbackEventStream.listen(
+            (event) {},
+            onError: (Object e, StackTrace stackTrace) {
+              print('❌ Playback error: $e');
+              Fluttertoast.showToast(msg: "${"playbackError".tr()}: $e");
+            },
+          );
+
+          // 🔹 Load and play the verse audio directly from URL
+          await player.setAudioSource(
+            AudioSource.uri(
+              Uri.parse(verseUrl),
+              tag: MediaItem(
+                id: event.suraName,
+                album: reciterMatch["englishName"],
+                title: "${getSurahNameArabic(event.surahNumber)} - Verse ${event.verse}",
+                artUri: Uri.parse(
+                  "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
+                ),
+              ),
+            ),
+          );
+
+          await player.play();
+          print("▶️ Now playing verse from URL");
+
+          Fluttertoast.showToast(
+            msg: "playingSuraVerse".tr(args: [event.suraName, event.verse.toString()]),
+            toastLength: Toast.LENGTH_SHORT,
+          );
+
+          emit(QuranPagePlayerPlaying(
+            player: player,
+            audioPlayerStream: player.positionStream,
+            suraNumber: event.surahNumber,
+            reciter: reciterMatch,
+            durations: [],
+          ));
+        } catch (e) {
+          print("🔥 Error in PlayFromVerse: $e");
+          Fluttertoast.showToast(msg: "${"error".tr()}: $e");
+        }
+      }
+
+      // 🔹 Play full surah
+      else if (event is PlayFullSurah) {
+        final player = audioPlayer;
+
+        try {
+          // 🔹 Verify reciter
+          final reciterMatch = reciters.firstWhere(
+            (element) => element["identifier"] == event.reciterIdentifier,
+            orElse: () => null,
+          );
+          if (reciterMatch == null) {
+            Fluttertoast.showToast(msg: "reciterNotFound".tr());
+            return;
+          }
+
+          // 🔹 Create playlist from all verses in the surah
+          final verseCount = getVerseCount(event.surahNumber);
+          List<AudioSource> playList = [];
+
+          for (int verseNumber = 1; verseNumber <= verseCount; verseNumber++) {
+            final verseUrl = getAudioURLByVerse(
+              event.surahNumber,
+              verseNumber,
+              event.reciterIdentifier,
+            );
+
+            playList.add(
+              AudioSource.uri(
+                Uri.parse(verseUrl),
+                tag: MediaItem(
+                  id: '${event.surahNumber}-$verseNumber',
+                  album: reciterMatch["englishName"],
+                  title: "${getSurahNameArabic(event.surahNumber)} - Verse $verseNumber",
+                  artUri: Uri.parse(
+                    "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
+                  ),
+                ),
+              ),
+            );
+          }
+
+          print('🎧 Playing full surah from playlist with ${playList.length} verses');
+
+          // 🔹 Configure audio session
+          final session = await AudioSession.instance;
+          await session.configure(const AudioSessionConfiguration.music());
+
+          // 🔹 Handle playback
+          player.playbackEventStream.listen(
+            (event) {},
+            onError: (Object e, StackTrace stackTrace) {
+              print('❌ Playback error: $e');
+              Fluttertoast.showToast(msg: "${"playbackError".tr()}: $e");
+            },
+          );
+
+          // 🔹 Load and play the surah as a playlist
+          await player.setAudioSource(
+            ConcatenatingAudioSource(children: playList),
+          );
+
+          await player.play();
+          print("▶️ Now playing full surah from playlist");
+
+          Fluttertoast.showToast(
+            msg: "playingSura".tr(args: [event.suraName]),
+            toastLength: Toast.LENGTH_SHORT,
+          );
+
+          emit(QuranPagePlayerPlaying(
+            player: player,
+            audioPlayerStream: player.positionStream,
+            suraNumber: event.surahNumber,
+            reciter: reciterMatch,
+            durations: [],
+          ));
+        } catch (e) {
+          print("🔥 Error in PlayFullSurah: $e");
+          Fluttertoast.showToast(msg: "${"error".tr()}: $e");
+        }
+      }
+
+      // 🔹 Stop
+      else if (event is StopPlaying) {
+        if (audioPlayer != null) {
+          await audioPlayer.stop();
+          Fluttertoast.showToast(msg: "playbackStopped".tr());
+        }
+        emit(QuranPagePlayerInitial());
+      }
+
+      // 🔹 Kill player
+      else if (event is KillPlayerEvent) {
+        if (audioPlayer != null) {
+          await audioPlayer.stop();
+          Fluttertoast.showToast(msg: "playerKilled".tr());
+        }
+        emit(QuranPagePlayerInitial());
+      }
+
+      // 🔹 Play a cross-surah range of ayahs with optional repeat
+      else if (event is PlayRangeWithRepeat) {
+        final player = audioPlayer;
+
+        try {
+          // Verify reciter
+          final reciterMatch = reciters.firstWhere(
+            (element) => element["identifier"] == event.reciterIdentifier,
+            orElse: () => null,
+          );
+          if (reciterMatch == null) {
+            Fluttertoast.showToast(msg: "reciterNotFound".tr());
+            return;
+          }
+
+          // ── Build the single-pass track list across surah boundaries ──────────
+          // Iterate surah by surah: startSurah:startVerse → endSurah:endVerse
+          List<AudioSource> rangeList = [];
+
+          for (int s = event.startSurahNumber; s <= event.endSurahNumber; s++) {
+            final firstVerse = (s == event.startSurahNumber) ? event.startVerse : 1;
+            final lastVerse = (s == event.endSurahNumber) ? event.endVerse : getVerseCount(s);
+
+            for (int v = firstVerse; v <= lastVerse; v++) {
+              final url = getAudioURLByVerse(s, v, event.reciterIdentifier);
+              rangeList.add(
+                AudioSource.uri(
+                  Uri.parse(url),
+                  tag: MediaItem(
+                    id: '$s-$v',
+                    album: reciterMatch["englishName"],
+                    title: "${getSurahNameArabic(s)} - Verse $v",
+                    artUri: Uri.parse(
+                      "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
+                    ),
+                  ),
+                ),
+              );
+            }
+          }
+
+          // ── Build the full playlist with repeat logic ──────────────────────────
+          // Finite repeats → duplicate the range N times in the playlist.
+          // Infinite        → use the single-pass list + LoopMode.all.
+          final bool isInfinite = event.repeatCount == null;
+          List<AudioSource> fullPlaylist;
+
+          if (isInfinite) {
+            fullPlaylist = rangeList;
+          } else {
+            fullPlaylist = [];
+            final times = event.repeatCount!;
+            for (int rep = 0; rep < times; rep++) {
+              for (int s = event.startSurahNumber; s <= event.endSurahNumber; s++) {
+                final firstVerse = (s == event.startSurahNumber) ? event.startVerse : 1;
+                final lastVerse = (s == event.endSurahNumber) ? event.endVerse : getVerseCount(s);
+
+                for (int v = firstVerse; v <= lastVerse; v++) {
+                  final url = getAudioURLByVerse(s, v, event.reciterIdentifier);
+                  // Suffix rep index to avoid duplicate MediaItem IDs
+                  fullPlaylist.add(
+                    AudioSource.uri(
+                      Uri.parse(url),
+                      tag: MediaItem(
+                        id: '$s-$v-rep$rep',
+                        album: reciterMatch["englishName"],
+                        title: "${getSurahNameArabic(s)} - Verse $v",
+                        artUri: Uri.parse(
+                          "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
+                        ),
+                      ),
+                    ),
+                  );
+                }
+              }
+            }
+          }
+
+          print('🔁 PlayRangeWithRepeat: '
+              '${event.startSurahNumber}:${event.startVerse} → '
+              '${event.endSurahNumber}:${event.endVerse}, '
+              'repeat=${event.repeatCount ?? "∞"}, tracks=${fullPlaylist.length}');
+
+          // Configure audio session
+          final session = await AudioSession.instance;
+          await session.configure(const AudioSessionConfiguration.music());
+
+          // Error listener
+          player.playbackEventStream.listen(
+            (event) {},
+            onError: (Object e, StackTrace stackTrace) {
+              print('❌ Playback error: $e');
+              Fluttertoast.showToast(msg: "playbackError".tr());
+            },
+          );
+
+          // Set loop mode
+          await player.setLoopMode(isInfinite ? LoopMode.all : LoopMode.off);
+
+          // Load and play
+          await player.setAudioSource(
+            ConcatenatingAudioSource(children: fullPlaylist),
+          );
+          await player.play();
+
+          print("▶️ Now playing cross-surah range with repeat");
+
+          emit(QuranPagePlayerPlaying(
+            player: player,
+            audioPlayerStream: player.positionStream,
+            suraNumber: event.startSurahNumber,
+            reciter: reciterMatch,
+            durations: [],
+          ));
+        } catch (e) {
+          print("🔥 Error in PlayRangeWithRepeat: $e");
+          Fluttertoast.showToast(msg: "${"error".tr()}: $e");
+        }
+      }
+    });
+  }
+}
