@@ -40,15 +40,16 @@ class AppBottomNav extends StatelessWidget {
   });
 
   /// Default 5 tabs defined in the approved specification, localized using [AppStrings].
+  /// Matches the exact icons in reference screenshots 03, 10, 11, 12, 13.
   static List<AppBottomNavItem> getDefaultItems() => [
     AppBottomNavItem(
-      icon: Iconsax.book,
-      activeIcon: Iconsax.book_1,
+      icon: Icons.format_list_bulleted,
+      activeIcon: Icons.format_list_bulleted,
       label: AppStrings.tr(AppStrings.navSurahs),
     ),
     AppBottomNavItem(
-      icon: Iconsax.calendar_1,
-      activeIcon: Iconsax.calendar5,
+      icon: Iconsax.tick_circle,
+      activeIcon: Iconsax.tick_circle,
       label: AppStrings.tr(AppStrings.navKhatma),
     ),
     AppBottomNavItem(
@@ -79,9 +80,7 @@ class AppBottomNav extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.bottomNavBackground,
-        border: Border(
-          top: BorderSide(color: colors.divider, width: 0.5),
-        ),
+        border: Border(top: BorderSide(color: colors.divider, width: 0.5)),
       ),
       child: SafeArea(
         top: false,
@@ -109,8 +108,9 @@ class AppBottomNav extends StatelessWidget {
                         item.label,
                         style: AppTypography.bodySmall.copyWith(
                           color: color,
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

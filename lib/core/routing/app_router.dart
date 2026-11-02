@@ -1,7 +1,13 @@
 import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
 import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
+import 'package:ayaat_quran_majeed/core/routing/app_shell.dart';
 import 'package:ayaat_quran_majeed/core/splash/splash_screen.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/presentation/views/bookmarks_tab_view.dart';
+import 'package:ayaat_quran_majeed/features/index/presentation/views/surahs_tab_view.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/views/khatma_tab_view.dart';
+import 'package:ayaat_quran_majeed/features/notes/presentation/views/notes_tab_view.dart';
+import 'package:ayaat_quran_majeed/features/starred/presentation/views/starred_tab_view.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
@@ -14,6 +20,18 @@ import 'package:go_router/go_router.dart';
 abstract class AppRouter {
   static final GlobalKey<NavigatorState> rootNavigatorKey =
       GlobalKey<NavigatorState>(debugLabel: 'rootNavigator');
+
+  // Branch navigator keys for the 5 tabs in the AppShell
+  static final GlobalKey<NavigatorState> surahsNavigatorKey =
+      GlobalKey<NavigatorState>(debugLabel: 'surahsNav');
+  static final GlobalKey<NavigatorState> khatmaNavigatorKey =
+      GlobalKey<NavigatorState>(debugLabel: 'khatmaNav');
+  static final GlobalKey<NavigatorState> bookmarksNavigatorKey =
+      GlobalKey<NavigatorState>(debugLabel: 'bookmarksNav');
+  static final GlobalKey<NavigatorState> starredNavigatorKey =
+      GlobalKey<NavigatorState>(debugLabel: 'starredNav');
+  static final GlobalKey<NavigatorState> notesNavigatorKey =
+      GlobalKey<NavigatorState>(debugLabel: 'notesNav');
 
   /// Creates a configured GoRouter instance.
   /// Allows injecting a custom [initialLocation] for testing or deep linking.
@@ -30,14 +48,26 @@ abstract class AppRouter {
         GoRoute(
           path: AppRoutes.reader,
           name: AppRoutes.readerName,
+          parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
+            final pageParam = state.uri.queryParameters['page'];
+            final pageNumber = int.tryParse(pageParam ?? '');
+
             return MultiBlocProvider(
               providers: [
                 BlocProvider<QuranPagePlayerBloc>(
                   create: (_) => sl<QuranPagePlayerBloc>(),
                 ),
                 BlocProvider<QuranReaderCubit>(
-                  create: (_) => sl<QuranReaderCubit>()..loadInitialPosition(),
+                  create: (_) {
+                    final cubit = sl<QuranReaderCubit>();
+                    if (pageNumber != null) {
+                      cubit.goToPage(pageNumber);
+                    } else {
+                      cubit.loadInitialPosition();
+                    }
+                    return cubit;
+                  },
                 ),
                 BlocProvider<BookmarkCubit>(
                   create: (_) => sl<BookmarkCubit>()..loadBookmarks(),
@@ -46,6 +76,80 @@ abstract class AppRouter {
               child: const QuranReadingPage(),
             );
           },
+        ),
+
+        // Stateful App Shell containing the 5 bottom tabs in RTL order
+        StatefulShellRoute.indexedStack(
+          restorationScopeId: 'app_shell_stack',
+          builder: (context, state, navigationShell) {
+            return AppShell(navigationShell: navigationShell);
+          },
+          branches: [
+            // Branch 0: السور (Surahs & Quarters Index)
+            StatefulShellBranch(
+              navigatorKey: surahsNavigatorKey,
+              restorationScopeId: 'surahs_branch',
+              routes: [
+                GoRoute(
+                  path: AppRoutes.surahs,
+                  name: AppRoutes.surahsName,
+                  builder: (context, state) => const SurahsTabView(),
+                ),
+              ],
+            ),
+
+            // Branch 1: الختمة (Khatma)
+            StatefulShellBranch(
+              navigatorKey: khatmaNavigatorKey,
+              restorationScopeId: 'khatma_branch',
+              routes: [
+                GoRoute(
+                  path: AppRoutes.khatma,
+                  name: AppRoutes.khatmaName,
+                  builder: (context, state) => const KhatmaTabView(),
+                ),
+              ],
+            ),
+
+            // Branch 2: الفواصل (Bookmarks)
+            StatefulShellBranch(
+              navigatorKey: bookmarksNavigatorKey,
+              restorationScopeId: 'bookmarks_branch',
+              routes: [
+                GoRoute(
+                  path: AppRoutes.bookmarks,
+                  name: AppRoutes.bookmarksName,
+                  builder: (context, state) => const BookmarksTabView(),
+                ),
+              ],
+            ),
+
+            // Branch 3: مميزة بنجمة (Starred)
+            StatefulShellBranch(
+              navigatorKey: starredNavigatorKey,
+              restorationScopeId: 'starred_branch',
+              routes: [
+                GoRoute(
+                  path: AppRoutes.starred,
+                  name: AppRoutes.starredName,
+                  builder: (context, state) => const StarredTabView(),
+                ),
+              ],
+            ),
+
+            // Branch 4: الملاحظات (Notes)
+            StatefulShellBranch(
+              navigatorKey: notesNavigatorKey,
+              restorationScopeId: 'notes_branch',
+              routes: [
+                GoRoute(
+                  path: AppRoutes.notes,
+                  name: AppRoutes.notesName,
+                  builder: (context, state) => const NotesTabView(),
+                ),
+              ],
+            ),
+          ],
         ),
       ],
       errorBuilder: (context, state) => Scaffold(
@@ -73,4 +177,3 @@ abstract class AppRouter {
   /// Default singleton router instance used by the application.
   static final GoRouter router = createRouter();
 }
-

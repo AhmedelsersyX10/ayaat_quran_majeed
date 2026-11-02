@@ -68,6 +68,7 @@ abstract class AppStrings {
   static const String congratulationsWird = 'congratulations_wird';
   static const String emptyKhatmaTitle = 'empty_khatma_title';
   static const String emptyKhatmaDesc = 'empty_khatma_desc';
+  static const String khatmaGuidanceDesc = 'khatma_guidance_desc';
   static const String startKhatmaBtn = 'start_khatma_btn';
   static const String reminderTimePickerTitle = 'reminder_time_picker_title';
   static const String amPeriod = 'am_period';
@@ -229,7 +230,10 @@ abstract class AppStrings {
     completedWird: 'أكملت هذا الورد',
     congratulationsWird: 'تهانينا! لقد أتممت ورد اليوم',
     emptyKhatmaTitle: 'لا توجد ختمة نشطة',
-    emptyKhatmaDesc: 'ابدأ ختمة جديدة لقراءة القرآن الكريم بانتظام ومتابعة تقدمك',
+    emptyKhatmaDesc:
+        'ابدأ ختمة جديدة لقراءة القرآن الكريم بانتظام ومتابعة تقدمك',
+    khatmaGuidanceDesc:
+        'حدّد وردك اليومي أو المدة التي تريد ختم القرآن فيها، وتابع ختمتك في شهر رمضان وطوال العام.',
     startKhatmaBtn: 'بدء ختمة جديدة',
     reminderTimePickerTitle: 'وقت التنبيه',
     amPeriod: 'ص',
@@ -254,7 +258,7 @@ abstract class AppStrings {
     colorGreen: 'الأخضر',
     colorBlue: 'الأزرق',
     starredTitle: 'مميزة بنجمة',
-    emptyStarredTitle: 'لا توجد آيات مميزة',
+    emptyStarredTitle: 'لا توجد آيات مميزة بنجمة',
     emptyStarredDesc: 'اضغط مطولاً على أي آية لإضافتها إلى قائمتك المفضلة',
     notesTitle: 'الملاحظات',
     emptyNotesTitle: 'لا توجد ملاحظات',
