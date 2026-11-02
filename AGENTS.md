@@ -28,6 +28,10 @@ Rebuild the existing Flutter app `ayaat_quran_majeed` into a **pixel-faithful re
 5. Do not create files, layers or services "just in case". Create them only when needed.
 6. Explain important architectural decisions briefly, especially when there is more than one reasonable option.
 7. If the owner asks for analysis only, **do not modify files**. Separate verified findings from hypotheses.
+8. **Mandatory completion checks:** after every task that changes the repository, run both commands from the repository root before declaring the task complete:
+   - `flutter analyze`
+   - `flutter test`
+   Targeted tests may be run in addition, but they do not replace the full `flutter test` command. If either command fails, investigate and report the real failure; do not claim the task is complete or the checks passed. The only exception is an explicitly analysis/research-only task that makes no repository changes; state that this exception applies in the final report.
 
 ## 3. Code the Owner Can Understand
 
@@ -203,6 +207,7 @@ Bottom navigation (5 tabs, RTL order): السور · الختمة · الفوا�
 - [ ] No business logic in UI; no duplicated services/helpers.
 - [ ] Loading / success / empty / failure states handled where applicable.
 - [ ] No hardcoded colors/strings; RTL verified; matches the reference screenshots.
+- [ ] `flutter analyze` and the full `flutter test` suite were run after the task, with their real results reported (unless the task was explicitly analysis/research-only and changed no files).
 - [ ] Final diff reviewed; relevant checks run or the reason they were not run is stated.
 - [ ] No claim of success for checks that were not executed.
 
