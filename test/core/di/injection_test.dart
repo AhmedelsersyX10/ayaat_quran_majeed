@@ -1,5 +1,6 @@
 import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/network/api_client.dart';
+import 'package:ayaat_quran_majeed/core/storage/hive_storage_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/bookmark_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_search_repository.dart';
@@ -27,6 +28,7 @@ void main() {
 
       expect(sl.isRegistered<AudioPlayer>(), isTrue);
       expect(sl.isRegistered<ApiClient>(), isTrue);
+      expect(sl.isRegistered<HiveStorageService>(), isTrue);
       expect(sl.isRegistered<QuranReadingRepository>(), isTrue);
       expect(sl.isRegistered<BookmarkRepository>(), isTrue);
       expect(sl.isRegistered<QuranSearchRepository>(), isTrue);

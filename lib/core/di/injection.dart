@@ -1,4 +1,7 @@
 import 'package:ayaat_quran_majeed/core/network/api_client.dart';
+import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
+import 'package:ayaat_quran_majeed/core/storage/hive_storage_service.dart';
+import 'package:ayaat_quran_majeed/core/storage/preferences_storage.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/bookmark_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_search_repository.dart';
@@ -26,7 +29,20 @@ Future<void> initInjection() async {
   }
 
   // ---------------------------------------------------------
-  // 2. Repositories
+  // 2. Storage Layer Singletons (if not already registered by StorageInitializer)
+  // ---------------------------------------------------------
+  if (!sl.isRegistered<HiveStorageService>()) {
+    sl.registerLazySingleton<HiveStorageService>(() => HiveStorageServiceImpl());
+  }
+
+  if (sl.isRegistered<PreferencesStorage>() && !sl.isRegistered<AppPreferences>()) {
+    sl.registerLazySingleton<AppPreferences>(
+      () => AppPreferences(sl<PreferencesStorage>()),
+    );
+  }
+
+  // ---------------------------------------------------------
+  // 3. Repositories
   // ---------------------------------------------------------
   if (!sl.isRegistered<QuranReadingRepository>()) {
     sl.registerLazySingleton<QuranReadingRepository>(
@@ -76,5 +92,10 @@ Future<void> initInjection() async {
 
 /// Resets all registrations in the service locator (useful for test isolation).
 Future<void> resetInjection() async {
+  if (sl.isRegistered<HiveStorageService>()) {
+    try {
+      await sl<HiveStorageService>().closeAll();
+    } catch (_) {}
+  }
   await sl.reset();
 }

@@ -1,7 +1,8 @@
-import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
 import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/localization/localization_config.dart';
 import 'package:ayaat_quran_majeed/core/routing/app_router.dart';
+import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
+import 'package:ayaat_quran_majeed/core/storage/storage_initializer.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/json_asset_service.dart';
 import 'package:easy_localization/easy_localization.dart' as ez;
@@ -12,16 +13,27 @@ import 'package:just_audio/just_audio.dart';
 /// Backward-compatible global getter referencing DI service locator.
 AudioPlayer get audioPlayer => sl<AudioPlayer>();
 
-/// Theme mode notifier persisted via Hive.
-final ValueNotifier<bool> isDarkModeNotifier =
-    ValueNotifier(getValue('darkMode') ?? false);
+/// Global theme mode notifier persisted via [AppPreferences].
+final ValueNotifier<bool> isDarkModeNotifier = ValueNotifier<bool>(false);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ez.EasyLocalization.ensureInitialized();
-  await initializeHive();
+  await StorageInitializer.init();
   await JsonAssetService.init();
   await initInjection();
+
+  // Sync initial theme mode from persisted preferences
+  if (sl.isRegistered<AppPreferences>()) {
+    isDarkModeNotifier.value = sl<AppPreferences>().isDarkMode;
+  }
+
+  // Persist theme adjustments whenever isDarkModeNotifier changes
+  isDarkModeNotifier.addListener(() {
+    if (sl.isRegistered<AppPreferences>()) {
+      sl<AppPreferences>().setDarkMode(isDarkModeNotifier.value);
+    }
+  });
 
   runApp(
     ez.EasyLocalization(
