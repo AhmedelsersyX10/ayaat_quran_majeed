@@ -3,9 +3,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:ayaat_quran_majeed/main.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:quran/quran.dart';
 import 'package:quran/reciters.dart';
@@ -26,7 +24,7 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
             orElse: () => null,
           );
           if (reciterMatch == null) {
-            Fluttertoast.showToast(msg: "reciterNotFound".tr());
+            print("❌ Reciter not found: ${event.reciterIdentifier}");
             return;
           }
 
@@ -48,7 +46,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
             (event) {},
             onError: (Object e, StackTrace stackTrace) {
               print('❌ Playback error: $e');
-              Fluttertoast.showToast(msg: "${"playbackError".tr()}: $e");
             },
           );
 
@@ -70,11 +67,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
           await player.play();
           print("▶️ Now playing verse from URL");
 
-          Fluttertoast.showToast(
-            msg: "playingSuraVerse".tr(args: [event.suraName, event.verse.toString()]),
-            toastLength: Toast.LENGTH_SHORT,
-          );
-
           emit(QuranPagePlayerPlaying(
             player: player,
             audioPlayerStream: player.positionStream,
@@ -84,7 +76,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
           ));
         } catch (e) {
           print("🔥 Error in PlayFromVerse: $e");
-          Fluttertoast.showToast(msg: "${"error".tr()}: $e");
         }
       }
 
@@ -99,7 +90,7 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
             orElse: () => null,
           );
           if (reciterMatch == null) {
-            Fluttertoast.showToast(msg: "reciterNotFound".tr());
+            print("❌ Reciter not found: ${event.reciterIdentifier}");
             return;
           }
 
@@ -140,7 +131,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
             (event) {},
             onError: (Object e, StackTrace stackTrace) {
               print('❌ Playback error: $e');
-              Fluttertoast.showToast(msg: "${"playbackError".tr()}: $e");
             },
           );
 
@@ -152,11 +142,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
           await player.play();
           print("▶️ Now playing full surah from playlist");
 
-          Fluttertoast.showToast(
-            msg: "playingSura".tr(args: [event.suraName]),
-            toastLength: Toast.LENGTH_SHORT,
-          );
-
           emit(QuranPagePlayerPlaying(
             player: player,
             audioPlayerStream: player.positionStream,
@@ -166,7 +151,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
           ));
         } catch (e) {
           print("🔥 Error in PlayFullSurah: $e");
-          Fluttertoast.showToast(msg: "${"error".tr()}: $e");
         }
       }
 
@@ -174,7 +158,7 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
       else if (event is StopPlaying) {
         if (audioPlayer != null) {
           await audioPlayer.stop();
-          Fluttertoast.showToast(msg: "playbackStopped".tr());
+          print("⏹ Playback stopped");
         }
         emit(QuranPagePlayerInitial());
       }
@@ -183,7 +167,7 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
       else if (event is KillPlayerEvent) {
         if (audioPlayer != null) {
           await audioPlayer.stop();
-          Fluttertoast.showToast(msg: "playerKilled".tr());
+          print("🛑 Player killed");
         }
         emit(QuranPagePlayerInitial());
       }
@@ -199,12 +183,11 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
             orElse: () => null,
           );
           if (reciterMatch == null) {
-            Fluttertoast.showToast(msg: "reciterNotFound".tr());
+            print("❌ Reciter not found: ${event.reciterIdentifier}");
             return;
           }
 
           // ── Build the single-pass track list across surah boundaries ──────────
-          // Iterate surah by surah: startSurah:startVerse → endSurah:endVerse
           List<AudioSource> rangeList = [];
 
           for (int s = event.startSurahNumber; s <= event.endSurahNumber; s++) {
@@ -230,8 +213,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
           }
 
           // ── Build the full playlist with repeat logic ──────────────────────────
-          // Finite repeats → duplicate the range N times in the playlist.
-          // Infinite        → use the single-pass list + LoopMode.all.
           final bool isInfinite = event.repeatCount == null;
           List<AudioSource> fullPlaylist;
 
@@ -247,7 +228,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
 
                 for (int v = firstVerse; v <= lastVerse; v++) {
                   final url = getAudioURLByVerse(s, v, event.reciterIdentifier);
-                  // Suffix rep index to avoid duplicate MediaItem IDs
                   fullPlaylist.add(
                     AudioSource.uri(
                       Uri.parse(url),
@@ -280,7 +260,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
             (event) {},
             onError: (Object e, StackTrace stackTrace) {
               print('❌ Playback error: $e');
-              Fluttertoast.showToast(msg: "playbackError".tr());
             },
           );
 
@@ -304,7 +283,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
           ));
         } catch (e) {
           print("🔥 Error in PlayRangeWithRepeat: $e");
-          Fluttertoast.showToast(msg: "${"error".tr()}: $e");
         }
       }
     });

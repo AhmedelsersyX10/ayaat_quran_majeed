@@ -31,23 +31,14 @@ environment:
 dependencies:
   audio_service: ^0.18.18
   audio_session: null
-  azlistview: ^2.0.0
   bloc: ^9.1.0
-  cupertino_icons: ^1.0.2
   dio: null
-  easy_container: null
   easy_localization: ^3.0.3
   flutter:
     sdk: flutter
   flutter_bloc: null
-  flutter_colorpicker: null
-  flutter_displaymode: ^0.6.0
-  flutter_html: null
   flutter_keyboard_visibility: ^6.0.0
   flutter_screenutil: null
-  fluttericon: null
-  fluttertoast: null
-  group_list_view: ^1.1.1
   hive: null
   iconsax: null
   image_gallery_saver_plus: ^4.0.1
@@ -62,17 +53,12 @@ dependencies:
   share_plus: ^11.0.0
   shared_preferences: null
   shimmer: ^3.0.0
-  string_validator: null
-  superellipse_shape: null
 
 dev_dependencies:
   flutter_launcher_icons: null
   flutter_lints: ^2.0.0
   flutter_test:
     sdk: flutter
-dependency_overrides:
-  win32: ^5.5.4
-  html: 0.15.4
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -108,76 +94,20 @@ flutter:
     - family: AmiriQuran
       fonts:
         - asset: assets/fonts/AmiriQuran-Regular.ttf
-
-    - family: Taha
-      fonts:
-        - asset: assets/fonts/taha.ttf
-    - family: me
-      fonts:
-        - asset: assets/fonts/me_quran.ttf
-
-    - family: UthmanicHafs13
-      fonts:
-        - asset: assets/fonts/UthmanicHafs1 Ver13.otf
-
-    - family: "qaloon"
-      fonts:
-        - asset: assets/fonts/qaloon.ttf
-
-    - family: "pdsm"
-      fonts:
-        - asset: assets/fonts/pdms.otf
     - family: cairo
       fonts:
         - asset: assets/fonts/Cairo-Regular.ttf
         - asset: assets/fonts/Cairo-Bold.ttf
           weight: 700
-    - family: "noor ehuda"
-      fonts:
-        - asset: assets/fonts/noorehuda-org.ttf
-
-    - family: "hafs-nastaleeq-ver10-org"
-      fonts:
-        - asset: assets/fonts/hafs-nastaleeq-ver10-org.otf
-    - family: "hafs-smart-07"
-      fonts:
-        - asset: assets/fonts/hafs-smart-07.woff
-
-    - family: "jomhuria-regular-full-org"
-      fonts:
-        - asset: assets/fonts/jomhuria-regular-full-org.ttf
-
-    - family: "mada-regular-full"
-      fonts:
-        - asset: assets/fonts/mada-regular-full.ttf
-    - family: "markazi-text-regular-full-org"
-      fonts:
-        - asset: assets/fonts/markazi-text-regular-full-org.ttf
-    - family: "noto-kufi-arabic-regular-full"
-      fonts:
-        - asset: assets/fonts/noto-kufi-arabic-regular-full.ttf
-
-    - family: "qumbul-v7-full"
-      fonts:
-        - asset: assets/fonts/qumbul-v7-full.ttf
-    - family: "qur-std"
-      fonts:
-        - asset: assets/fonts/qur-std.ttf
-
-    - family: "shorooq-full-org"
-      fonts:
-        - asset: assets/fonts/shorooq-full-org.ttf
-
     - family: "arsura"
       fonts:
         - asset: assets/fonts/arsura.ttf
-
     - family: "KFGQPC Uthmanic Script HAFS Regular"
       fonts:
         - asset: assets/fonts/KFGQPC Uthmanic Script HAFS Regular.otf
-    - family: "roboto"
+    - family: "surah_names"
       fonts:
-        - asset: assets/fonts/roboto.ttf
+        - asset: assets/fonts/surah_names.ttf
     - family: QCF_P001
       fonts:
         - asset: assets\fonts\v2woff\p1.woff

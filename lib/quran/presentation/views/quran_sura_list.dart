@@ -10,10 +10,8 @@ import 'package:ayaat_quran_majeed/quran/presentation/widgets/tabs/quarter_tab.d
 import 'package:flutter_bloc/flutter_bloc.dart';
 // import 'package:ghaith/features/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'dart:convert';
-import 'package:easy_container/easy_container.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:iconsax/iconsax.dart';
 
 import 'package:quran/quran.dart' as quran;
@@ -24,8 +22,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' as m;
-
-import 'package:string_validator/string_validator.dart';
 
 class SurahListPage extends StatefulWidget {
   final dynamic jsonData;
@@ -325,7 +321,7 @@ class _SurahListPageState extends State<SurahListPage> {
         padding: const EdgeInsets.all(8.0),
         child: searchQuery.isNotEmpty
             ? Icon(Icons.close, color: color)
-            : Icon(FontAwesome.search, color: color),
+            : Icon(Icons.search, color: color),
       ),
     );
   }
@@ -374,8 +370,9 @@ class _SurahListPageState extends State<SurahListPage> {
   }
 
   void _handlePageNumberSearch(String value) {
-    if (isInt(value)) {
-      pageNumbers.add(toInt(value) as int);
+    final parsed = int.tryParse(value);
+    if (parsed != null) {
+      pageNumbers.add(parsed);
     }
   }
 
@@ -428,17 +425,21 @@ class _SurahListPageState extends State<SurahListPage> {
   Widget _buildPageNumberItem(int pageNumber) {
     return Padding(
       padding: const EdgeInsets.all(5.0),
-      child: EasyContainer(
+      child: Material(
         color: Theme.of(context).cardColor,
-        onTap: () => Navigator.pop(context, pageNumber),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(pageNumber.toString()),
-              Text(quran.getSurahName(quran.getPageData(pageNumber)[0]["surah"])),
-            ],
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => Navigator.pop(context, pageNumber),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(pageNumber.toString()),
+                Text(quran.getSurahName(quran.getPageData(pageNumber)[0]["surah"])),
+              ],
+            ),
           ),
         ),
       ),
@@ -642,20 +643,23 @@ class _SurahListPageState extends State<SurahListPage> {
       bookmarkColor = colorsOfBookmarks2.first;
     }
 
-    return EasyContainer(
-      borderRadius: 18,
+    return Material(
+      borderRadius: BorderRadius.circular(18),
       color: darkWarmBrowns[0].withOpacity(.05),
-      onTap: () => _navigateToBookmark(suraNumber, verseNumber),
-      child: SizedBox(
-        width: double.infinity,
-        child: Column(
-          children: [
-            _buildBookmarkHeader(bookmark, bookmarkColor),
-            const Divider(),
-            _buildBookmarkVerse(suraNumber, verseNumber),
-            const Divider(),
-            _buildBookmarkInfo(suraNumber, verseNumber),
-          ],
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _navigateToBookmark(suraNumber, verseNumber),
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            children: [
+              _buildBookmarkHeader(bookmark, bookmarkColor),
+              const Divider(),
+              _buildBookmarkVerse(suraNumber, verseNumber),
+              const Divider(),
+              _buildBookmarkInfo(suraNumber, verseNumber),
+            ],
+          ),
         ),
       ),
     );
@@ -769,7 +773,7 @@ class _SurahListPageState extends State<SurahListPage> {
   //   final suraNumber = int.parse(parts[0]);
   //   final verseNumber = int.parse(parts[1]);
 
-  //   return EasyContainer(
+  //   return Container(
   //     color: darkWarmBrowns[0].withOpacity(.05),
   //     onTap: () => _navigateToStarredVerse(suraNumber, verseNumber),
   //     child: Column(

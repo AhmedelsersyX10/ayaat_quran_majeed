@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 
@@ -18,15 +17,12 @@ Future<void> saveImageToGallery(Uint8List capturedImage) async {
   try {
     final result = await ImageGallerySaverPlus.saveImage(
       capturedImage,
-      quality: 100, // Adjust the image quality as needed
+      quality: 100,
     );
 
     if (result != null && result['isSuccess']) {
-      Fluttertoast.showToast(msg: 'Saved Successfully');
-      // Image saved successfully
-      print('Image saved to gallery');
+      print('Image saved to gallery successfully');
     } else {
-      // Image save failed
       print('Failed to save image to gallery');
     }
   } catch (e) {

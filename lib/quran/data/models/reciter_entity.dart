@@ -1,8 +1,7 @@
 import 'package:ayaat_quran_majeed/GlobalHelpers/arabic_text_helper.dart';
 import 'package:ayaat_quran_majeed/quran/data/models/mushaf_entity.dart';
-import 'package:azlistview/azlistview.dart';
 
-class ReciterEntity extends ISuspensionBean {
+class ReciterEntity {
   final dynamic id;
   final dynamic name;
   final dynamic letter;
@@ -15,7 +14,6 @@ class ReciterEntity extends ISuspensionBean {
     required this.mushafs,
   });
 
-  @override
   String getSuspensionTag() {
     return normalizeArabic(letter.toString());
   }

@@ -3,9 +3,7 @@ import 'package:ayaat_quran_majeed/core/widgets/hizb_quarter_circle.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:group_list_view/group_list_view.dart';
 import 'package:quran/quran.dart' as quran;
-
 
 class QuarterTab extends StatelessWidget {
   final dynamic quarterjsonData;
@@ -19,18 +17,24 @@ class QuarterTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GroupListView(
-      sectionsCount: 60,
-      countOfItemInSection: (int section) => 4,
-      itemBuilder: (BuildContext context, IndexPath index) => _buildQuarterListItem(context, index),
-      groupHeaderBuilder: (BuildContext context, int section) => _buildQuarterHeader(context, section),
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
-      sectionSeparatorBuilder: (context, section) => const SizedBox(height: 10),
+    return ListView.builder(
+      itemCount: 60,
+      itemBuilder: (BuildContext context, int section) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildQuarterHeader(context, section),
+            for (int itemIndex = 0; itemIndex < 4; itemIndex++)
+              _buildQuarterListItem(context, section, itemIndex),
+            const SizedBox(height: 10),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildQuarterListItem(BuildContext context, IndexPath index) {
-    final quarterData = quarterjsonData[indexes[index.section][index.index] - 1];
+  Widget _buildQuarterListItem(BuildContext context, int section, int indexInHizb) {
+    final quarterData = quarterjsonData[indexes[section][indexInHizb] - 1];
     final surah = quarterData["surah"];
     final ayah = quarterData["ayah"];
 
@@ -51,13 +55,13 @@ class QuarterTab extends StatelessWidget {
           subtitle: Text(
             quran.getVerse(surah, ayah),
             style: TextStyle(
-              fontFamily: "UthmanicHafs13",
+              fontFamily: "AmiriQuran",
               fontSize: 18.sp,
               color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
           onTap: () => onNavigateToQuarter(surah, ayah),
-          leading: _buildQuarterCircle(context, index.index, index.section + 1),
+          leading: _buildQuarterCircle(context, indexInHizb, section + 1),
         ),
       ),
     );

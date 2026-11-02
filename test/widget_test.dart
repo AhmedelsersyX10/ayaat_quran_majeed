@@ -1,30 +1,86 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:ayaat_quran_majeed/GlobalHelpers/arabic_text_helper.dart';
+import 'package:ayaat_quran_majeed/quran/data/models/bookmark_model.dart';
+import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
+import 'package:ayaat_quran_majeed/quran/data/utils/convert_number_to_ar.dart';
+import 'package:ayaat_quran_majeed/quran/data/utils/remove_html_tags.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:ayaat_quran_majeed/main.dart';
+import 'package:quran/quran.dart' as quran;
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('Core Utilities & Normalization Tests', () {
+    test('normalizeArabic standardizes hamzas, yaa, and taa marbuta', () {
+      expect(normalizeArabic('أحمد'), equals('احمد'));
+      expect(normalizeArabic('إبراهيم'), equals('ابراهيم'));
+      expect(normalizeArabic('قرآن'), equals('قران'));
+      expect(normalizeArabic('هدى'), equals('هدي'));
+      expect(normalizeArabic('فاطمة'), equals('فاطمه'));
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('convertToArabicNumber converts western digits to eastern Arabic-Indic numerals', () {
+      expect(convertToArabicNumber('0123456789'), equals('٠١٢٣٤٥٦٧٨٩'));
+      expect(convertToArabicNumber('114'), equals('١١٤'));
+      expect(convertToArabicNumber('604'), equals('٦٠٤'));
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('removeHtmlTags strips HTML formatting tags and keeps inner text', () {
+      expect(removeHtmlTags('<p>تفسير الآية</p>'), equals('تفسير الآية'));
+      expect(removeHtmlTags('<b>نص عريض</b><br/>سطر جديد'), equals('نص عريضسطر جديد'));
+      expect(removeHtmlTags('نص عادي بدون وسوم'), equals('نص عادي بدون وسوم'));
+    });
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  group('Domain Models & Contracts Tests', () {
+    test('BookmarkModel serializes and deserializes correctly', () {
+      final bookmark = BookmarkModel(
+        suraNumber: 2,
+        verseNumber: 255,
+        name: 'آية الكرسي',
+        color: '00FF00',
+      );
+
+      final map = bookmark.toMap();
+      final restored = BookmarkModel.fromMap(map);
+
+      expect(restored.suraNumber, equals(2));
+      expect(restored.verseNumber, equals(255));
+      expect(restored.name, equals('آية الكرسي'));
+      expect(restored.color, equals('00FF00'));
+      expect(restored, equals(bookmark));
+    });
+
+    test('ReadingPosition serializes and deserializes correctly', () {
+      const position = ReadingPosition(
+        page: 187,
+        surahNumber: 9,
+        ayahNumber: 1,
+        viewMode: 'pageview',
+      );
+
+      final jsonString = position.toJson();
+      final restored = ReadingPosition.fromJson(jsonString);
+
+      expect(restored.page, equals(187));
+      expect(restored.surahNumber, equals(9));
+      expect(restored.ayahNumber, equals(1));
+      expect(restored.viewMode, equals('pageview'));
+    });
+  });
+
+  group('Quran Metadata Sanity Tests', () {
+    test('Quran surahs count is exactly 114', () {
+      expect(quran.totalSurahCount, equals(114));
+    });
+
+    test('Quran pages count is exactly 604', () {
+      expect(quran.totalPagesCount, equals(604));
+    });
+
+    test('Al-Fatiha has 7 verses', () {
+      expect(quran.getVerseCount(1), equals(7));
+    });
+
+    test('Al-Baqarah has 286 verses', () {
+      expect(quran.getVerseCount(2), equals(286));
+    });
   });
 }

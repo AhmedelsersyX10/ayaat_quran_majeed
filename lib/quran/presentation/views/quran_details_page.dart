@@ -3,9 +3,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
-import 'package:ayaat_quran_majeed/cubit/bloc/quran_reading_cubit.dart';
-import 'package:ayaat_quran_majeed/cubit/quran_page_player_bloc.dart';
-import 'package:ayaat_quran_majeed/models/reciter.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
+import 'package:ayaat_quran_majeed/quran/data/models/reciter_model.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/get_translation_data.dart'
     as get_translation_data;
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/translationdata.dart';
@@ -14,6 +14,7 @@ import 'package:ayaat_quran_majeed/quran/data/models/quran_search_result.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/json_asset_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_search_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/utils/convert_number_to_ar.dart';
+import 'package:ayaat_quran_majeed/quran/data/utils/remove_html_tags.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_search_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/views/quran_search_view.dart';
@@ -30,9 +31,7 @@ import 'package:flutter/foundation.dart' as flutter_foundation;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_html/flutter_html.dart';
 
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import 'package:quran/quran.dart';
@@ -908,7 +907,11 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
 
     final jsonData = json.encode(starredVerses.toList()); // Convert Set to List for serialization
     prefs.setString("starredVerses", jsonData);
-    Fluttertoast.showToast(msg: "Added to Starred verses");
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Added to Starred verses"), duration: Duration(seconds: 1)),
+      );
+    }
   }
 
   Future<void> removeStarredVerse(int surahNumber, int verseNumber) async {
@@ -927,7 +930,11 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
 
     final jsonData = json.encode(starredVerses.toList()); // Convert Set to List for serialization
     prefs.setString("starredVerses", jsonData);
-    Fluttertoast.showToast(msg: "Removed from Starred verses");
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Removed from Starred verses"), duration: Duration(seconds: 1)),
+      );
+    }
   }
 
   void updateState(VoidCallback fn) {

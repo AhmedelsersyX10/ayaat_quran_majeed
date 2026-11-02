@@ -8,7 +8,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:quran/quran.dart' as quran;
 
 
@@ -468,23 +467,26 @@ class _BookmarksDialogState extends State<BookmarksDialog> with SingleTickerProv
 
       await context.read<BookmarkCubit>().addBookmark(bookmark);
 
-      Fluttertoast.showToast(
-        msg: "✓ ${"bookmarkSaved".tr()}",
-        backgroundColor: Colors.green.shade600,
-        textColor: Colors.white,
-        toastLength: Toast.LENGTH_SHORT,
-      );
-
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("✓ ${"bookmarkSaved".tr()}"),
+            backgroundColor: Colors.green.shade600,
+            duration: const Duration(seconds: 1),
+          ),
+        );
         Navigator.of(context).pop();
       }
     } catch (e) {
-      Fluttertoast.showToast(
-        msg: "✗ ${"errorSavingBookmark".tr()}",
-        backgroundColor: Colors.red.shade600,
-        textColor: Colors.white,
-        toastLength: Toast.LENGTH_SHORT,
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("✗ ${"errorSavingBookmark".tr()}"),
+            backgroundColor: Colors.red.shade600,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
     }
   }
 }

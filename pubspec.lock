@@ -57,14 +57,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.4"
-  azlistview:
-    dependency: "direct main"
-    description:
-      name: azlistview
-      sha256: "93e865f11777a271b439f0d6b00799c0797e9daeec2e082a2e01373809c4b90d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.0"
   bloc:
     dependency: "direct main"
     description:
@@ -145,22 +137,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.7"
-  csslib:
-    dependency: transitive
-    description:
-      name: csslib
-      sha256: "09bad715f418841f976c77db72d5398dc1253c21fb9c0c7f0b0b985860b2d58e"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.2"
-  cupertino_icons:
-    dependency: "direct main"
-    description:
-      name: cupertino_icons
-      sha256: "41e005c33bd814be4d3096aff55b1908d419fde52ca656c8c47719ec745873cd"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.9"
   dartarabic:
     dependency: transitive
     description:
@@ -185,14 +161,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.2"
-  easy_container:
-    dependency: "direct main"
-    description:
-      name: easy_container
-      sha256: "94a8ffb80a1a6bd7fa4e0b627c3ccc22d93fc4670c3cc0dc56dccc8e805b388f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.4"
   easy_localization:
     dependency: "direct main"
     description:
@@ -262,30 +230,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.5"
-  flutter_colorpicker:
-    dependency: "direct main"
-    description:
-      name: flutter_colorpicker
-      sha256: "969de5f6f9e2a570ac660fb7b501551451ea2a1ab9e2097e89475f60e07816ea"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
-  flutter_displaymode:
-    dependency: "direct main"
-    description:
-      name: flutter_displaymode
-      sha256: "42c5e9abd13d28ed74f701b60529d7f8416947e58256e6659c5550db719c57ef"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.6.0"
-  flutter_html:
-    dependency: "direct main"
-    description:
-      name: flutter_html
-      sha256: "38a2fd702ffdf3243fb7441ab58aa1bc7e6922d95a50db76534de8260638558d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.0"
   flutter_keyboard_visibility:
     dependency: "direct main"
     description:
@@ -373,30 +317,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  fluttericon:
-    dependency: "direct main"
-    description:
-      name: fluttericon
-      sha256: "252fa8043826e93d972a602497a260cb3d62b5aea6d045793e4381590f2c1e99"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.0"
-  fluttertoast:
-    dependency: "direct main"
-    description:
-      name: fluttertoast
-      sha256: a5c39007e19fff5eeb7810d5be651c02bb5a1c06104bdd203b037bbfe49bd827
-      url: "https://pub.dev"
-    source: hosted
-    version: "10.0.2"
-  group_list_view:
-    dependency: "direct main"
-    description:
-      name: group_list_view
-      sha256: "58bfc7f4b818abff531c2b202fb18b08abfb503f1621b0e86137a4fa4b6d91dd"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.1"
   hive:
     dependency: "direct main"
     description:
@@ -413,14 +333,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
-  html:
-    dependency: "direct overridden"
-    description:
-      name: html
-      sha256: "3a7812d5bcd2894edf53dfaf8cd640876cf6cef50a8f238745c8b8120ea74d3a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.15.4"
   http:
     dependency: transitive
     description:
@@ -565,14 +477,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
-  list_counter:
-    dependency: transitive
-    description:
-      name: list_counter
-      sha256: c447ae3dfcd1c55f0152867090e67e219d42fe6d4f2807db4bbe8b8d69912237
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.2"
   logging:
     dependency: transitive
     description:
@@ -938,21 +842,13 @@ packages:
     source: hosted
     version: "1.4.1"
   string_validator:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: string_validator
       sha256: "50dd8ecf91db6a732f4a851eeae81ee12406eedc62d0da72f2d91a04a2d10dd8"
       url: "https://pub.dev"
     source: hosted
     version: "0.3.0"
-  superellipse_shape:
-    dependency: "direct main"
-    description:
-      name: superellipse_shape
-      sha256: "8475f974a35be6d299ddbbe5b6be26ff2bc5521752cc631ffa8349aeb420bb18"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
   synchronized:
     dependency: transitive
     description:
@@ -1050,7 +946,7 @@ packages:
     source: hosted
     version: "1.1.1"
   win32:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: win32
       sha256: d7cb55e04cd34096cd3a79b3330245f54cb96a370a1c27adb3c84b917de8b08e

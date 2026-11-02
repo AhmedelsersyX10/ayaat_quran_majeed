@@ -237,53 +237,29 @@ extension VerseByVerseViewExtension on QuranDetailsPageState {
                                                   "العربية"
                                               ? m.TextDirection.rtl
                                               : m.TextDirection.ltr,
-                                          child: get_translation_data
+                                          child: Text(
+                                            removeHtmlTags(
+                                              get_translation_data
                                                   .getVerseTranslationForVerseByVerse(
-                                                    dataOfCurrentTranslation,
-                                                    e["surah"],
-                                                    i,
-                                                    translationDataList[getValue(
-                                                        "indexOfTranslationInVerseByVerse")],
-                                                  )
-                                                  .contains(">")
-                                              ? Html(
-                                                  data: get_translation_data
-                                                      .getVerseTranslationForVerseByVerse(
-                                                    dataOfCurrentTranslation,
-                                                    e["surah"],
-                                                    i,
-                                                    translationDataList[getValue(
-                                                        "indexOfTranslationInVerseByVerse")],
-                                                  ),
-                                                  style: {
-                                                    '*': Style(
-                                                      fontFamily: 'cairo',
-                                                      fontSize: FontSize(14.sp),
-                                                      lineHeight: LineHeight(1.7.sp),
-                                                    ),
-                                                  },
-                                                )
-                                              : Text(
-                                                  get_translation_data
-                                                      .getVerseTranslationForVerseByVerse(
-                                                    dataOfCurrentTranslation,
-                                                    e["surah"],
-                                                    i,
-                                                    translationDataList[getValue(
-                                                        "indexOfTranslationInVerseByVerse")],
-                                                  ),
-                                                  style: TextStyle(
-                                                      color: darkWarmBrowns[
-                                                          getValue("quranPageolorsIndex")],
-                                                      fontFamily: translationDataList[getValue(
-                                                                          "indexOfTranslationInVerseByVerse") ??
-                                                                      0]
-                                                                  .typeInNativeLanguage ==
-                                                              "العربية"
-                                                          ? "cairo"
-                                                          : "roboto",
-                                                      fontSize: 14.sp),
-                                                ),
+                                                dataOfCurrentTranslation,
+                                                e["surah"],
+                                                i,
+                                                translationDataList[getValue(
+                                                    "indexOfTranslationInVerseByVerse")],
+                                              ),
+                                            ),
+                                            style: TextStyle(
+                                                color: darkWarmBrowns[
+                                                    getValue("quranPageolorsIndex")],
+                                                fontFamily: translationDataList[getValue(
+                                                                    "indexOfTranslationInVerseByVerse") ??
+                                                                0]
+                                                            .typeInNativeLanguage ==
+                                                        "العربية"
+                                                    ? "cairo"
+                                                    : "roboto",
+                                                fontSize: 14.sp),
+                                          ),
                                         ),
                                       )),
                                     WidgetSpan(

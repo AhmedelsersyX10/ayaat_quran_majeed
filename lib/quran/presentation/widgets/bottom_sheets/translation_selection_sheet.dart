@@ -8,7 +8,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fluttericon/mfg_labs_icons.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -192,7 +191,7 @@ class _TranslationSelectionModalState extends State<_TranslationSelectionModal> 
                                     ? Icons.downloading_rounded
                                     : (isDownloaded
                                         ? (i == 0 || i == 1
-                                            ? MfgLabs.hdd
+                                            ? Icons.storage_rounded
                                             : Icons.check_circle_rounded)
                                         : Icons.cloud_download_rounded),
                                 color: isSelected ? accentColor : textColor.withOpacity(0.6),

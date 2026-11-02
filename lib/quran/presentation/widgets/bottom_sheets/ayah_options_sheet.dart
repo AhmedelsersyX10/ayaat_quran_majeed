@@ -1,13 +1,12 @@
 import 'dart:io';
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
-import 'package:ayaat_quran_majeed/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/main.dart';
-import 'package:ayaat_quran_majeed/models/reciter.dart';
+import 'package:ayaat_quran_majeed/quran/data/models/reciter_model.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/translation_info.dart';
 import 'package:ayaat_quran_majeed/quran/data/models/bookmark_model.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart' hide PlayFromVerse, QuranPagePlayerPlaying, KillPlayerEvent, QuranPagePlayerBloc, QuranPagePlayerEvent;
+import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/tafseer_and_translation_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/dialogs/bookmark_dialog.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/dialogs/share_ayah_dialog.dart';
@@ -16,8 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fluttericon/font_awesome5_icons.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:quran/quran.dart' as quran;
@@ -228,7 +225,7 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(
-              FontAwesome5.quran,
+              Icons.menu_book,
               color: _primaryColor,
               size: 20.sp,
             ),
@@ -523,7 +520,7 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
                 ],
               ),
               child: Icon(
-                FontAwesome5.book_open,
+                Icons.auto_stories,
                 color: _currentColorIndex == 0 ? _secondaryColor : _accentColor,
                 size: 20.sp,
               ),
@@ -904,10 +901,12 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
 
       if (mounted) {
         Navigator.of(context).pop();
-        Fluttertoast.showToast(
-          msg: "✓ ${"bookmarkUpdated".tr()}",
-          backgroundColor: Colors.green.shade600,
-          textColor: Colors.white,
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("✓ ${"bookmarkUpdated".tr()}"),
+            backgroundColor: Colors.green.shade600,
+            duration: const Duration(seconds: 1),
+          ),
         );
       }
     } catch (e) {
@@ -928,11 +927,15 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
       await cubit.repository.saveBookmarks(current);
       await cubit.loadBookmarks();
 
-      Fluttertoast.showToast(
-        msg: "✓ $bookmarkName ${"removed".tr()}",
-        backgroundColor: Colors.red.shade600,
-        textColor: Colors.white,
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("✓ $bookmarkName ${"removed".tr()}"),
+            backgroundColor: Colors.red.shade600,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
 
       widget.onUpdate();
 
@@ -1054,10 +1057,12 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
 
   void _showError(String message) {
     if (mounted) {
-      Fluttertoast.showToast(
-        msg: "✗ $message",
-        backgroundColor: Colors.red.shade600,
-        textColor: Colors.white,
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("✗ $message"),
+          backgroundColor: Colors.red.shade600,
+          duration: const Duration(seconds: 1),
+        ),
       );
     }
   }

@@ -1,25 +1,20 @@
-
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
-import 'package:ayaat_quran_majeed/cubit/bloc/player_bar_bloc.dart';
-import 'package:ayaat_quran_majeed/cubit/bloc/quran_reading_cubit.dart';
-import 'package:ayaat_quran_majeed/cubit/player_bloc_bloc.dart';
-import 'package:ayaat_quran_majeed/cubit/quran_page_player_bloc.dart';
+import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
+import 'package:ayaat_quran_majeed/core/splash/splash_screen.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/json_asset_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/bookmark_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
-import 'package:ayaat_quran_majeed/quran/data/data_sources/json_asset_service.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
+import 'package:easy_localization/easy_localization.dart' as ez;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
-import 'package:easy_localization/easy_localization.dart' as ez;
-import 'package:ayaat_quran_majeed/core/splash/splash_screen.dart';
 import 'package:just_audio/just_audio.dart';
 
-// import 'package:alarm/alarm.dart';
 final AudioPlayer audioPlayer = AudioPlayer();
 final ValueNotifier<bool> isDarkModeNotifier = ValueNotifier(getValue("darkMode") ?? false);
 
-// import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ez.EasyLocalization.ensureInitialized();
@@ -38,9 +33,7 @@ void main() async {
       ],
       child: MultiBlocProvider(
         providers: [
-          BlocProvider(create: (_) => PlayerBlocBloc()),
           BlocProvider(create: (_) => QuranPagePlayerBloc()),
-          BlocProvider(create: (_) => PlayerBarBloc()),
           BlocProvider(
             create: (context) => QuranReaderCubit(
               context.read<QuranReadingRepository>(),
@@ -54,7 +47,7 @@ void main() async {
         ],
         child: ez.EasyLocalization(
           supportedLocales: const [Locale('ar')],
-          path: 'assets/translations', // <-- change the path of the translation files
+          path: 'assets/translations',
           fallbackLocale: const Locale('ar'),
           child: const MyApp(),
         ),
@@ -71,23 +64,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  setup() async {
-    // await    setupServiceLocator();
-  }
-  @override
-  void initState() {
-    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
-    // checkNotificationPermission();
-
-    super.initState();
-  }
-
-  // BoxController boxController = BoxController();
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    //print(context.locale.toLanguageTag());
     return ScreenUtilInit(
       designSize: const Size(392.72727272727275, 800.7272727272727),
       builder: (context, child) => ValueListenableBuilder(

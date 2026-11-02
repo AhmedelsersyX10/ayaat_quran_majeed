@@ -4,10 +4,10 @@ import 'package:ayaat_quran_majeed/main.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/translationdata.dart';
 import 'package:ayaat_quran_majeed/quran/data/utils/convert_number_to_ar.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/translation_selection_sheet.dart';
+import 'package:ayaat_quran_majeed/quran/data/utils/remove_html_tags.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:quran/quran.dart';
 
@@ -466,27 +466,15 @@ class _TafseerAndTranslateSheetState extends State<TafseerAndTranslateSheet> {
               : paperBeige.withOpacity(0.3),
           borderRadius: BorderRadius.circular(16.r),
         ),
-        child: data.contains(">")
-            ? Html(
-                data: data,
-                style: {
-                  '*': Style(
-                    fontFamily: isArabic ? 'cairo' : 'roboto',
-                    fontSize: FontSize(16.sp),
-                    lineHeight: const LineHeight(1.8),
-                    color: textColor,
-                  ),
-                },
-              )
-            : Text(
-                data,
-                style: TextStyle(
-                  color: textColor,
-                  fontFamily: isArabic ? "cairo" : "roboto",
-                  fontSize: 16.sp,
-                  height: 1.8,
-                ),
-              ),
+        child: Text(
+          removeHtmlTags(data),
+          style: TextStyle(
+            color: textColor,
+            fontFamily: isArabic ? "cairo" : "roboto",
+            fontSize: 16.sp,
+            height: 1.8,
+          ),
+        ),
       ),
     );
   }
