@@ -1,6 +1,6 @@
+import 'package:ayaat_quran_majeed/core/localization/arabic_numbers.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme.dart';
 import 'package:ayaat_quran_majeed/core/widgets/app_stepper.dart';
-import 'package:ayaat_quran_majeed/quran/data/utils/convert_number_to_ar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,7 +30,7 @@ void main() {
         ),
       );
 
-      expect(find.text(convertToArabicNumber('5')), findsOneWidget);
+      expect(find.text(toArabicDigits('5')), findsOneWidget);
     });
 
     testWidgets('increments value on plus button tap', (tester) async {

@@ -1,5 +1,6 @@
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
 import 'package:ayaat_quran_majeed/core/di/injection.dart';
+import 'package:ayaat_quran_majeed/core/localization/localization_config.dart';
 import 'package:ayaat_quran_majeed/core/routing/app_router.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/json_asset_service.dart';
@@ -24,9 +25,11 @@ void main() async {
 
   runApp(
     ez.EasyLocalization(
-      supportedLocales: const [Locale('ar')],
-      path: 'assets/translations',
-      fallbackLocale: const Locale('ar'),
+      supportedLocales: LocalizationConfig.supportedLocales,
+      path: LocalizationConfig.translationsPath,
+      fallbackLocale: LocalizationConfig.fallbackLocale,
+      startLocale: LocalizationConfig.startLocale,
+      saveLocale: false,
       child: const MyApp(),
     ),
   );

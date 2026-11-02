@@ -1,4 +1,5 @@
 import 'package:ayaat_quran_majeed/core/di/injection.dart';
+import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
 import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/core/splash/splash_screen.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
@@ -53,14 +54,14 @@ abstract class AppRouter {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'الصفحة غير موجودة: ${state.uri}',
+                '${AppStrings.tr(AppStrings.pageNotFound)}: ${state.uri}',
                 style: const TextStyle(fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => context.go(AppRoutes.splash),
-                child: const Text('العودة للرئيسية'),
+                child: Text(AppStrings.tr(AppStrings.returnHome)),
               ),
             ],
           ),

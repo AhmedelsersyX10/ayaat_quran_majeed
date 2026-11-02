@@ -1,3 +1,4 @@
+import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_spacing.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
@@ -38,39 +39,42 @@ class AppBottomNav extends StatelessWidget {
     this.items,
   });
 
-  /// Default 5 tabs defined in the approved specification.
-  static const List<AppBottomNavItem> defaultItems = [
+  /// Default 5 tabs defined in the approved specification, localized using [AppStrings].
+  static List<AppBottomNavItem> getDefaultItems() => [
     AppBottomNavItem(
       icon: Iconsax.book,
       activeIcon: Iconsax.book_1,
-      label: 'السور',
+      label: AppStrings.tr(AppStrings.navSurahs),
     ),
     AppBottomNavItem(
       icon: Iconsax.calendar_1,
       activeIcon: Iconsax.calendar5,
-      label: 'الختمة',
+      label: AppStrings.tr(AppStrings.navKhatma),
     ),
     AppBottomNavItem(
       icon: Iconsax.bookmark,
       activeIcon: Iconsax.bookmark_2,
-      label: 'الفواصل',
+      label: AppStrings.tr(AppStrings.navBookmarks),
     ),
     AppBottomNavItem(
       icon: Iconsax.star,
       activeIcon: Iconsax.star1,
-      label: 'مميزة بنجمة',
+      label: AppStrings.tr(AppStrings.navStarred),
     ),
     AppBottomNavItem(
       icon: Iconsax.note_2,
       activeIcon: Iconsax.note_21,
-      label: 'الملاحظات',
+      label: AppStrings.tr(AppStrings.navNotes),
     ),
   ];
+
+  /// Getter alias for backwards compatibility.
+  static List<AppBottomNavItem> get defaultItems => getDefaultItems();
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final navItems = items ?? defaultItems;
+    final navItems = items ?? getDefaultItems();
 
     return Container(
       decoration: BoxDecoration(

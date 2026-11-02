@@ -1,3 +1,4 @@
+import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_spacing.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
@@ -9,14 +10,14 @@ import 'package:iconsax/iconsax.dart';
 class AppErrorState extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
-  final String retryText;
+  final String? retryText;
   final Widget? icon;
 
   const AppErrorState({
     super.key,
     required this.message,
     this.onRetry,
-    this.retryText = 'أعد المحاولة',
+    this.retryText,
     this.icon,
   });
 
@@ -47,7 +48,7 @@ class AppErrorState extends StatelessWidget {
             if (onRetry != null) ...[
               SizedBox(height: AppSpacing.lg),
               AppButton.secondary(
-                text: retryText,
+                text: retryText ?? AppStrings.tr(AppStrings.retry),
                 onPressed: onRetry,
               ),
             ],

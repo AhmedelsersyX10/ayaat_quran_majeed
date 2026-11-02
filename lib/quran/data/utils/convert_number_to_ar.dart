@@ -1,16 +1,11 @@
 // ignore_for_file: file_names
 
-import 'package:flutter/material.dart';
+import 'package:ayaat_quran_majeed/core/localization/arabic_numbers.dart';
 
+/// Legacy bridge forwarding to the centralized [toArabicDigits] formatter.
+///
+/// Prevents runtime FormatExceptions on non-digit characters and supports
+/// backward compatibility across legacy views until full rebuild.
 String convertToArabicNumber(String number) {
-  // print(number);
-  String res = '';
-
-  final arabics = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  for (var element in number.characters) {
-    res += arabics[int.parse(element)];
-  }
-
-/*   final latins = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']; */
-  return res;
+  return toArabicDigits(number);
 }

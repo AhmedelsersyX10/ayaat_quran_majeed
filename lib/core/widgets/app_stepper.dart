@@ -1,8 +1,8 @@
+import 'package:ayaat_quran_majeed/core/localization/arabic_numbers.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_spacing.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
 import 'package:ayaat_quran_majeed/core/widgets/app_icon_button.dart';
-import 'package:ayaat_quran_majeed/quran/data/utils/convert_number_to_ar.dart';
 import 'package:flutter/material.dart';
 
 /// Counter stepper widget with circular minus and plus buttons.
@@ -48,7 +48,7 @@ class AppStepper extends StatelessWidget {
           constraints: const BoxConstraints(minWidth: 36),
           alignment: Alignment.center,
           child: Text(
-            convertToArabicNumber(value.toString()),
+            toArabicDigits(value),
             style: AppTypography.titleMedium.copyWith(
               fontWeight: FontWeight.w700,
             ),
