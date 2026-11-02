@@ -1,0 +1,73 @@
+import 'package:ayaat_quran_majeed/core/di/injection.dart';
+import 'package:ayaat_quran_majeed/core/network/api_client.dart';
+import 'package:ayaat_quran_majeed/quran/data/repositories/bookmark_repository.dart';
+import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
+import 'package:ayaat_quran_majeed/quran/data/repositories/quran_search_repository.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_search_cubit.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:just_audio/just_audio.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() async {
+    await resetInjection();
+  });
+
+  tearDown(() async {
+    await resetInjection();
+  });
+
+  group('Central Dependency Injection Tests', () {
+    test('initInjection registers all core singletons and repositories', () async {
+      await initInjection();
+
+      expect(sl.isRegistered<AudioPlayer>(), isTrue);
+      expect(sl.isRegistered<ApiClient>(), isTrue);
+      expect(sl.isRegistered<QuranReadingRepository>(), isTrue);
+      expect(sl.isRegistered<BookmarkRepository>(), isTrue);
+      expect(sl.isRegistered<QuranSearchRepository>(), isTrue);
+
+      expect(sl.isRegistered<QuranPagePlayerBloc>(), isTrue);
+      expect(sl.isRegistered<QuranReaderCubit>(), isTrue);
+      expect(sl.isRegistered<BookmarkCubit>(), isTrue);
+      expect(sl.isRegistered<QuranSearchCubit>(), isTrue);
+    });
+
+    test('Singletons return identical instances across multiple resolutions', () async {
+      await initInjection();
+
+      final player1 = sl<AudioPlayer>();
+      final player2 = sl<AudioPlayer>();
+      expect(identical(player1, player2), isTrue);
+
+      final client1 = sl<ApiClient>();
+      final client2 = sl<ApiClient>();
+      expect(identical(client1, client2), isTrue);
+    });
+
+    test('Factories produce fresh, distinct instances for Cubits', () async {
+      await initInjection();
+
+      final cubit1 = sl<BookmarkCubit>();
+      final cubit2 = sl<BookmarkCubit>();
+      expect(identical(cubit1, cubit2), isFalse);
+
+      await cubit1.close();
+      await cubit2.close();
+    });
+
+    test('resetInjection unregisters all dependencies', () async {
+      await initInjection();
+      expect(sl.isRegistered<ApiClient>(), isTrue);
+
+      await resetInjection();
+      expect(sl.isRegistered<ApiClient>(), isFalse);
+      expect(sl.isRegistered<AudioPlayer>(), isFalse);
+    });
+  });
+}
+

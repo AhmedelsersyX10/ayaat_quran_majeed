@@ -39,6 +39,8 @@ dependencies:
   flutter_bloc: null
   flutter_keyboard_visibility: ^6.0.0
   flutter_screenutil: null
+  get_it: ^9.3.0
+  go_router: ^18.1.2
   hive: null
   iconsax: null
   image_gallery_saver_plus: ^4.0.1
