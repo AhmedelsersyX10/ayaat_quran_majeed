@@ -3,33 +3,34 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:ayaat_quran_majeed/main.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:quran/quran.dart';
-import 'package:quran/reciters.dart';
 
 part 'quran_page_player_event.dart';
 part 'quran_page_player_state.dart';
 
 class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerState> {
-  QuranPagePlayerBloc() : super(QuranPagePlayerInitial()) {
+  final QuranMetadataService _metadataService;
+
+  QuranPagePlayerBloc({
+    QuranMetadataService metadataService = const QuranMetadataService(),
+  })  : _metadataService = metadataService,
+        super(QuranPagePlayerInitial()) {
     on<QuranPagePlayerEvent>((event, emit) async {
       if (event is PlayFromVerse) {
         final player = audioPlayer;
 
         try {
           // 🔹 Verify reciter
-          final reciterMatch = reciters.firstWhere(
-            (element) => element["identifier"] == event.reciterIdentifier,
-            orElse: () => null,
-          );
+          final reciterMatch = _metadataService.getReciter(event.reciterIdentifier);
           if (reciterMatch == null) {
             print("❌ Reciter not found: ${event.reciterIdentifier}");
             return;
           }
 
           // 🔹 Get audio URL for specific verse
-          final verseUrl = getAudioURLByVerse(
+          final verseUrl = _metadataService.getAudioURLByVerse(
             event.surahNumber,
             event.verse,
             event.reciterIdentifier,
@@ -56,7 +57,7 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
               tag: MediaItem(
                 id: event.suraName,
                 album: reciterMatch["englishName"],
-                title: "${getSurahNameArabic(event.surahNumber)} - Verse ${event.verse}",
+                title: "${_metadataService.getSurahNameArabic(event.surahNumber)} - Verse ${event.verse}",
                 artUri: Uri.parse(
                   "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
                 ),
@@ -85,21 +86,18 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
 
         try {
           // 🔹 Verify reciter
-          final reciterMatch = reciters.firstWhere(
-            (element) => element["identifier"] == event.reciterIdentifier,
-            orElse: () => null,
-          );
+          final reciterMatch = _metadataService.getReciter(event.reciterIdentifier);
           if (reciterMatch == null) {
             print("❌ Reciter not found: ${event.reciterIdentifier}");
             return;
           }
 
           // 🔹 Create playlist from all verses in the surah
-          final verseCount = getVerseCount(event.surahNumber);
+          final verseCount = _metadataService.getVerseCount(event.surahNumber);
           List<AudioSource> playList = [];
 
           for (int verseNumber = 1; verseNumber <= verseCount; verseNumber++) {
-            final verseUrl = getAudioURLByVerse(
+            final verseUrl = _metadataService.getAudioURLByVerse(
               event.surahNumber,
               verseNumber,
               event.reciterIdentifier,
@@ -111,7 +109,7 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
                 tag: MediaItem(
                   id: '${event.surahNumber}-$verseNumber',
                   album: reciterMatch["englishName"],
-                  title: "${getSurahNameArabic(event.surahNumber)} - Verse $verseNumber",
+                  title: "${_metadataService.getSurahNameArabic(event.surahNumber)} - Verse $verseNumber",
                   artUri: Uri.parse(
                     "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
                   ),
@@ -178,10 +176,7 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
 
         try {
           // Verify reciter
-          final reciterMatch = reciters.firstWhere(
-            (element) => element["identifier"] == event.reciterIdentifier,
-            orElse: () => null,
-          );
+          final reciterMatch = _metadataService.getReciter(event.reciterIdentifier);
           if (reciterMatch == null) {
             print("❌ Reciter not found: ${event.reciterIdentifier}");
             return;
@@ -192,17 +187,17 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
 
           for (int s = event.startSurahNumber; s <= event.endSurahNumber; s++) {
             final firstVerse = (s == event.startSurahNumber) ? event.startVerse : 1;
-            final lastVerse = (s == event.endSurahNumber) ? event.endVerse : getVerseCount(s);
+            final lastVerse = (s == event.endSurahNumber) ? event.endVerse : _metadataService.getVerseCount(s);
 
             for (int v = firstVerse; v <= lastVerse; v++) {
-              final url = getAudioURLByVerse(s, v, event.reciterIdentifier);
+              final url = _metadataService.getAudioURLByVerse(s, v, event.reciterIdentifier);
               rangeList.add(
                 AudioSource.uri(
                   Uri.parse(url),
                   tag: MediaItem(
                     id: '$s-$v',
                     album: reciterMatch["englishName"],
-                    title: "${getSurahNameArabic(s)} - Verse $v",
+                    title: "${_metadataService.getSurahNameArabic(s)} - Verse $v",
                     artUri: Uri.parse(
                       "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
                     ),
@@ -224,17 +219,17 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
             for (int rep = 0; rep < times; rep++) {
               for (int s = event.startSurahNumber; s <= event.endSurahNumber; s++) {
                 final firstVerse = (s == event.startSurahNumber) ? event.startVerse : 1;
-                final lastVerse = (s == event.endSurahNumber) ? event.endVerse : getVerseCount(s);
+                final lastVerse = (s == event.endSurahNumber) ? event.endVerse : _metadataService.getVerseCount(s);
 
                 for (int v = firstVerse; v <= lastVerse; v++) {
-                  final url = getAudioURLByVerse(s, v, event.reciterIdentifier);
+                  final url = _metadataService.getAudioURLByVerse(s, v, event.reciterIdentifier);
                   fullPlaylist.add(
                     AudioSource.uri(
                       Uri.parse(url),
                       tag: MediaItem(
                         id: '$s-$v-rep$rep',
                         album: reciterMatch["englishName"],
-                        title: "${getSurahNameArabic(s)} - Verse $v",
+                        title: "${_metadataService.getSurahNameArabic(s)} - Verse $v",
                         artUri: Uri.parse(
                           "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
                         ),

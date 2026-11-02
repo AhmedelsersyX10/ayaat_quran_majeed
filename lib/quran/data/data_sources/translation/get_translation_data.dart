@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/translation_info.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/translations/muyassar.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/translations/sahih_english.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:quran/quran.dart' as q;
+
+const _metadataService = QuranMetadataService();
 
 String getVerseTranslationForVerseByVerse(
     var data, int surahNumber, int verseNumber, TranslationData translation,
@@ -36,7 +38,7 @@ String getVerseTranslationForVerseByVerse(
   }
   print(verse);
   return verse.replaceAll("<br>", "\n") +
-      (verseEndSymbol ? q.getVerseEndSymbol(verseNumber, arabicNumeral: false) : "");
+      (verseEndSymbol ? _metadataService.getVerseEndSymbol(verseNumber, arabicNumeral: false) : "");
 }
 
 Future<String> getVerseTranslation(int surahNumber, int verseNumber, TranslationData translation,
@@ -65,5 +67,5 @@ Future<String> getVerseTranslation(int surahNumber, int verseNumber, Translation
   if (verse == "") {
     return "";
   }
-  return verse + (verseEndSymbol ? q.getVerseEndSymbol(verseNumber, arabicNumeral: false) : "");
+  return verse + (verseEndSymbol ? _metadataService.getVerseEndSymbol(verseNumber, arabicNumeral: false) : "");
 }

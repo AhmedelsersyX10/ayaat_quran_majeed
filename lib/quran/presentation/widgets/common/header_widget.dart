@@ -1,8 +1,10 @@
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:quran/quran.dart';
+
+const _metadataService = QuranMetadataService();
 
 class HeaderWidget extends StatelessWidget {
   final Map<String, dynamic> e;
@@ -48,7 +50,7 @@ class HeaderWidget extends StatelessWidget {
               children: [
                 Text(
                   textAlign: TextAlign.center,
-                  "اياتها\n${getVerseCount(e["surah"])}",
+                  "اياتها\n${_metadataService.getVerseCount(e["surah"])}",
                   style: TextStyle(
                       // color: deepBurgundyRed,
                       color: indexOfTheme == null

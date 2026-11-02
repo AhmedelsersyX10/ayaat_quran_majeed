@@ -1,6 +1,6 @@
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:quran/quran.dart' as quran;
 
 
 class QuranReadingState {
@@ -42,10 +42,16 @@ class QuranReadingState {
 /// experience.
 class QuranReaderCubit extends Cubit<QuranReadingState> {
   final QuranReadingRepository _repository;
+  final QuranMetadataService _metadataService;
 
-  QuranReaderCubit(this._repository) : super(QuranReadingState.initial());
+  QuranReaderCubit(
+    this._repository, {
+    QuranMetadataService metadataService = const QuranMetadataService(),
+  })  : _metadataService = metadataService,
+        super(QuranReadingState.initial());
 
   QuranReadingRepository get repository => _repository;
+  QuranMetadataService get metadataService => _metadataService;
 
   /// Load the initial reading position when the reader is first opened.
   Future<void> loadInitialPosition() async {
@@ -92,7 +98,7 @@ class QuranReaderCubit extends Cubit<QuranReadingState> {
 
   /// Navigate to a specific surah (first ayah by default).
   Future<void> goToSurah(int surahNumber, {int ayahNumber = 1}) async {
-    final int page = quran.getPageNumber(surahNumber, ayahNumber);
+    final int page = _metadataService.getPageNumber(surahNumber, ayahNumber);
     final position = ReadingPosition(
       page: page,
       surahNumber: surahNumber,
@@ -110,7 +116,7 @@ class QuranReaderCubit extends Cubit<QuranReadingState> {
 
   /// Navigate to a specific ayah.
   Future<void> goToAyah(int surahNumber, int ayahNumber) async {
-    final int page = quran.getPageNumber(surahNumber, ayahNumber);
+    final int page = _metadataService.getPageNumber(surahNumber, ayahNumber);
     final position = ReadingPosition(
       page: page,
       surahNumber: surahNumber,
@@ -146,7 +152,7 @@ class QuranReaderCubit extends Cubit<QuranReadingState> {
 
   ReadingPosition _mapPageToPosition(int page) {
     try {
-      final pageData = quran.getPageData(page);
+      final pageData = _metadataService.getPageData(page);
       if (pageData.isNotEmpty) {
         final firstSegment = pageData.first;
         final int surah = firstSegment['surah'] as int;

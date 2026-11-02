@@ -5,6 +5,7 @@ import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:go_router/go_router.dart';
+import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 
 
 class SplashScreen extends StatefulWidget {
@@ -18,6 +19,18 @@ class _SplashScreenState extends State<SplashScreen> {
   
 
   Future<void> _navigateToHome() async {
+    final sw = Stopwatch()..start();
+    try {
+      await QcfFontLoader.setupFontsAtStartup(
+        onProgress: (progress) {
+          debugPrint('[QcfFontLoader] ${(progress * 100).toStringAsFixed(1)}%');
+        },
+      );
+      debugPrint('[QcfFontLoader] Fonts initialized in ${sw.elapsedMilliseconds} ms');
+    } catch (e) {
+      debugPrint('[QcfFontLoader] Font initialization error: $e');
+    }
+
     await Future.delayed(const Duration(seconds: 1));
     // Load jsonData and quarterjsonData from assets so SurahListPage shows the same data
     var jsonData = [];

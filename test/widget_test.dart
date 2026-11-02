@@ -1,10 +1,10 @@
 import 'package:ayaat_quran_majeed/GlobalHelpers/arabic_text_helper.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/models/bookmark_model.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/utils/convert_number_to_ar.dart';
 import 'package:ayaat_quran_majeed/quran/data/utils/remove_html_tags.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quran/quran.dart' as quran;
 
 void main() {
   group('Core Utilities & Normalization Tests', () {
@@ -67,6 +67,8 @@ void main() {
   });
 
   group('Quran Metadata Sanity Tests', () {
+    const quran = QuranMetadataService();
+
     test('Quran surahs count is exactly 114', () {
       expect(quran.totalSurahCount, equals(114));
     });

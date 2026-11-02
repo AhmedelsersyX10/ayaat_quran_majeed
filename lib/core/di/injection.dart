@@ -2,6 +2,7 @@ import 'package:ayaat_quran_majeed/core/network/api_client.dart';
 import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
 import 'package:ayaat_quran_majeed/core/storage/hive_storage_service.dart';
 import 'package:ayaat_quran_majeed/core/storage/preferences_storage.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/bookmark_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_search_repository.dart';
@@ -42,11 +43,22 @@ Future<void> initInjection() async {
   }
 
   // ---------------------------------------------------------
-  // 3. Repositories
+  // 3. Services / Data Sources
+  // ---------------------------------------------------------
+  if (!sl.isRegistered<QuranMetadataService>()) {
+    sl.registerLazySingleton<QuranMetadataService>(
+      () => const QuranMetadataService(),
+    );
+  }
+
+  // ---------------------------------------------------------
+  // 4. Repositories
   // ---------------------------------------------------------
   if (!sl.isRegistered<QuranReadingRepository>()) {
     sl.registerLazySingleton<QuranReadingRepository>(
-      () => const QuranReadingRepository(),
+      () => QuranReadingRepository(
+        metadataService: sl<QuranMetadataService>(),
+      ),
     );
   }
 
@@ -58,7 +70,9 @@ Future<void> initInjection() async {
 
   if (!sl.isRegistered<QuranSearchRepository>()) {
     sl.registerLazySingleton<QuranSearchRepository>(
-      () => QuranSearchRepository(),
+      () => QuranSearchRepository(
+        metadataService: sl<QuranMetadataService>(),
+      ),
     );
   }
 
@@ -67,13 +81,18 @@ Future<void> initInjection() async {
   // ---------------------------------------------------------
   if (!sl.isRegistered<QuranPagePlayerBloc>()) {
     sl.registerFactory<QuranPagePlayerBloc>(
-      () => QuranPagePlayerBloc(),
+      () => QuranPagePlayerBloc(
+        metadataService: sl<QuranMetadataService>(),
+      ),
     );
   }
 
   if (!sl.isRegistered<QuranReaderCubit>()) {
     sl.registerFactory<QuranReaderCubit>(
-      () => QuranReaderCubit(sl<QuranReadingRepository>()),
+      () => QuranReaderCubit(
+        sl<QuranReadingRepository>(),
+        metadataService: sl<QuranMetadataService>(),
+      ),
     );
   }
 

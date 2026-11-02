@@ -12,11 +12,14 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:quran/quran.dart';
-import 'package:quran/quran.dart' as get_translation_data;
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/get_translation_data.dart'
+    as get_translation_data;
 import 'package:screenshot/screenshot.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart' as m;
+
+const _metadataService = QuranMetadataService();
 
 class ScreenShotPreviewPage extends StatefulWidget {
   final int index;
@@ -94,7 +97,7 @@ class _ScreenShotPreviewPageState extends State<ScreenShotPreviewPage>
     List<InlineSpan> verseSpans = [];
 
     for (int verseNumber = firstVerseNumber; verseNumber <= lastVerseNumber; verseNumber++) {
-      String verseText = getVerse(surahNumber, verseNumber);
+      String verseText = _metadataService.getVerse(surahNumber, verseNumber);
 
       verseSpans.addAll([
         TextSpan(
@@ -139,7 +142,7 @@ class _ScreenShotPreviewPageState extends State<ScreenShotPreviewPage>
       ),
     ];
     for (int v = firstVerse; v <= lastVerse; v++) {
-      String text = get_translation_data.getVerseTranslation(surahNumber, v, translatee);
+      String text = await get_translation_data.getVerseTranslation(surahNumber, v, translatee);
       text = text.replaceAll("<p>", "\n").replaceAll("</p>", "");
       spans.add(TextSpan(
         text: "$text (${convertToArabicNumber(v.toString())}) ",

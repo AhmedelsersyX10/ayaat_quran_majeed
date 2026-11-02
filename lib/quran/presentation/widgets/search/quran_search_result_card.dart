@@ -1,11 +1,12 @@
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../data/models/quran_search_result.dart';
 import '../../../data/repositories/quran_search_repository.dart';
 
-import 'package:quran/quran.dart' as quran;
+const _metadataService = QuranMetadataService();
 
 class QuranSearchResultCard extends StatelessWidget {
   final QuranSearchResult result;
@@ -29,7 +30,7 @@ class QuranSearchResultCard extends StatelessWidget {
     if (normalizedQueryWords.isEmpty) {
       return [
         TextSpan(
-          text: '${result.originalText} ${quran.getVerseEndSymbol(result.verseNumber)}',
+          text: '${result.originalText} ${_metadataService.getVerseEndSymbol(result.verseNumber)}',
           style: TextStyle(
             fontFamily: 'UthmanicHafs13',
             fontSize: 20.sp,
@@ -76,7 +77,7 @@ class QuranSearchResultCard extends StatelessWidget {
     }
 
     spans.add(TextSpan(
-      text: quran.getVerseEndSymbol(result.verseNumber),
+      text: _metadataService.getVerseEndSymbol(result.verseNumber),
       style: defaultStyle.copyWith(color: secondaryColors[colorIndex]),
     ));
 

@@ -14,7 +14,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
-import 'package:quran/quran.dart' as quran;
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
@@ -22,6 +22,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' as m;
+
+const _metadataService = QuranMetadataService();
 
 class SurahListPage extends StatefulWidget {
   final dynamic jsonData;
@@ -80,8 +82,9 @@ class _SurahListPageState extends State<SurahListPage> {
 
   Future<void> getJuzNumber() async {
     if (getValue("lastRead") != "non") {
-      juzNumberLastRead = quran.getJuzNumber(quran.getPageData(getValue("lastRead"))[0]["surah"],
-          quran.getPageData(getValue("lastRead"))[0]["start"]);
+      juzNumberLastRead = _metadataService.getJuzNumber(
+          _metadataService.getPageData(getValue("lastRead"))[0]["surah"],
+          _metadataService.getPageData(getValue("lastRead"))[0]["start"]);
       setState(() {});
     }
   }
@@ -273,7 +276,7 @@ class _SurahListPageState extends State<SurahListPage> {
           juzNumberLastRead: juzNumberLastRead,
           onNavigateToJuz: (juzNumber, firstSurah, firstVerse) {
             Navigator.pop(context, {
-              'pageNumber': quran.getPageNumber(firstSurah, firstVerse),
+              'pageNumber': _metadataService.getPageNumber(firstSurah, firstVerse),
               'surah': firstSurah,
               'ayah': firstVerse,
             });
@@ -283,7 +286,7 @@ class _SurahListPageState extends State<SurahListPage> {
           quarterjsonData: widget.quarterjsonData,
           onNavigateToQuarter: (surah, ayah) {
             Navigator.pop(context, {
-              'pageNumber': quran.getPageNumber(surah, ayah),
+              'pageNumber': _metadataService.getPageNumber(surah, ayah),
               'surah': surah,
               'ayah': ayah,
             });
@@ -361,7 +364,7 @@ class _SurahListPageState extends State<SurahListPage> {
     setState(() {
       filteredData = widget.jsonData.where((sura) {
         final suraName = sura['englishName'].toLowerCase();
-        final suraNameArabic = quran.getSurahNameArabic(sura["number"]);
+        final suraNameArabic = _metadataService.getSurahNameArabic(sura["number"]);
 
         return suraName.contains(searchQuery.toLowerCase()) ||
             suraNameArabic.contains(searchQuery.toLowerCase());
@@ -437,7 +440,7 @@ class _SurahListPageState extends State<SurahListPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(pageNumber.toString()),
-                Text(quran.getSurahName(quran.getPageData(pageNumber)[0]["surah"])),
+                Text(_metadataService.getSurahName(_metadataService.getPageData(pageNumber)[0]["surah"])),
               ],
             ),
           ),
@@ -538,7 +541,7 @@ class _SurahListPageState extends State<SurahListPage> {
   }
 
   Widget _buildSurahSubtitle(Map<String, dynamic> suraData) {
-    final ayahCount = quran.getVerseCount(suraData["number"]);
+    final ayahCount = _metadataService.getVerseCount(suraData["number"]);
     return Text(
       "${suraData["englishName"]} ($ayahCount)",
       style: TextStyle(fontFamily: "uthmanic", fontSize: 14.sp, color: Colors.grey.withOpacity(.8)),
@@ -559,7 +562,7 @@ class _SurahListPageState extends State<SurahListPage> {
   // }
 
   void _navigateToSurah(int suraNumber) async {
-    Navigator.pop(context, quran.getPageNumber(suraNumber, 1));
+    Navigator.pop(context, _metadataService.getPageNumber(suraNumber, 1));
     // await Navigator.push(
     //   context,
     //   MaterialPageRoute(
@@ -686,7 +689,7 @@ class _SurahListPageState extends State<SurahListPage> {
   Widget _buildBookmarkVerse(int suraNumber, int verseNumber) {
     return SizedBox(
       child: Text(
-        quran.getVerse(suraNumber, verseNumber),
+        _metadataService.getVerse(suraNumber, verseNumber),
         textAlign: TextAlign.center,
         style: TextStyle(
           fontFamily: fontFamilies[0],
@@ -702,8 +705,8 @@ class _SurahListPageState extends State<SurahListPage> {
       children: [
         Text(
           context.locale.languageCode == "ar"
-              ? quran.getSurahNameArabic(suraNumber)
-              : quran.getSurahNameEnglish(suraNumber),
+              ? _metadataService.getSurahNameArabic(suraNumber)
+              : _metadataService.getSurahNameEnglish(suraNumber),
           style: TextStyle(
             color: isDarkModeNotifier.value ? Colors.white.withOpacity(.87) : Colors.black87,
           ),
@@ -724,7 +727,7 @@ class _SurahListPageState extends State<SurahListPage> {
     if (scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
       Navigator.pop(context); // Close drawer
     }
-    Navigator.pop(context, quran.getPageNumber(suraNumber, verseNumber));
+    Navigator.pop(context, _metadataService.getPageNumber(suraNumber, verseNumber));
     // await Navigator.push(
     //   context,
     //   MaterialPageRoute(

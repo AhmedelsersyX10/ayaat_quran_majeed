@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
-import 'package:quran/quran.dart' as quran;
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 
 
 class ReadingPosition {
@@ -64,8 +64,11 @@ class ReadingPosition {
 class QuranReadingRepository {
   static const String _legacyLastReadKey = 'lastRead';
   static const String _lastReadingPositionKey = 'lastReadingPosition';
+  final QuranMetadataService _metadataService;
 
-  const QuranReadingRepository();
+  const QuranReadingRepository({
+    QuranMetadataService metadataService = const QuranMetadataService(),
+  }) : _metadataService = metadataService;
 
   /// Load the last reading position.
   ///
@@ -112,10 +115,10 @@ class QuranReadingRepository {
   }
 
   /// Helper to map a mushaf page number to a concrete surah and ayah
-  /// using the `quran` package metadata.
+  /// using the [QuranMetadataService].
   ReadingPosition _mapPageToReadingPosition(int page) {
     try {
-      final pageData = quran.getPageData(page);
+      final pageData = _metadataService.getPageData(page);
       if (pageData.isNotEmpty) {
         final firstSegment = pageData.first;
         final int surah = firstSegment['surah'] as int;

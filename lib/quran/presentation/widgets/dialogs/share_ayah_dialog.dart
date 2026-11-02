@@ -7,10 +7,11 @@ import 'package:ayaat_quran_majeed/quran/data/utils/remove_html_tags.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/views/screenshot_preview.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-import 'package:quran/quran.dart' as quran;
 import 'package:share_plus/share_plus.dart';
+
+const _metadataService = QuranMetadataService();
 
 class ShareAyahDialog extends StatefulWidget {
   final int surahNumber;
@@ -155,7 +156,7 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                                 });
                               },
                               items: List.generate(
-                                quran.getVerseCount(widget.surahNumber),
+                                _metadataService.getVerseCount(widget.surahNumber),
                                 (index) => DropdownMenuItem<int>(
                                   value: index + 1,
                                   child: Text(
@@ -225,7 +226,7 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                                 }
                               },
                               items: List.generate(
-                                quran.getVerseCount(widget.surahNumber),
+                                _metadataService.getVerseCount(widget.surahNumber),
                                 (index) => DropdownMenuItem<int>(
                                   value: index + 1,
                                   child: Text(
@@ -497,18 +498,18 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
       // Share as text
       List verses = [];
       for (int i = firstVerse; i <= lastVerse; i++) {
-        verses.add(quran.getVerse(widget.surahNumber, i, verseEndSymbol: true));
+        verses.add(_metadataService.getVerse(widget.surahNumber, i, verseEndSymbol: true));
       }
 
       String shareText = "";
 
       if (getValue("textWithoutDiacritics")) {
-        shareText = "{${quran.removeDiacritics(verses.join(''))}}";
+        shareText = "{${_metadataService.removeDiacritics(verses.join(''))}}";
       } else {
         shareText = "{${verses.join('')}}";
       }
 
-      shareText += " [${quran.getSurahNameArabic(widget.surahNumber)}: $firstVerse";
+      shareText += " [${_metadataService.getSurahNameArabic(widget.surahNumber)}: $firstVerse";
       if (firstVerse != lastVerse) shareText += " - $lastVerse";
       shareText += "]";
 

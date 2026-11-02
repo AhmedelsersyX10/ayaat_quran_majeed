@@ -1,6 +1,9 @@
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
 import 'package:ayaat_quran_majeed/main.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/get_translation_data.dart'
+    as get_translation_data;
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/translationdata.dart';
 import 'package:ayaat_quran_majeed/quran/data/utils/convert_number_to_ar.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/translation_selection_sheet.dart';
@@ -8,8 +11,8 @@ import 'package:ayaat_quran_majeed/quran/data/utils/remove_html_tags.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:quran/quran.dart' as quran;
-import 'package:quran/quran.dart';
+
+const _metadataService = QuranMetadataService();
 
 class TafseerAndTranslateSheet extends StatefulWidget {
   final int surahNumber;
@@ -44,7 +47,7 @@ class _TafseerAndTranslateSheetState extends State<TafseerAndTranslateSheet> {
   }
 
   Future<void> getData() async {
-    data = getVerseTranslation(
+    data = await get_translation_data.getVerseTranslation(
       widget.surahNumber,
       widget.verseNumber + verseNumber,
       translationDataList[getValue("indexOfTranslationInVerseByVerse") ?? 0],
@@ -54,7 +57,7 @@ class _TafseerAndTranslateSheetState extends State<TafseerAndTranslateSheet> {
 
   void _navigateVerse(bool isNext) {
     final currentVerse = widget.verseNumber + verseNumber;
-    final totalVerses = quran.getVerseCount(widget.surahNumber);
+    final totalVerses = _metadataService.getVerseCount(widget.surahNumber);
 
     if (isNext && currentVerse < totalVerses) {
       setState(() => verseNumber++);
@@ -72,7 +75,7 @@ class _TafseerAndTranslateSheetState extends State<TafseerAndTranslateSheet> {
     final textColor = isDark ? softOffWhite : darkWarmBrown;
     final accentColor = isDark ? tealBlue : deepBurgundyRed;
     final currentVerse = widget.verseNumber + verseNumber;
-    final totalVerses = quran.getVerseCount(widget.surahNumber);
+    final totalVerses = _metadataService.getVerseCount(widget.surahNumber);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.92,
@@ -305,7 +308,7 @@ class _TafseerAndTranslateSheetState extends State<TafseerAndTranslateSheet> {
 
           // Quran verse text
           Text(
-            quran.getVerse(
+            _metadataService.getVerse(
               widget.surahNumber,
               widget.verseNumber + verseNumber,
             ),

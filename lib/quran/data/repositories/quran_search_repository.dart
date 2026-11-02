@@ -1,26 +1,30 @@
-import 'package:quran/quran.dart' as quran;
-import 'package:quran/quran_text_normal.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import '../models/quran_search_result.dart';
 
 class QuranSearchRepository {
+  final QuranMetadataService _metadataService;
   List<Map<String, dynamic>>? _cachedIndex;
+
+  QuranSearchRepository({
+    QuranMetadataService metadataService = const QuranMetadataService(),
+  }) : _metadataService = metadataService;
 
   /// Initializes the search index by applying normalization to all verses.
   /// This is called once and the result is cached in memory.
   Future<void> init() async {
     if (_cachedIndex != null) return;
 
-    _cachedIndex = quran_text_normal.map((verse) {
-      final text = verse['content'] as String;
+    _cachedIndex = _metadataService.allVersesRawData.map((verse) {
+      final emlaey = (verse['aya_text_emlaey'] ?? '').toString();
+      final surahNumber = verse['sora'] as int;
+      final verseNumber = verse['aya_no'] as int;
+      final originalText = (verse['aya_text'] ?? '').toString().replaceAll('۩', '').trim();
+
       return {
-        'surah_number': verse['surah_number'] as int,
-        'verse_number': verse['verse_number'] as int,
-        'searchable_text': normalizeArabicText(text),
-        'original_text': quran.getVerse(
-          verse['surah_number'] as int,
-          verse['verse_number'] as int,
-          verseEndSymbol: false,
-        ),
+        'surah_number': surahNumber,
+        'verse_number': verseNumber,
+        'searchable_text': normalizeArabicText(emlaey),
+        'original_text': originalText,
       };
     }).toList();
   }
@@ -29,10 +33,10 @@ class QuranSearchRepository {
   /// to make search more robust (handles different Hamza forms, Alif Maqsura, etc.)
   static String normalizeArabicText(String text) {
     return text
-        // Remove diacritics (tashkeel)
-        .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '')
-        // Normalize Alef (أ إ آ) to bare Alef (ا)
-        .replaceAll(RegExp(r'[إأآ]'), 'ا')
+        // Remove diacritics (tashkeel) and Quranic annotation marks
+        .replaceAll(RegExp(r'[\u064B-\u065F\u0670\u06D6-\u06ED]'), '')
+        // Normalize Alef (أ إ آ ٱ) to bare Alef (ا)
+        .replaceAll(RegExp(r'[إأآٱ\u0671]'), 'ا')
         // Normalize Yaa (ي ى) to standard Yaa (ي)
         .replaceAll(RegExp(r'[ى]'), 'ي')
         // Normalize Taa Marbutah (ة) to Haa (ه)
@@ -92,14 +96,14 @@ class QuranSearchRepository {
 
         final surahNumber = verse['surah_number'] as int;
         final verseNumber = verse['verse_number'] as int;
-        
+
         results.add(
           QuranSearchResult(
             surahNumber: surahNumber,
             verseNumber: verseNumber,
-            pageNumber: quran.getPageNumber(surahNumber, verseNumber),
+            pageNumber: _metadataService.getPageNumber(surahNumber, verseNumber),
             originalText: verse['original_text'] as String,
-            surahName: quran.getSurahNameArabic(surahNumber),
+            surahName: _metadataService.getSurahNameArabic(surahNumber),
             score: score,
           ),
         );

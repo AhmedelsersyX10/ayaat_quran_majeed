@@ -17,8 +17,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:quran/quran.dart' as quran;
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
+const _metadataService = QuranMetadataService();
 
 class AyahOptionsSheet extends StatefulWidget {
   final int surahNumber;
@@ -131,8 +133,8 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
   //     widget.starredVerses.contains("${widget.surahNumber}:${widget.verseNumber}");
 
   String get _surahName => context.locale.languageCode == "ar"
-      ? quran.getSurahNameArabic(widget.surahNumber)
-      : quran.getSurahNameEnglish(widget.surahNumber);
+      ? _metadataService.getSurahNameArabic(widget.surahNumber)
+      : _metadataService.getSurahNameEnglish(widget.surahNumber);
 
   Color get _primaryColor => darkWarmBrowns[_currentColorIndex];
   Color get _backgroundColor => softOffWhites[_currentColorIndex];
@@ -1012,7 +1014,7 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
             widget.verseNumber,
             widget.reciters[_currentReciterIndex].identifier,
             widget.surahNumber,
-            quran.getSurahNameEnglish(widget.surahNumber),
+            _metadataService.getSurahNameEnglish(widget.surahNumber),
           ),
         );
       } else {
@@ -1037,10 +1039,10 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
 
   Future<void> _handleScrollIfNeeded() async {
     if (getValue("alignmentType") == "verticalview" &&
-        quran.getPageNumber(widget.surahNumber, widget.verseNumber) > 600) {
+        _metadataService.getPageNumber(widget.surahNumber, widget.verseNumber) > 600) {
       await Future.delayed(const Duration(milliseconds: 1000));
       widget.itemScrollController?.jumpTo(
-        index: quran.getPageNumber(widget.surahNumber, widget.verseNumber),
+        index: _metadataService.getPageNumber(widget.surahNumber, widget.verseNumber),
       );
     }
   }
@@ -1209,8 +1211,8 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
                   ),
                   Text(
                     _startSurah == _endSurah
-                        ? '${quran.getSurahNameArabic(_startSurah)} $_startVerse → $_endVerse'
-                        : '${quran.getSurahNameArabic(_startSurah)}:$_startVerse → ${quran.getSurahNameArabic(_endSurah)}:$_endVerse',
+                        ? '${_metadataService.getSurahNameArabic(_startSurah)} $_startVerse → $_endVerse'
+                        : '${_metadataService.getSurahNameArabic(_startSurah)}:$_startVerse → ${_metadataService.getSurahNameArabic(_endSurah)}:$_endVerse',
                     style: TextStyle(
                       fontFamily: 'cairo',
                       fontSize: 11.sp,
@@ -1437,7 +1439,7 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
 
     // Helper: clamp end-verse when end-surah changes
     void clampEndVerse(void Function(void Function()) setS) {
-      final maxV = quran.getVerseCount(tempEndSurah);
+      final maxV = _metadataService.getVerseCount(tempEndSurah);
       if (tempEndVerse > maxV) {
         tempEndVerse = maxV;
         endVerseCtrl.jumpToItem(maxV - 1);
@@ -1466,8 +1468,8 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) {
-          final startVerseCount = quran.getVerseCount(tempStartSurah);
-          final endVerseCount = quran.getVerseCount(tempEndSurah);
+          final startVerseCount = _metadataService.getVerseCount(tempStartSurah);
+          final endVerseCount = _metadataService.getVerseCount(tempEndSurah);
           final valid = isValid(tempStartSurah, tempStartVerse, tempEndSurah, tempEndVerse);
 
           return Container(
@@ -1627,7 +1629,7 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
                           onSelectedItemChanged: (idx) {
                             tempStartSurah = idx + 1;
                             // clamp start verse
-                            final maxV = quran.getVerseCount(tempStartSurah);
+                            final maxV = _metadataService.getVerseCount(tempStartSurah);
                             if (tempStartVerse > maxV) {
                               tempStartVerse = maxV;
                               startVerseCtrl.animateToItem(
@@ -1653,7 +1655,7 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
                                     color: isSel ? _secondaryColor : _primaryColor.withOpacity(0.4),
                                   ),
                                   child: Text(
-                                    quran.getSurahNameArabic(s),
+                                    _metadataService.getSurahNameArabic(s),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
@@ -1741,7 +1743,7 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
                                             : _primaryColor.withOpacity(0.4),
                                   ),
                                   child: Text(
-                                    quran.getSurahNameArabic(s),
+                                    _metadataService.getSurahNameArabic(s),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
@@ -1992,7 +1994,7 @@ class _ModernBookmarkItemState extends State<_ModernBookmarkItem>
               Expanded(
                 flex: 3,
                 child: Text(
-                  quran.getVerse(
+                  _metadataService.getVerse(
                     widget.bookmark.suraNumber,
                     widget.bookmark.verseNumber,
                   ),

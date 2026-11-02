@@ -1,9 +1,11 @@
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/core/widgets/hizb_quarter_circle.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:quran/quran.dart' as quran;
+
+const _metadataService = QuranMetadataService();
 
 class QuarterTab extends StatelessWidget {
   final dynamic quarterjsonData;
@@ -47,13 +49,13 @@ class QuarterTab extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: ListTile(
           title: Text(
-            quran.getSurahNameArabic(surah),
+            _metadataService.getSurahNameArabic(surah),
             style: TextStyle(
               color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           subtitle: Text(
-            quran.getVerse(surah, ayah),
+            _metadataService.getVerse(surah, ayah),
             style: TextStyle(
               fontFamily: "AmiriQuran",
               fontSize: 18.sp,

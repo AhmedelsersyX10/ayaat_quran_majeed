@@ -2,13 +2,15 @@
 
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/models/bookmark_model.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:quran/quran.dart' as quran;
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+const _metadataService = QuranMetadataService();
 
 
 class BookmarksDialog extends StatefulWidget {
@@ -204,8 +206,8 @@ class _BookmarksDialogState extends State<BookmarksDialog> with SingleTickerProv
                       ),
                       child: Text(
                         context.locale.languageCode == "ar"
-                            ? quran.getSurahNameArabic(widget.suraNumber)
-                            : quran.getSurahNameEnglish(widget.suraNumber),
+                            ? _metadataService.getSurahNameArabic(widget.suraNumber)
+                            : _metadataService.getSurahNameEnglish(widget.suraNumber),
                         style: TextStyle(
                           fontFamily: "cairo",
                           fontSize: 11.sp,

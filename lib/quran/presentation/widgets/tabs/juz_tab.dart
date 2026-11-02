@@ -1,7 +1,9 @@
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:quran/quran.dart' as quran;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
+const _metadataService = QuranMetadataService();
 
 class JuzTab extends StatelessWidget {
   final ItemScrollController scrollController;
@@ -26,7 +28,7 @@ class JuzTab extends StatelessWidget {
 
   Widget _buildJuzListItem(BuildContext context, int index) {
     final juzNumber = index + 1;
-    final surahAndVerses = quran.getSurahAndVersesFromJuz(juzNumber);
+    final surahAndVerses = _metadataService.getSurahAndVersesFromJuz(juzNumber);
     final firstSurah = surahAndVerses.keys.first;
     final firstVerse = surahAndVerses.values.first[0];
     final isLastRead = juzNumberLastRead == juzNumber;
@@ -42,11 +44,11 @@ class JuzTab extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: ListTile(
           title: Text(
-            quran.getSurahNameArabic(firstSurah),
+            _metadataService.getSurahNameArabic(firstSurah),
             style: TextStyle(color: theme.textTheme.bodyLarge?.color),
           ),
           subtitle: Text(
-            quran.getVerse(firstSurah, firstVerse),
+            _metadataService.getVerse(firstSurah, firstVerse),
             style: TextStyle(
               fontFamily: "UthmanicHafs13",
               fontSize: 18.sp,

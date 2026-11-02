@@ -78,97 +78,84 @@ extension PageViewExtension on QuranDetailsPageState {
   //   }
   // }
 
-  PageView buildPageView(BuildContext context, Size screenSize) {
-    return PageView.builder(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      allowImplicitScrolling: true,
-      pageSnapping: true,
-      padEnds: false,
+  Widget buildPageView(BuildContext context, Size screenSize) {
+    final activeHighlights = <qp.HighlightVerse>[];
 
-      onPageChanged: (a) {
-        // إلغاء أي مؤقت تظليل قيد التشغيل
-        verseHighlightTimer?.cancel();
-
-        updateState(() {
-          index = a;
-        });
-
-        final readerCubit = context.read<QuranReaderCubit>();
-        readerCubit.updateFromPageChange(a);
-
-        // التحقق من بداية جزء جديد وإظهار الإشعار
-        // _checkAndShowJuzNotification(context, a);
-      },
-      controller: _pageController,
-      // onPageChanged: _onPageChanged,
-      reverse: context.locale.languageCode == "ar" ? false : true,
-      itemCount: quran.totalPagesCount + 1 /* specify the total number of pages */,
-      itemBuilder: (context, idx) {
-        // Preload next and prev pages spans when scrolling
-        // if (_pageController.hasClients && _pageController.position.isScrollingNotifier.value) {
-        //   if (idx < quran.totalPagesCount) _buildPageSpans(idx + 1);
-        //   if (idx > 1) _buildPageSpans(idx - 1);
-        // }
-
-        final bool isEvenPage = idx.isEven;
-
-        if (idx == 0) {
-          return Container(
-            color: const Color(0xffFFFCE7),
-            child: Image.asset(
-              "assets/images/quran.jpg",
-              fit: BoxFit.fill,
-            ),
-          );
-        }
-
-        return KeepAlivePage(
-          child: _buildQuranPage(idx, isEvenPage, screenSize, context),
-        );
-      },
-    );
-  }
-
-  Widget _buildQuranPage(int index, bool isEvenPage, Size screenSize, BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: Colors.transparent,
-        body: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(height: 4.h),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right: 12.0.w,
-                  left: 12.w,
-                ),
-                child: _buildBodyPageView(index, screenSize),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(right: 12.w, left: 12.w, top: 2.h),
-                child: MushafDivider(color: secondaryColors[getValue("quranPageolorsIndex")]),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right: 20.w,
-                ),
-                child: _buildFooterPageView(index),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(height: 4.h),
-            ),
-          ],
+    // Bookmarks highlights
+    final bookmarkCubit = context.watch<BookmarkCubit>();
+    for (final bookmark in bookmarkCubit.state.bookmarks) {
+      Color bookmarkColor;
+      try {
+        final hex = bookmark.color.replaceFirst('#', '');
+        bookmarkColor = Color(int.parse(hex.length == 6 ? '0xFF$hex' : '0x$hex'));
+      } catch (_) {
+        bookmarkColor = secondaryColors[getValue("quranPageolorsIndex")];
+      }
+      activeHighlights.add(
+        qp.HighlightVerse(
+          verseNumber: bookmark.verseNumber,
+          surah: bookmark.suraNumber,
+          page: _metadataService.getPageNumber(bookmark.suraNumber, bookmark.verseNumber),
+          color: bookmarkColor.withOpacity(0.2),
         ),
-      ),
+      );
+    }
+
+    // Selected or searched verse highlight
+    if (selectedSpan.isNotEmpty && selectedSpan.contains(':')) {
+      final parts = selectedSpan.split(':');
+      final s = int.tryParse(parts[0]) ?? 1;
+      final a = int.tryParse(parts[1]) ?? 1;
+      activeHighlights.add(
+        qp.HighlightVerse(
+          surah: s,
+          verseNumber: a,
+          page: _metadataService.getPageNumber(s, a),
+          color: secondaryColors[getValue("quranPageolorsIndex")].withOpacity(0.35),
+        ),
+      );
+    } else if (shouldHighlightText && highlightVerse is String && highlightVerse.contains(':')) {
+      final parts = highlightVerse.split(':');
+      final s = int.tryParse(parts[0]) ?? 1;
+      final a = int.tryParse(parts[1]) ?? 1;
+      activeHighlights.add(
+        qp.HighlightVerse(
+          surah: s,
+          verseNumber: a,
+          page: _metadataService.getPageNumber(s, a),
+          color: secondaryColors[getValue("quranPageolorsIndex")].withOpacity(0.35),
+        ),
+      );
+    }
+
+    return qp.QuranPageView(
+      pageController: _pageController,
+      highlights: activeHighlights,
+      isDarkMode: Theme.of(context).brightness == Brightness.dark,
+      isTajweed: false,
+      quranPagesCount: 604,
+      onPageChanged: (newPageNumber) {
+        verseHighlightTimer?.cancel();
+        updateState(() {
+          index = newPageNumber;
+        });
+        final readerCubit = context.read<QuranReaderCubit>();
+        readerCubit.updateFromPageChange(newPageNumber);
+      },
+      onVerseTap: (surah, verse) {
+        toggleAppbar();
+      },
+      onLongPress: (surah, verse, details) {
+        verseHighlightTimer?.cancel();
+        updateState(() {
+          selectedSpan = "$surah:$verse";
+        });
+        final page = _metadataService.getPageNumber(surah, verse);
+        showAyahOptionsSheet(page, surah, verse);
+      },
+      bottomBar: _buildFooterPageView(index),
+      pageBackgroundColor: Colors.transparent,
+      enableTwoPageLayout: false,
     );
   }
 
@@ -177,7 +164,7 @@ extension PageViewExtension on QuranDetailsPageState {
       child: Builder(
         builder: (context) {
           final quarterResult = checkIfPageIncludesQuarterAndQuarterIndex(
-              widget.quarterJsonData, quran.getPageData(index), indexes);
+              widget.quarterJsonData, _metadataService.getPageData(index), indexes);
 
           return quarterResult.includesQuarter
               ? Align(
@@ -223,78 +210,6 @@ extension PageViewExtension on QuranDetailsPageState {
         },
       ),
     );
-  }
-
-  SizedBox _buildBodyPageView(int index, Size screenSize) {
-    // استخرج كل السور في الصفحة
-    final surahsOnPage = quran.getPageData(index);
-
-// اعمل list بأسماء السور
-    final surahNames = surahsOnPage
-        .map((s) => widget.jsonData[s["surah"] - 1]["name"] as String)
-        .toSet() // لو نفس السورة اتكررت في أكتر من حزب
-        .join(" | ");
-    return SizedBox(
-      width: double.infinity,
-      child: Column(
-        children: [
-          if ((index == 1 || index == 2))
-            SizedBox(
-              height: (screenSize.height * .24),
-            ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-            ).r,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "${"juz".tr()} ${_getArabicOrdinalJuzName(getJuzNumber(getPageData(index)[0]["surah"], getPageData(index)[0]["start"]))}",
-                  style: TextStyle(
-                    fontFamily: 'aldahabi',
-                    fontSize: 14.sp,
-                    color: secondaryColors[getValue("quranPageolorsIndex")],
-                  ),
-                ),
-                Text(
-                  surahNames,
-                  style: TextStyle(
-                    color: secondaryColors[getValue("quranPageolorsIndex")],
-                    fontFamily: "Taha",
-                    fontSize: 16.sp,
-                    letterSpacing: 0.3,
-                  ),
-                )
-              ],
-            ),
-          ),
-          MushafDivider(color: secondaryColors[getValue("quranPageolorsIndex")]),
-          Directionality(
-            textDirection: m.TextDirection.rtl,
-            child: SizedBox(
-              width: double.infinity,
-              child: RepaintBoundary(
-                child: RichText(
-                  key: richTextKeys[index - 1],
-                  textDirection: m.TextDirection.rtl,
-                  textAlign: TextAlign.center,
-                  softWrap: true,
-                  text: TextSpan(
-                    locale: const Locale("ar"),
-                    children: _buildPageSpans(index),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<InlineSpan> _buildPageSpans(int index) {
-    return _buildMushafSpans(index, _pageSpansCache);
   }
 }
 

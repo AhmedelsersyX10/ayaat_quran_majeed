@@ -42,13 +42,13 @@ extension VerticalViewExtension on QuranDetailsPageState {
       body: Stack(
         children: [
           ScrollablePositionedList.separated(
-            itemCount: quran.totalPagesCount + 1,
+            itemCount: _metadataService.totalPagesCount + 1,
             physics: const BouncingScrollPhysics(),
             separatorBuilder: (context, index) {
               if (index == 0) return Container();
 
               // ✅ هنا بقا بيستخدم index الصح
-              final surahsOnPage = quran.getPageData(index);
+              final surahsOnPage = _metadataService.getPageData(index);
               final surahNames = surahsOnPage
                   .map((s) => widget.jsonData[s["surah"] - 1]["name"] as String)
                   .toSet()
@@ -65,11 +65,11 @@ extension VerticalViewExtension on QuranDetailsPageState {
                     children: [
                       Text(
                         checkIfPageIncludesQuarterAndQuarterIndex(
-                                        widget.quarterJsonData, quran.getPageData(index), indexes)
+                                        widget.quarterJsonData, _metadataService.getPageData(index), indexes)
                                     .includesQuarter ==
                                 true
-                            ? "${"page".tr()} ${convertToArabicNumber(index.toString())} | ${(checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, quran.getPageData(index), indexes).quarterIndex + 1) == 1 ? "" : "${convertToArabicNumber((checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, quran.getPageData(index), indexes).quarterIndex).toString())}/${convertToArabicNumber(4.toString())}"} ${"hizb".tr()} ${convertToArabicNumber((checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, quran.getPageData(index), indexes).hizbIndex + 1).toString())} | ${"juz".tr()} ${_getArabicOrdinalJuzName(getJuzNumber(getPageData(index)[0]["surah"], getPageData(index)[0]["start"]))}"
-                            : "${"page".tr()} ${convertToArabicNumber(index.toString())} | ${"juz".tr()} ${_getArabicOrdinalJuzName(getJuzNumber(getPageData(index)[0]["surah"], getPageData(index)[0]["start"]))}",
+                            ? "${"page".tr()} ${convertToArabicNumber(index.toString())} | ${(checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, _metadataService.getPageData(index), indexes).quarterIndex + 1) == 1 ? "" : "${convertToArabicNumber((checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, _metadataService.getPageData(index), indexes).quarterIndex).toString())}/${convertToArabicNumber(4.toString())}"} ${"hizb".tr()} ${convertToArabicNumber((checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, _metadataService.getPageData(index), indexes).hizbIndex + 1).toString())} | ${"juz".tr()} ${_getArabicOrdinalJuzName(_metadataService.getJuzNumber(_metadataService.getPageData(index)[0]["surah"], _metadataService.getPageData(index)[0]["start"]))}"
+                            : "${"page".tr()} ${convertToArabicNumber(index.toString())} | ${"juz".tr()} ${_getArabicOrdinalJuzName(_metadataService.getJuzNumber(_metadataService.getPageData(index)[0]["surah"], _metadataService.getPageData(index)[0]["start"]))}",
                         style: TextStyle(
                             fontSize: 10.sp,
                             fontWeight: FontWeight.bold,

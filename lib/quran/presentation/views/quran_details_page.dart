@@ -34,7 +34,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
-import 'package:quran/quran.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
+import 'package:qcf_quran_plus/qcf_quran_plus.dart' as qp;
 import 'package:path_provider/path_provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'dart:io';
@@ -43,15 +44,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter/services.dart';
-
-import 'package:quran/quran.dart' as quran;
-
 import 'package:screenshot/screenshot.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 part 'alignment_views/verse_by_verse_view.dart';
 part 'alignment_views/vertical_view.dart';
 part 'alignment_views/page_view.dart';
+
+const _metadataService = QuranMetadataService();
 
 class QuranReadingPage extends StatelessWidget {
   const QuranReadingPage({super.key});
@@ -262,7 +262,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
     checkIfSelectHighlight();
 
     // Setup page controller
-    _pageController = PageController(initialPage: widget.pageNumber);
+    _pageController = PageController(initialPage: (widget.pageNumber - 1).clamp(0, 603));
     _pageController.addListener(_pagecontroller_scrollListner);
     _pageController.addListener(_updatePageControllerScrollingState);
 
@@ -332,6 +332,14 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
     });
   }
 
+  void toggleAppbar() {
+    if (!mounted) return;
+    _appBarAutoHideTimer?.cancel();
+    setState(() {
+      isAppBarVisible = !isAppBarVisible;
+    });
+  }
+
   @override
   void didUpdateWidget(QuranDetailsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -385,7 +393,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
 
   // [CAN_BE_EXTRACTED] -> helpers/reciters_helper.dart
   void addReciters() {
-    quran.getReciters().forEach((element) {
+    for (final element in _metadataService.reciters) {
       reciters.add(QuranPageReciter(
         identifier: element["identifier"],
         language: element["language"],
@@ -395,7 +403,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
         type: element["type"],
         direction: element["direction"],
       ));
-    });
+    }
   }
 
   // ==================== Scroll Listeners ====================
@@ -487,10 +495,10 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
     if (widget.highlightVerse is String && widget.highlightVerse.toString().isNotEmpty) {
       final verseText = widget.highlightVerse.toString();
       try {
-        final pageData = quran.getPageData(index > 0 ? index : widget.pageNumber);
+        final pageData = _metadataService.getPageData(index > 0 ? index : widget.pageNumber);
         for (var e in pageData) {
           for (var i = e["start"]; i <= e["end"]; i++) {
-            if (quran.getVerse(e["surah"], i) == verseText) {
+            if (_metadataService.getVerse(e["surah"], i) == verseText) {
               highlightVerse = "${e["surah"]}:$i";
               break;
             }
@@ -514,7 +522,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
       highlightVerse = "$surah:$ayah"; // Matches selectedSpan format
     });
 
-    final targetPage = quran.getPageNumber(surah, ayah);
+    final targetPage = _metadataService.getPageNumber(surah, ayah);
     _pageSpansCache.remove(targetPage);
     _verticalSpansCache.remove(targetPage);
 
@@ -550,9 +558,6 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
     // Reset system UI
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
-    // Cleanup
-    getTotalCharacters(quran.getVersesTextByPage(widget.pageNumber));
 
     // Dispose controllers
     _pageController.dispose();
@@ -674,7 +679,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                 // Use the controller's page as the truth if available, otherwise fallback to index.
                 // This prevents conflicts if didUpdateWidget updated 'index' prematurely.
                 final int currentPage =
-                    _pageController.hasClients ? (_pageController.page?.round() ?? index) : index;
+                    _pageController.hasClients ? ((_pageController.page?.round() ?? 0) + 1) : index;
 
                 if (targetPage != currentPage) {
                   setState(() {
@@ -682,11 +687,12 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                   });
                   if (_pageController.hasClients) {
                     final int diff = (targetPage - currentPage).abs();
+                    final int zeroBasedTarget = (targetPage - 1).clamp(0, 603);
                     if (diff > 5) {
-                      _pageController.jumpToPage(targetPage);
+                      _pageController.jumpToPage(zeroBasedTarget);
                     } else {
                       _pageController.animateToPage(
-                        targetPage,
+                        zeroBasedTarget,
                         duration: const Duration(milliseconds: 200),
                         curve: Curves.easeInOutQuart,
                       );
@@ -948,7 +954,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
       return cache[index]!;
     }
 
-    List<InlineSpan> spans = quran.getPageData(index).expand((e) {
+    List<InlineSpan> spans = _metadataService.getPageData(index).expand((e) {
       List<InlineSpan> iterSpans = [];
       for (var i = e["start"]; i <= e["end"]; i++) {
         // Header
@@ -986,8 +992,8 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
               showAyahOptionsSheet(index, e["surah"], i);
             },
           text: i == e["start"]
-              ? "${quran.getVerseQCF(e["surah"], i).replaceAll(" ", "").substring(0, 1)}\u200A${quran.getVerseQCF(e["surah"], i).replaceAll(" ", "").substring(1)}"
-              : quran.getVerseQCF(e["surah"], i).replaceAll(' ', ''),
+              ? "${_metadataService.getVerseQCF(e["surah"], i).replaceAll(" ", "").substring(0, 1)}\u200A${_metadataService.getVerseQCF(e["surah"], i).replaceAll(" ", "").substring(1)}"
+              : _metadataService.getVerseQCF(e["surah"], i).replaceAll(' ', ''),
           style: TextStyle(
             height: (index == 1 || index == 2) ? 2.h : 1.95.h,
             letterSpacing: 0.w,
@@ -1000,7 +1006,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                         ? 22.5.sp
                         : 22.4.sp
                     : 22.9.sp,
-            fontFamily: "QCF_P${index.toString().padLeft(3, "0")}",
+            fontFamily: qp.QcfFontLoader.getBaseFontFamily(index),
             backgroundColor: selectedSpan == "${e["surah"]}:$i"
                 ? secondaryColors[getValue("quranPageolorsIndex")].withOpacity(0.3)
                 : (shouldHighlightText == true && highlightVerse == "${e["surah"]}:$i")

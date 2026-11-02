@@ -8,7 +8,7 @@ extension VerseByVerseViewExtension on QuranDetailsPageState {
       resizeToAvoidBottomInset: false,
       backgroundColor: softOffWhites[getValue("quranPageolorsIndex")],
       body: ScrollablePositionedList.separated(
-        itemCount: quran.totalPagesCount + 1,
+        itemCount: _metadataService.totalPagesCount + 1,
         separatorBuilder: (context, index) {
           if (index == 0) return Container();
           return Container(
@@ -21,18 +21,18 @@ extension VerseByVerseViewExtension on QuranDetailsPageState {
                 children: [
                   Text(
                     checkIfPageIncludesQuarterAndQuarterIndex(
-                                    widget.quarterJsonData, quran.getPageData(index), indexes)
+                                    widget.quarterJsonData, _metadataService.getPageData(index), indexes)
                                 .includesQuarter ==
                             true
-                        ? "${"page".tr()} ${convertToArabicNumber(index.toString())} | ${(checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, quran.getPageData(index), indexes).quarterIndex + 1) == 1 ? "" : "${convertToArabicNumber((checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, quran.getPageData(index), indexes).quarterIndex).toString())}/${convertToArabicNumber(4.toString())}"} ${"hizb".tr()} ${convertToArabicNumber((checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, quran.getPageData(index), indexes).hizbIndex + 1).toString())} | ${"juz".tr()} ${_getArabicOrdinalJuzName(getJuzNumber(getPageData(index)[0]["surah"], getPageData(index)[0]["start"]))}"
-                        : "${"page".tr()} ${convertToArabicNumber(index.toString())} | ${"juz".tr()} ${_getArabicOrdinalJuzName(getJuzNumber(getPageData(index)[0]["surah"], getPageData(index)[0]["start"]))}",
+                        ? "${"page".tr()} ${convertToArabicNumber(index.toString())} | ${(checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, _metadataService.getPageData(index), indexes).quarterIndex + 1) == 1 ? "" : "${convertToArabicNumber((checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, _metadataService.getPageData(index), indexes).quarterIndex).toString())}/${convertToArabicNumber(4.toString())}"} ${"hizb".tr()} ${convertToArabicNumber((checkIfPageIncludesQuarterAndQuarterIndex(widget.quarterJsonData, _metadataService.getPageData(index), indexes).hizbIndex + 1).toString())} | ${"juz".tr()} ${_getArabicOrdinalJuzName(_metadataService.getJuzNumber(_metadataService.getPageData(index)[0]["surah"], _metadataService.getPageData(index)[0]["start"]))}"
+                        : "${"page".tr()} ${convertToArabicNumber(index.toString())} | ${"juz".tr()} ${_getArabicOrdinalJuzName(_metadataService.getJuzNumber(_metadataService.getPageData(index)[0]["surah"], _metadataService.getPageData(index)[0]["start"]))}",
                     style: TextStyle(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.bold,
                         color: softOffWhites[getValue("quranPageolorsIndex")]),
                   ),
                   Text(
-                    widget.jsonData[quran.getPageData(index)[0]["surah"] - 1]["name"],
+                    widget.jsonData[_metadataService.getPageData(index)[0]["surah"] - 1]["name"],
                     style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.bold,
@@ -82,7 +82,7 @@ extension VerseByVerseViewExtension on QuranDetailsPageState {
                           softWrap: true,
                           text: TextSpan(
                             locale: const Locale("ar"),
-                            children: quran.getPageData(index).expand((e) {
+                            children: _metadataService.getPageData(index).expand((e) {
                               List<InlineSpan> spans = [];
                               for (var i = e["start"]; i <= e["end"]; i++) {
                                 // Header
@@ -121,7 +121,7 @@ extension VerseByVerseViewExtension on QuranDetailsPageState {
                                           });
                                           showAyahOptionsSheet(index, e["surah"], i);
                                         },
-                                      text: quran.getVerse(e["surah"], i),
+                                      text: _metadataService.getVerse(e["surah"], i),
                                       style: TextStyle(
                                         color: darkWarmBrowns[getValue("quranPageolorsIndex")],
                                         fontSize: getValue("verseByVerseFontSize").toDouble(),
