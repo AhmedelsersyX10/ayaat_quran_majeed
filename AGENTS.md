@@ -9,13 +9,13 @@
 
 ## 1. Project Goal
 
-Rebuild the existing Flutter app `ayaat_quran_majeed` into a **pixel-faithful replica** of the 31 reference screenshots in `docs/design/reference/` (see section 12).
+Rebuild the existing Flutter app `ayaat_quran_majeed` into a **pixel-faithful replica** of the 39 reference screenshots and the playback video in `docs/design/reference/` (see section 12).
 
 - Scope: **Quran reader only**. Everything not visible in the reference screenshots (azkar, qibla, tasbeeh, prayer times, etc.) is **out of scope and must be removed** during the cleanup task, including their unused assets and dependencies. The only notification feature in scope is the **daily khatma reminder** (screenshots 23, 26, 31).
 - Language: **Arabic only, RTL only** for now. Light theme only unless a task says otherwise.
 - Architecture decision (owner-approved): **full rebuild on Clean Architecture, Feature-First**, while **preserving the Quran data and audio capabilities**.
 - Quran engine decision (owner-approved): the local `quran-1.2.2` package and the 604 per-page font families `QCF_P001`…`QCF_P604` (plus `assets/fonts/v2woff`) are **replaced by the pub.dev package `qcf_quran_plus`** (MIT; page rendering, QCF font loading via `QcfFontLoader`, metadata, search, highlights). Adoption, pinning, wrapping behind our own domain interfaces and removal of the old fonts/package happen in task 1.07 only, after parity is verified. Quran text must never be modified.
-- Content sources: the owner states that the data needed for the Al-Mukhtasar tafsir, word meanings, the 29-day/thematic khatma division and tafsir audio **exists in his local project files**. Before using any online API, search the project (assets, lib, docs, local data folders) and report exactly what exists (paths, format, size, license). Only for what is not found, verify public online APIs with real documentation/responses and present the finding to the owner. Never invent endpoints, response fields, or data.
+- Content sources (owner decisions, 2026-11-01): **word meanings and audio tafsir are cancelled** (do not build them). **The default tafsir book is Al-Tafsir Al-Muyassar** (replaces Al-Mukhtasar everywhere it appears in the screenshots: the label in tafsir mode, the library sheet, the editor sheet). Tafsir books come from what already exists in the project: bundled `muyassar.dart` and `sahih_english.dart`, plus downloadable books listed in `lib/quran/data/data_sources/translation/translationdata.dart` (remote JSON from `noureddin/Quran-App-Data`; the owner tested the links and they work; the repository license/terms must still be recorded in the About section). Reciter audio comes from the **mp3quran.net API v3** that the legacy code already uses (reciters, suwar, moshaf, whole-surah files) plus its **ayat_timing** endpoints for ayah timing (to be verified with real responses in task 0.01) and must support **per-surah offline download** and **ayah-level timing for the follow-along highlight** (screenshot 36 and video 37). The 29-day khatma table is transcribed from screenshots 24, 33 and 35. Never invent endpoints, response fields, or data.
 
 ## 2. Mandatory Workflow
 
@@ -149,7 +149,7 @@ Never claim that code compiles, tests pass, an API works or a feature is complet
 
 ## 12. Reference Screenshots
 
-Location: `docs/design/reference/` (31 files). Mapping:
+Location: `docs/design/reference/` (39 images + 1 video). Mapping:
 
 | File | Screen |
 |---|---|
@@ -184,6 +184,15 @@ Location: `docs/design/reference/` (31 files). Mapping:
 | `29_note_editor_dialog` | Note editor dialog (add, share, close) with the ayah quoted + keyboard; ayah tints in mushaf |
 | `30_notes_list_with_data` | Notes list grouped by surah with note text and "surah: ayah - page" |
 | `31_khatma_active_day1` | Active khatma, day 1, reminder switch OFF, "جميع الأوراد 29", "حذف الختمة" |
+| `32_khatma_program_picker_full_list` | "برنامج الختمة" full list: 240 … 3 days with daily-wird sublines |
+| `33_khatma_all_wirds_19_to_29` | "جميع الأوراد" days 19–29 (complete the table with 35) |
+| `34_library_edit_sheet` | "تحرير المكتبة": my library (reorder handle, red minus) + available books by language/category (green plus) |
+| `35_khatma_all_wirds_1_to_18` | "جميع الأوراد" days 1–18 |
+| `36_reciter_surahs_download` | Reciter page (opened from the info icon): surahs grouped by juz, per-surah cloud-download icon |
+| `38_select_ayah_picker` | "اختيار الآية" picker (surah header, 'surah: n' rows with faded ayah text, green check on the selected one) |
+| `39_select_ayah_picker_scrolled` | Same picker scrolled; selection on ayah 7 |
+| `40_recitation_settings_sheet` | "إعدادات التلاوة": range from/to (opens the picker) and repeat range / repeat ayah with counters |
+| `37_playback_follow_along_highlight` (video) | Playback: expanded player card, loading state, and the ayah highlight following the audio line by line |
 
 Bottom navigation (5 tabs, RTL order): السور · الختمة · الفواصل · مميزة بنجمة · الملاحظات.
 
@@ -198,3 +207,21 @@ Bottom navigation (5 tabs, RTL order): السور · الختمة · الفوا�
 - [ ] No claim of success for checks that were not executed.
 
 **Final rule:** inspect first, follow existing approved decisions, ask when information is missing, and never replace this approach with your own preferences.
+
+
+## 14. Owner Decisions Log (binding)
+
+| Date | Decision |
+|---|---|
+| 2026-11-01 | Full rebuild on Clean Architecture; Quran only; Arabic RTL only. |
+| 2026-11-01 | `qcf_quran_plus` replaces `quran-1.2.2` and fonts `QCF_P001`…`QCF_P604` (+ `assets/fonts/v2woff`), executed only in task 1.07. |
+| 2026-11-01 | Cancelled features: word meanings, audio tafsir ("المختصر الصوتي"). Remove them from the reciter picker and the library sheet. |
+| 2026-11-01 | Release identity: Android `applicationId` = `com.quran.ayaatquranmajeed`, already the Google Play listing id; the owner changed it locally but has not pushed it yet, so verify the real state of the project before touching it (iOS bundle id still to be confirmed by the owner). A signing key already exists; never commit keystores or `key.properties`. |
+| 2026-11-01 | Al-Mukhtasar replaced by Al-Tafsir Al-Muyassar (bundled file). The reciter info icon opens a per-reciter page listing surahs grouped by juz with a download button per surah (screenshot 36). Playback highlights the playing ayah line by line (video 37). |
+| 2026-11-01 | Player: the '...' button opens "إعدادات التلاوة" (screenshot 40). The return arrow with a number appears after the user drags the page slider and jumps back to the page where the drag started (the number is that page). In the reciter surahs page a downloaded surah shows a green check mark instead of the cloud icon. Keyword highlighting in tafsir (red words) is NOT required. |
+| 2026-11-01 | Security: the legacy `AudioPlayerRemoteDataSource` contains a hardcoded Google Custom Search API key (used only to fetch reciter photos, a feature that is not in the screenshots). The photo feature is removed, the key must not be copied anywhere, and the owner should revoke/rotate it in Google Cloud. |
+| 2026-11-01 | Approved defaults (task 0.03): bookmarks edit mode = delete a bookmark with an X (no reordering); "another bookmark…" = small dialog for name and extra color; the plus-circle in the note editor = add another note on the same ayah (confirm at GATE 1); relative label ("بعد يومين") = difference between the wird's scheduled date and today; a single active khatma only; settings = mushaf text size if supported by the package, keep screen awake, sources and licenses; Hijri = Umm al-Qura with a manual ±1 day adjustment; share = text + image card. |
+
+### Khatma 29-day table (from screenshots 24, 33, 35; verify every row against the images)
+
+1: Al-Fatihah → Al-Baqarah 141 · 2: Al-Baqarah 142 → 252 · 3: Al-Baqarah 253 → Aal-Imran 92 · 4: Aal-Imran 93 → An-Nisa 35 · 5: An-Nisa 36 → end of An-Nisa · 6: Al-Ma'idah · 7: Al-An'am · 8: Al-A'raf · 9: Al-Anfal → At-Tawbah 72 · 10: At-Tawbah 73 → end of Yunus · 11: Hud → Yusuf 57 · 12: Yusuf 58 → end of Ibrahim · 13: Al-Hijr & An-Nahl · 14: Al-Isra & Al-Kahf · 15: Maryam & Ta-Ha · 16: Al-Anbiya & Al-Hajj · 17: Al-Mu'minun & An-Nur · 18: Al-Furqan & Ash-Shu'ara · 19: An-Naml & Al-Qasas · 20: Al-Ankabut, Ar-Rum, Luqman & As-Sajdah · 21: Al-Ahzab, Saba & Fatir · 22: Ya-Sin, As-Saffat & Sad · 23: Az-Zumar & Ghafir · 24: Fussilat, Ash-Shura, Az-Zukhruf & Ad-Dukhan · 25: Al-Jathiyah, Al-Ahqaf, Muhammad, Al-Fath & Al-Hujurat · 26: Qaf → Al-Hadid · 27: Al-Mujadila → At-Tahrim · 28: Al-Mulk → Al-Mursalat · 29: An-Naba → An-Nas.
