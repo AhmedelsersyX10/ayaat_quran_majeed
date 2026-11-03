@@ -22,7 +22,7 @@ Rebuild the existing Flutter app `ayaat_quran_majeed` into a **pixel-faithful re
 1. **Understand → Plan → Implement.** Inspect `pubspec.yaml`, entry points, routing, state management, DI and the files related to the task before writing code.
 2. For any non-trivial task use the **two-gate flow**:
    - **GATE 1:** return a short evidence-based plan (files to create/change, data flow, edge cases, tests, genuine unknowns). **Stop and wait for explicit owner approval.** Do not edit files before approval.
-   - **GATE 2:** implement the approved minimal change, then verify and report.
+   - **GATE 2:** implement the approved minimal change, then verify and report (execution MUST follow the **Mandatory Implementation Delegation Rule** below via Antigravity).
 3. Work in small reviewable steps, one complete feature at a time. After each important step summarize what is done and what is next.
 4. Do not guess APIs, backends, data models or undocumented behavior. Name the missing information first and ask.
 5. Do not create files, layers or services "just in case". Create them only when needed.
@@ -140,6 +140,30 @@ Do not replace a technology with your own preference. Do not add a dependency wi
 - Run `flutter pub get` after dependency changes, then the relevant checks.
 - Do not run `flutter clean` or delete build output randomly; only when evidence supports it.
 - For build problems start from the exact error message and the smallest change.
+
+## Mandatory Implementation Delegation Rule (GATE 2 Execution)
+
+Whenever a task reaches **GATE 2 (Implementation)** after owner approval, you (Codex) are the **Orchestrator and Reviewer**, NOT the direct code writer. You MUST execute GATE 2 through the following exact workflow:
+
+1. **Write the Implementation Brief:**
+   - Do NOT edit repository source or test files directly.
+   - Write the approved GATE 1 plan, exact file paths, architectural constraints (Clean Architecture Feature-First: `Presentation → Domain ← Data`, no API/storage in UI/Cubits), and task requirements into a temporary file named `.agy-brief.txt`.
+   - Explicitly instruct the implementer inside `.agy-brief.txt` NOT to run `git commit`.
+
+2. **Delegate to Antigravity (`gemini-3.8-flash-high`):**
+   - Run the delegation relay command in the shell and wait for completion:
+     ```bash
+     node ~/.agents/skills/agy-delegate/scripts/relay.mjs --brief .agy-brief.txt --cd . --model "gemini-3.8-flash-high" --dangerously-skip-permissions
+     ```
+
+3. **Clean Up Temporary Brief:**
+   - Immediately delete `.agy-brief.txt` after the relay finishes so the working tree only contains actual project changes.
+
+4. **Verify, Fix if Needed, and Report:**
+   - Read `result.json` from the relay output and inspect the actual `git status` and `git diff` against the approved plan.
+   - Run `flutter analyze` and `flutter test` yourself and verify real results.
+   - If Antigravity made a mistake or a check fails, either send a delta brief using `--resume-last` or apply minimal targeted fixes to make the gates pass.
+   - Provide the final report required by Section 11.
 
 ## 11. Final Report (every task)
 
