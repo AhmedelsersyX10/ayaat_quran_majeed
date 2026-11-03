@@ -21,7 +21,9 @@ import 'package:ayaat_quran_majeed/quran/presentation/views/quran_search_view.da
 import 'package:ayaat_quran_majeed/quran/presentation/views/quran_sura_list.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/ayah_options_sheet.dart'
     show AyahOptionsSheet;
+import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/ayah_picker_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/settings_bottom_sheet.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/tafseer_and_translation_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/bismallah.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/floating_quran_app_bar.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/header_widget.dart';
@@ -29,6 +31,8 @@ import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/mushaf_divi
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/mushaf_page_footer.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/mushaf_page_header.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/mushaf_page_shell.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/mushaf_page_slider.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/mushaf_return_button.dart';
 import 'package:flutter/foundation.dart' as flutter_foundation;
 
 import 'package:easy_localization/easy_localization.dart';
@@ -673,7 +677,9 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
               },
             ),
             BlocListener<QuranReaderCubit, QuranReadingState>(
-              listenWhen: (previous, current) => previous.position.page != current.position.page,
+              listenWhen: (previous, current) =>
+                  previous.position.page != current.position.page ||
+                  previous.targetHighlightVerse != current.targetHighlightVerse,
               listener: (context, state) {
                 if (!mounted) return;
 
@@ -702,6 +708,18 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                   }
                   if (itemScrollController.isAttached) {
                     itemScrollController.jumpTo(index: targetPage);
+                  }
+                }
+
+                if (state.targetHighlightVerse != null) {
+                  final parts = state.targetHighlightVerse!.split(':');
+                  if (parts.length == 2) {
+                    final s = int.tryParse(parts[0]);
+                    final a = int.tryParse(parts[1]);
+                    if (s != null && a != null) {
+                      triggerHighlight(s, a);
+                      context.read<QuranReaderCubit>().clearHighlight();
+                    }
                   }
                 }
               },
@@ -774,6 +792,75 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                         });
                       },
                     ),
+                    // Floating Return Button with Page Number (AGENTS.md Section 14)
+                    BlocBuilder<QuranReaderCubit, QuranReadingState>(
+                      buildWhen: (prev, curr) => prev.returnPage != curr.returnPage,
+                      builder: (context, readerState) {
+                        return Positioned(
+                          bottom: isAppBarVisible ? 72.h : 24.h,
+                          right: 20.w,
+                          child: MushafReturnButton(
+                            returnPage: readerState.returnPage,
+                            onReturn: () {
+                              context.read<QuranReaderCubit>().returnToPreviousPage();
+                            },
+                            onDismiss: () {
+                              context.read<QuranReaderCubit>().dismissReturnPage();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    // Bottom Page Slider Toolbar (Ref 05)
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOutQuart,
+                      bottom: isAppBarVisible ? 0 : -90.h,
+                      left: 0,
+                      right: 0,
+                      child: BlocBuilder<QuranReaderCubit, QuranReadingState>(
+                        buildWhen: (prev, curr) =>
+                            prev.position.page != curr.position.page ||
+                            prev.isSliderDragging != curr.isSliderDragging ||
+                            prev.draggingPage != curr.draggingPage,
+                        builder: (context, readerState) {
+                          return Container(
+                            color: softOffWhites[getValue("quranPageolorsIndex")].withOpacity(0.96),
+                            padding: EdgeInsets.only(
+                              bottom: MediaQuery.of(context).padding.bottom + 4.h,
+                            ),
+                            child: MushafPageSlider(
+                              currentPage: readerState.position.page,
+                              onDragStarted: (startPage) {
+                                context.read<QuranReaderCubit>().onSliderDragStarted(startPage);
+                              },
+                              onScrubbing: (scrubPage) {
+                                context.read<QuranReaderCubit>().onSliderScrubbing(scrubPage);
+                              },
+                              onPageSelected: (selectedPage) {
+                                context.read<QuranReaderCubit>().onSliderDragEnded(selectedPage);
+                              },
+                              onTafseerPressed: () {
+                                final pageData = _metadataService.getPageData(index);
+                                if (pageData.isNotEmpty) {
+                                  final first = pageData.first;
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => TafseerAndTranslateSheet(
+                                      surahNumber: first['surah'] as int,
+                                      verseNumber: first['start'] as int,
+                                      isVerseByVerseSelection: false,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -812,6 +899,19 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
           ),
         );
       },
+    );
+  }
+
+  /// Displays the pixel-faithful Ayah Picker sheet (Ref 38 & 39).
+  static Future<int?> showAyahPickerSheet(
+    BuildContext context, {
+    required int surahNumber,
+    int? initialAyahNumber,
+  }) {
+    return AyahPickerSheet.show(
+      context,
+      surahNumber: surahNumber,
+      initialAyahNumber: initialAyahNumber,
     );
   }
 

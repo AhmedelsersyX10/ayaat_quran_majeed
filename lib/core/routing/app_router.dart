@@ -52,6 +52,10 @@ abstract class AppRouter {
           builder: (context, state) {
             final pageParam = state.uri.queryParameters['page'];
             final pageNumber = int.tryParse(pageParam ?? '');
+            final surahParam = state.uri.queryParameters['surah'];
+            final surahNumber = int.tryParse(surahParam ?? '');
+            final ayahParam = state.uri.queryParameters['ayah'];
+            final ayahNumber = int.tryParse(ayahParam ?? '');
 
             return MultiBlocProvider(
               providers: [
@@ -61,7 +65,9 @@ abstract class AppRouter {
                 BlocProvider<QuranReaderCubit>(
                   create: (_) {
                     final cubit = sl<QuranReaderCubit>();
-                    if (pageNumber != null) {
+                    if (surahNumber != null && ayahNumber != null) {
+                      cubit.goToAyah(surahNumber, ayahNumber);
+                    } else if (pageNumber != null) {
                       cubit.goToPage(pageNumber);
                     } else {
                       cubit.loadInitialPosition();

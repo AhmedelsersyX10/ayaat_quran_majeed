@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 
-
+/// Pure entity/model representing a stable reading position in the Mushaf.
+/// Persists stable domain identifiers only, never transient widget state.
 class ReadingPosition {
   final int page;
   final int surahNumber;
@@ -42,9 +43,9 @@ class ReadingPosition {
 
   factory ReadingPosition.fromMap(Map<String, dynamic> map) {
     return ReadingPosition(
-      page: map['page'] as int,
-      surahNumber: map['surahNumber'] as int,
-      ayahNumber: map['ayahNumber'] as int,
+      page: (map['page'] as num?)?.toInt() ?? 1,
+      surahNumber: (map['surahNumber'] as num?)?.toInt() ?? 1,
+      ayahNumber: (map['ayahNumber'] as num?)?.toInt() ?? 1,
       viewMode: map['viewMode'] as String?,
     );
   }
@@ -53,14 +54,35 @@ class ReadingPosition {
 
   factory ReadingPosition.fromJson(String source) =>
       ReadingPosition.fromMap(json.decode(source) as Map<String, dynamic>);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReadingPosition &&
+          runtimeType == other.runtimeType &&
+          page == other.page &&
+          surahNumber == other.surahNumber &&
+          ayahNumber == other.ayahNumber &&
+          viewMode == other.viewMode;
+
+  @override
+  int get hashCode =>
+      page.hashCode ^
+      surahNumber.hashCode ^
+      ayahNumber.hashCode ^
+      viewMode.hashCode;
+
+  @override
+  String toString() =>
+      'ReadingPosition(page: $page, surah: $surahNumber, ayah: $ayahNumber, mode: $viewMode)';
 }
 
-/// Repository responsible for persisting and restoring the current Quran
-/// reading position.
+/// Repository responsible for persisting, validating, and restoring the
+/// current Quran reading position.
 ///
-/// This wraps the legacy `lastRead` Hive key (which stores only the page
-/// number) and introduces a richer `lastReadingPosition` payload that also
-/// includes surah and ayah information.
+/// This wraps the legacy `lastRead` Hive key (storing only page number)
+/// and persists a richer structured `lastReadingPosition` payload.
+/// Normalizes and handles corrupt/stale positions gracefully.
 class QuranReadingRepository {
   static const String _legacyLastReadKey = 'lastRead';
   static const String _lastReadingPositionKey = 'lastReadingPosition';
@@ -70,23 +92,35 @@ class QuranReadingRepository {
     QuranMetadataService metadataService = const QuranMetadataService(),
   }) : _metadataService = metadataService;
 
-  /// Load the last reading position.
+  QuranMetadataService get metadataService => _metadataService;
+
+  /// Load the last reading position with strict validation and normalization.
   ///
   /// Priority:
   /// 1. Structured `lastReadingPosition` (page + surah + ayah)
   /// 2. Legacy `lastRead` page number mapped to (page, first surah/ayah)
-  /// 3. Default to Al-Fatiha: page 1, surah 1, ayah 1
+  /// 3. Default fallback to Al-Fatiha: page 1, surah 1, ayah 1
   Future<ReadingPosition> loadLastPosition() async {
     final dynamic stored = getValue(_lastReadingPositionKey);
     if (stored is String && stored.isNotEmpty) {
       try {
-        return ReadingPosition.fromJson(stored);
+        final parsed = ReadingPosition.fromJson(stored);
+        final normalized = validateAndNormalize(parsed);
+        if (normalized != parsed) {
+          await savePosition(normalized);
+        }
+        return normalized;
       } catch (_) {
         // Fall through to legacy handling.
       }
     } else if (stored is Map<String, dynamic>) {
       try {
-        return ReadingPosition.fromMap(stored);
+        final parsed = ReadingPosition.fromMap(stored);
+        final normalized = validateAndNormalize(parsed);
+        if (normalized != parsed) {
+          await savePosition(normalized);
+        }
+        return normalized;
       } catch (_) {
         // Fall through to legacy handling.
       }
@@ -94,7 +128,8 @@ class QuranReadingRepository {
 
     final dynamic legacy = getValue(_legacyLastReadKey);
     if (legacy is int && legacy > 0) {
-      final mapped = _mapPageToReadingPosition(legacy);
+      final safePage = legacy.clamp(1, 604);
+      final mapped = _mapPageToReadingPosition(safePage);
       await savePosition(mapped);
       return mapped;
     }
@@ -105,13 +140,61 @@ class QuranReadingRepository {
     return fallback;
   }
 
-  /// Persist the current reading position.
+  /// Persist the current reading position after validating and normalizing.
   Future<void> savePosition(ReadingPosition position) async {
+    final normalized = validateAndNormalize(position);
+
     // Keep legacy `lastRead` updated for backward compatibility
-    updateValue(_legacyLastReadKey, position.page);
+    updateValue(_legacyLastReadKey, normalized.page);
 
     // Store the richer representation
-    updateValue(_lastReadingPositionKey, position.toJson());
+    updateValue(_lastReadingPositionKey, normalized.toJson());
+  }
+
+  /// Validates and normalizes [rawPosition] against [QuranMetadataService].
+  ///
+  /// Guarantees:
+  /// - `page` is strictly clamped between 1 and 604.
+  /// - `surahNumber` is between 1 and 114.
+  /// - `ayahNumber` is between 1 and total verses in that surah.
+  /// - `surahNumber` and `ayahNumber` belong to `page`. If stale or mismatched,
+  ///   they are automatically synchronized to the first verse on `page`.
+  ReadingPosition validateAndNormalize(ReadingPosition rawPosition) {
+    final int safePage = rawPosition.page.clamp(1, 604);
+
+    try {
+      final pageData = _metadataService.getPageData(safePage);
+      if (pageData.isEmpty) {
+        return _mapPageToReadingPosition(safePage).copyWith(
+          viewMode: rawPosition.viewMode,
+        );
+      }
+
+      // Check if the given (surah, ayah) exists on safePage
+      for (final segment in pageData) {
+        final int s = segment['surah'] as int;
+        final int start = segment['start'] as int;
+        final int end = segment['end'] as int;
+        if (rawPosition.surahNumber == s &&
+            rawPosition.ayahNumber >= start &&
+            rawPosition.ayahNumber <= end) {
+          return rawPosition.copyWith(page: safePage);
+        }
+      }
+
+      // Mismatched / stale: normalize to the first verse of the page
+      final firstSegment = pageData.first;
+      return ReadingPosition(
+        page: safePage,
+        surahNumber: firstSegment['surah'] as int,
+        ayahNumber: firstSegment['start'] as int,
+        viewMode: rawPosition.viewMode,
+      );
+    } catch (_) {
+      return _mapPageToReadingPosition(safePage).copyWith(
+        viewMode: rawPosition.viewMode,
+      );
+    }
   }
 
   /// Helper to map a mushaf page number to a concrete surah and ayah
@@ -141,4 +224,3 @@ class QuranReadingRepository {
     );
   }
 }
-

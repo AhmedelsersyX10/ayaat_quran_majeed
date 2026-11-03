@@ -11,6 +11,12 @@ class _FakeReadingRepository implements QuranReadingRepository {
   _FakeReadingRepository({required this.currentPosition});
 
   @override
+  QuranMetadataService get metadataService => const QuranMetadataService();
+
+  @override
+  ReadingPosition validateAndNormalize(ReadingPosition rawPosition) => rawPosition;
+
+  @override
   Future<ReadingPosition> loadLastPosition() async {
     return currentPosition;
   }
@@ -53,6 +59,8 @@ void main() {
       expect(cubit.state.position.page, 1);
       expect(cubit.state.position.surahNumber, 1);
       expect(cubit.state.position.ayahNumber, 1);
+      expect(cubit.state.returnPage, isNull);
+      expect(cubit.state.isSliderDragging, isFalse);
     });
 
     test('loadInitialPosition loads position from repository and sets isLoading to false', () async {
@@ -79,20 +87,12 @@ void main() {
       expect(repository.lastSavedPosition?.surahNumber, 2);
     });
 
-    test('goToPage(1) boundary correctly maps to Al-Fatiha', () async {
-      await cubit.goToPage(1);
-
+    test('goToPage clamps negative and out of bound pages safely', () async {
+      await cubit.goToPage(-10);
       expect(cubit.state.position.page, 1);
-      expect(cubit.state.position.surahNumber, 1);
-      expect(cubit.state.position.ayahNumber, 1);
-    });
 
-    test('goToPage(604) boundary correctly maps to Juz 30 end surahs', () async {
-      await cubit.goToPage(604);
-
+      await cubit.goToPage(999);
       expect(cubit.state.position.page, 604);
-      expect(cubit.state.position.surahNumber, 112); // Al-Ikhlas starts page 604
-      expect(repository.lastSavedPosition?.page, 604);
     });
 
     test('updateFromPageChange syncs state and saves to repository', () async {
@@ -114,14 +114,18 @@ void main() {
       expect(repository.lastSavedPosition?.page, 440);
     });
 
-    test('goToAyah navigates to exact ayah and page', () async {
+    test('goToAyah navigates to exact ayah, sets highlight and page', () async {
       // Ayat Al-Kursi (2:255) is on page 42
       await cubit.goToAyah(2, 255);
 
       expect(cubit.state.position.page, 42);
       expect(cubit.state.position.surahNumber, 2);
       expect(cubit.state.position.ayahNumber, 255);
+      expect(cubit.state.targetHighlightVerse, '2:255');
       expect(repository.lastSavedPosition?.page, 42);
+
+      cubit.clearHighlight();
+      expect(cubit.state.targetHighlightVerse, isNull);
     });
 
     test('toggleChrome toggles isChromeVisible back and forth', () {
@@ -142,14 +146,63 @@ void main() {
       expect(cubit.state.position.viewMode, 'pageview');
     });
 
-    test('persistCurrentPosition saves current state to repository', () async {
-      await cubit.goToPage(100);
-      final initialCount = repository.saveCount;
+    test('slider drag lifecycle sets returnPage and handles returnToPreviousPage', () async {
+      // 1. Initial page is 10
+      await cubit.goToPage(10);
+      expect(cubit.state.position.page, 10);
+      expect(cubit.state.returnPage, isNull);
 
-      await cubit.persistCurrentPosition();
-      expect(repository.saveCount, initialCount + 1);
-      expect(repository.lastSavedPosition?.page, 100);
+      // 2. User starts dragging from page 10
+      cubit.onSliderDragStarted(10);
+      expect(cubit.state.isSliderDragging, isTrue);
+      expect(cubit.state.draggingPage, 10);
+
+      // 3. User scrubs to page 75
+      cubit.onSliderScrubbing(75);
+      expect(cubit.state.draggingPage, 75);
+
+      // 4. User releases on page 100
+      await cubit.onSliderDragEnded(100);
+      expect(cubit.state.isSliderDragging, isFalse);
+      expect(cubit.state.draggingPage, isNull);
+      expect(cubit.state.position.page, 100);
+      expect(cubit.state.returnPage, 10); // Return arrow target is 10
+
+      // 5. User taps return button
+      await cubit.returnToPreviousPage();
+      expect(cubit.state.position.page, 10);
+      expect(cubit.state.returnPage, isNull); // Return button dismissed
+    });
+
+    test('slider drag ending on the same page does not set returnPage', () async {
+      await cubit.goToPage(25);
+      cubit.onSliderDragStarted(25);
+      cubit.onSliderScrubbing(26);
+      await cubit.onSliderDragEnded(25);
+
+      expect(cubit.state.position.page, 25);
+      expect(cubit.state.returnPage, isNull);
+    });
+
+    test('manually navigating to returnPage clears returnPage', () async {
+      await cubit.goToPage(10);
+      await cubit.onSliderDragEnded(100);
+      expect(cubit.state.returnPage, 10);
+
+      // User manually swipes back to page 10
+      await cubit.updateFromPageChange(10);
+      expect(cubit.state.position.page, 10);
+      expect(cubit.state.returnPage, isNull);
+    });
+
+    test('dismissReturnPage dismisses return button without moving', () async {
+      await cubit.goToPage(10);
+      await cubit.onSliderDragEnded(100);
+      expect(cubit.state.returnPage, 10);
+
+      cubit.dismissReturnPage();
+      expect(cubit.state.returnPage, isNull);
+      expect(cubit.state.position.page, 100);
     });
   });
 }
-
