@@ -134,4 +134,22 @@ abstract class AppTypography {
         height: 1.2,
         color: AppColors.textPrimary,
       );
+
+  /// Mushaf page header style ("الجزء الأول", "الفاتحة") - 13sp, Medium
+  static TextStyle get mushafPageHeader => TextStyle(
+        fontFamily: arabicFontFamily,
+        fontSize: _sp(13),
+        fontWeight: FontWeight.w500,
+        height: 1.2,
+        color: AppColors.mushafOrnament,
+      );
+
+  /// Mushaf page footer badge text style - 11sp, SemiBold
+  static TextStyle get mushafPageFooter => TextStyle(
+        fontFamily: arabicFontFamily,
+        fontSize: _sp(11),
+        fontWeight: FontWeight.w600,
+        height: 1.2,
+        color: AppColors.mushafBadgeText,
+      );
 }

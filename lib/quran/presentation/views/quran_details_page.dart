@@ -26,6 +26,8 @@ import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/bismallah.d
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/floating_quran_app_bar.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/header_widget.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/mushaf_divider.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/mushaf_page_footer.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/mushaf_page_header.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/mushaf_page_shell.dart';
 import 'package:flutter/foundation.dart' as flutter_foundation;
 

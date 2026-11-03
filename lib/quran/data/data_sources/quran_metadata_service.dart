@@ -49,6 +49,69 @@ class QuranMetadataService {
     return qp.getSurahNameArabic(surahNumber);
   }
 
+  /// Returns the Hizb/Quarter text if a new quarter starts exactly on [pageNumber];
+  /// returns an empty string otherwise.
+  String getHizbTextByPage(int pageNumber, {bool isArabic = true}) {
+    return qp.getHizbTextByPage(pageNumber, isArabic: isArabic);
+  }
+
+  /// Returns the Arabic ordinal name for [juzNumber] (e.g. "الأول" for 1).
+  String getJuzNameArabic(int juzNumber) {
+    const arabicOrdinals = [
+      'الأول',
+      'الثاني',
+      'الثالث',
+      'الرابع',
+      'الخامس',
+      'السادس',
+      'السابع',
+      'الثامن',
+      'التاسع',
+      'العاشر',
+      'الحادي عشر',
+      'الثاني عشر',
+      'الثالث عشر',
+      'الرابع عشر',
+      'الخامس عشر',
+      'السادس عشر',
+      'السابع عشر',
+      'الثامن عشر',
+      'التاسع عشر',
+      'العشرون',
+      'الحادي والعشرون',
+      'الثاني والعشرون',
+      'الثالث والعشرون',
+      'الرابع والعشرون',
+      'الخامس والعشرون',
+      'السادس والعشرون',
+      'السابع والعشرون',
+      'الثامن والعشرون',
+      'التاسع والعشرون',
+      'الثلاثون',
+    ];
+
+    if (juzNumber >= 1 && juzNumber <= 30) {
+      return arabicOrdinals[juzNumber - 1];
+    }
+    return juzNumber.toString();
+  }
+
+  /// Returns the Juz number for the beginning of [pageNumber].
+  int getJuzNumberForPage(int pageNumber) {
+    final pageData = getPageData(pageNumber);
+    if (pageData.isEmpty) return 1;
+    final first = pageData[0];
+    return getJuzNumber(first['surah'] as int, first['start'] as int);
+  }
+
+  /// Returns the Arabic name of the first Surah appearing on [pageNumber].
+  String getSurahNameArabicForPage(int pageNumber) {
+    final pageData = getPageData(pageNumber);
+    if (pageData.isEmpty) return '';
+    final first = pageData[0];
+    return getSurahNameArabic(first['surah'] as int);
+  }
+
   /// Returns the transliterated name of the Surah (e.g. "Al-Fatihah").
   String getSurahName(int surahNumber) {
     return qp.getSurahName(surahNumber);

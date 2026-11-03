@@ -35,6 +35,15 @@ abstract class AppColors {
   /// Mushaf reading page paper color (#FFF9F1).
   static const Color mushafPaperLight = Color(0xFFFFF9F1);
 
+  /// Decorative ornament and header text color on Mushaf pages (#A88C6B).
+  static const Color mushafOrnament = Color(0xFFA88C6B);
+
+  /// Background fill of the page number/hizb footer badge (#F3E8DB).
+  static const Color mushafBadgeFill = Color(0xFFF3E8DB);
+
+  /// Text color inside the page number/hizb footer badge (#5A442E).
+  static const Color mushafBadgeText = Color(0xFF5A442E);
+
   /// Ayah card header background in Tafsir mode (#F7EBDD).
   static const Color ayahHeaderSurface = Color(0xFFF7EBDD);
 

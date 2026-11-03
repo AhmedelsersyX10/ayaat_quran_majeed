@@ -162,64 +162,14 @@ extension PageViewExtension on QuranDetailsPageState {
             final page = _metadataService.getPageNumber(surah, verse);
             showAyahOptionsSheet(page, surah, verse);
           },
-          bottomBar: _buildFooterPageView(index),
+          pageHeaderBuilder: (context, pageNum) {
+            return MushafPageHeader(pageNumber: pageNum);
+          },
+          bottomBar: MushafPageFooter(pageNumber: index),
           pageBackgroundColor: Colors.transparent,
           enableTwoPageLayout: false,
         );
       },
-    );
-  }
-
-  Center _buildFooterPageView(int index) {
-    return Center(
-      child: Builder(
-        builder: (context) {
-          final quarterResult = checkIfPageIncludesQuarterAndQuarterIndex(
-              widget.quarterJsonData, _metadataService.getPageData(index), indexes);
-
-          return quarterResult.includesQuarter
-              ? Align(
-                  alignment: Alignment.centerRight,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/numberP.png',
-                        height: 27.h,
-                      ),
-                      Text(
-                        "${"page".tr()} ${convertToArabicNumber(index.toString())}  |  ${(quarterResult.quarterIndex + 1) == 1 ? "" : "${convertToArabicNumber((quarterResult.quarterIndex).toString())}/${convertToArabicNumber(4.toString())}"} ${"hizb".tr()} ${convertToArabicNumber((quarterResult.hizbIndex + 1).toString())}",
-                        style: TextStyle(
-                          fontFamily: 'cairo',
-                          fontSize: 10.sp,
-                          color: secondaryColors[getValue("quranPageolorsIndex")],
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : Align(
-                  alignment: Alignment.centerRight,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/numberP.png',
-                        height: 20.h,
-                      ),
-                      Text(
-                        "${"page".tr()} ${convertToArabicNumber(index.toString())}",
-                        style: TextStyle(
-                          fontFamily: 'cairo',
-                          fontSize: 11.sp,
-                          color: secondaryColors[getValue("quranPageolorsIndex")],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-        },
-      ),
     );
   }
 }
