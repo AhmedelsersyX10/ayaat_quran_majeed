@@ -128,34 +128,45 @@ extension PageViewExtension on QuranDetailsPageState {
       );
     }
 
-    return qp.QuranPageView(
-      pageController: _pageController,
-      highlights: activeHighlights,
-      isDarkMode: Theme.of(context).brightness == Brightness.dark,
-      isTajweed: false,
-      quranPagesCount: 604,
-      onPageChanged: (newPageNumber) {
-        verseHighlightTimer?.cancel();
-        updateState(() {
-          index = newPageNumber;
-        });
-        final readerCubit = context.read<QuranReaderCubit>();
-        readerCubit.updateFromPageChange(newPageNumber);
+    return FutureBuilder<void>(
+      future: qp.QcfFontLoader.ensureFontLoaded(index),
+      builder: (context, snapshot) {
+        if (!qp.QcfFontLoader.isFontLoaded(index) &&
+            snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return qp.QuranPageView(
+          pageController: _pageController,
+          highlights: activeHighlights,
+          isDarkMode: Theme.of(context).brightness == Brightness.dark,
+          isTajweed: false,
+          quranPagesCount: 604,
+          onPageChanged: (newPageNumber) {
+            verseHighlightTimer?.cancel();
+            updateState(() {
+              index = newPageNumber;
+            });
+            qp.QcfFontLoader.preloadPages(newPageNumber);
+            final readerCubit = context.read<QuranReaderCubit>();
+            readerCubit.updateFromPageChange(newPageNumber);
+          },
+          onVerseTap: (surah, verse) {
+            toggleAppbar();
+          },
+          onLongPress: (surah, verse, details) {
+            verseHighlightTimer?.cancel();
+            updateState(() {
+              selectedSpan = "$surah:$verse";
+            });
+            final page = _metadataService.getPageNumber(surah, verse);
+            showAyahOptionsSheet(page, surah, verse);
+          },
+          bottomBar: _buildFooterPageView(index),
+          pageBackgroundColor: Colors.transparent,
+          enableTwoPageLayout: false,
+        );
       },
-      onVerseTap: (surah, verse) {
-        toggleAppbar();
-      },
-      onLongPress: (surah, verse, details) {
-        verseHighlightTimer?.cancel();
-        updateState(() {
-          selectedSpan = "$surah:$verse";
-        });
-        final page = _metadataService.getPageNumber(surah, verse);
-        showAyahOptionsSheet(page, surah, verse);
-      },
-      bottomBar: _buildFooterPageView(index),
-      pageBackgroundColor: Colors.transparent,
-      enableTwoPageLayout: false,
     );
   }
 
@@ -179,7 +190,7 @@ extension PageViewExtension on QuranDetailsPageState {
                       Text(
                         "${"page".tr()} ${convertToArabicNumber(index.toString())}  |  ${(quarterResult.quarterIndex + 1) == 1 ? "" : "${convertToArabicNumber((quarterResult.quarterIndex).toString())}/${convertToArabicNumber(4.toString())}"} ${"hizb".tr()} ${convertToArabicNumber((quarterResult.hizbIndex + 1).toString())}",
                         style: TextStyle(
-                          fontFamily: 'aldahabi',
+                          fontFamily: 'cairo',
                           fontSize: 10.sp,
                           color: secondaryColors[getValue("quranPageolorsIndex")],
                         ),
@@ -199,7 +210,7 @@ extension PageViewExtension on QuranDetailsPageState {
                       Text(
                         "${"page".tr()} ${convertToArabicNumber(index.toString())}",
                         style: TextStyle(
-                          fontFamily: 'aldahabi',
+                          fontFamily: 'cairo',
                           fontSize: 11.sp,
                           color: secondaryColors[getValue("quranPageolorsIndex")],
                         ),
