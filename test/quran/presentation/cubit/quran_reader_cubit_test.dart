@@ -55,7 +55,6 @@ void main() {
 
     test('Initial state has default values and isLoading is true', () {
       expect(cubit.state.isLoading, isTrue);
-      expect(cubit.state.isChromeVisible, isTrue);
       expect(cubit.state.position.page, 1);
       expect(cubit.state.position.surahNumber, 1);
       expect(cubit.state.position.ayahNumber, 1);
@@ -126,16 +125,6 @@ void main() {
 
       cubit.clearHighlight();
       expect(cubit.state.targetHighlightVerse, isNull);
-    });
-
-    test('toggleChrome toggles isChromeVisible back and forth', () {
-      expect(cubit.state.isChromeVisible, isTrue);
-
-      cubit.toggleChrome();
-      expect(cubit.state.isChromeVisible, isFalse);
-
-      cubit.toggleChrome();
-      expect(cubit.state.isChromeVisible, isTrue);
     });
 
     test('updateViewMode updates viewMode in state', () {

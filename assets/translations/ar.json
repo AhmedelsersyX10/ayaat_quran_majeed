@@ -211,6 +211,7 @@
   "today_ayah": "آية اليوم",
   "hijri_calendar": "التقويم الهجري",
   "gregorian_calendar": "التقويم الميلادي",
+  "today_load_failed": "تعذر تحميل آية اليوم",
   "search_results": "نتائج البحث",
   "no_search_results": "لا توجد نتائج بحث",
   "page_not_found": "الصفحة غير موجودة",

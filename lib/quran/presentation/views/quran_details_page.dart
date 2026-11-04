@@ -22,6 +22,11 @@ import 'package:ayaat_quran_majeed/quran/presentation/views/quran_sura_list.dart
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/ayah_options_sheet.dart'
     show AyahOptionsSheet;
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/ayah_picker_sheet.dart';
+import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
+import 'package:ayaat_quran_majeed/features/today/presentation/widgets/today_ayah_sheet.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/controllers/reader_chrome_controller.dart';
+import 'package:ayaat_quran_majeed/quran/presentation/widgets/dialogs/share_ayah_dialog.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/settings_bottom_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/tafseer_and_translation_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/bismallah.dart';
@@ -158,8 +163,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
   double currentLetterSpacing = 0.0;
   bool showSuraHeader = true;
   bool addAppSlogan = true;
-  bool isAppBarVisible = false; // Add state var for AppBar
-  Timer? _appBarAutoHideTimer; // Timer for auto-hiding AppBar
+  late final ReaderChromeController _chromeController;
   Timer? verseHighlightTimer; // Timer for delayed verse highlighting
 
   // ==================== Helpers ====================
@@ -320,30 +324,12 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
     // Configure system UI
     _configureSystemUI();
 
-    // Auto-show AppBar for 3 seconds on initial load
-    if (mounted) {
-      setState(() {
-        isAppBarVisible = true;
-      });
-    }
-    _appBarAutoHideTimer = Timer(const Duration(seconds: 1), () {
-      // Only update if widget is still mounted
-      if (mounted) {
-        setState(() {
-          isAppBarVisible = false;
-        });
-        // ✅ إخفاء System UI بعد ما الـ AppBar يختفي
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      }
-    });
+    // Initialize chrome controller (starts visible on reader entry, no auto-hide timer)
+    _chromeController = ReaderChromeController(initialVisibility: true);
   }
 
   void toggleAppbar() {
-    if (!mounted) return;
-    _appBarAutoHideTimer?.cancel();
-    setState(() {
-      isAppBarVisible = !isAppBarVisible;
-    });
+    _chromeController.toggle();
   }
 
   @override
@@ -545,7 +531,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
     }
     verseTrackingTimer?.cancel();
     _debounceTimer?.cancel();
-    _appBarAutoHideTimer?.cancel();
+    _chromeController.dispose();
     verseHighlightTimer?.cancel();
 
     _navHighlightController.dispose();
@@ -736,130 +722,184 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                 // extendBodyBehindAppBar: true,
                 body: Stack(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        if (!mounted) return;
-                        _appBarAutoHideTimer?.cancel();
-                        setState(() {
-                          isAppBarVisible = !isAppBarVisible;
-                        });
+                    NotificationListener<ScrollNotification>(
+                      onNotification: (notification) {
+                        if (notification is UserScrollNotification &&
+                            notification.direction != ScrollDirection.idle) {
+                          _chromeController.hide();
+                        } else if (notification is ScrollStartNotification &&
+                            notification.dragDetails != null) {
+                          _chromeController.hide();
+                        }
+                        return false;
                       },
-                      behavior: HitTestBehavior.opaque,
-                      child: Builder(
-                        builder: (context2) {
-                          return _buildAlignmentView(screenSize, context);
+                      child: GestureDetector(
+                        onTap: () {
+                          toggleAppbar();
                         },
+                        behavior: HitTestBehavior.opaque,
+                        child: Builder(
+                          builder: (context2) {
+                            return _buildAlignmentView(screenSize, context);
+                          },
+                        ),
                       ),
                     ),
-                    // Floating App Bar
-                    FloatingQuranAppBar(
-                      isVisible: isAppBarVisible,
-                      backgroundColor: softOffWhites[getValue("quranPageolorsIndex")],
-                      iconColor: secondaryColors[getValue("quranPageolorsIndex")],
-                      onBack: () => Navigator.pop(context),
-                      onNavigator: () async {
-                        final result = await QuranDetailsPageState.showSurahNavigatorSheet(context);
-                        if (result != null) {
-                          final readerCubit = context.read<QuranReaderCubit>();
-                          if (result is int) {
-                            readerCubit.goToPage(result);
-                          } else if (result is Map) {
-                            readerCubit.goToPage(result['pageNumber']);
-                            triggerHighlight(result['surah'], result['ayah']);
-                          }
-                        }
-                      },
-                      onSearch: () async {
-                        final result = await Navigator.push<QuranSearchResult>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => BlocProvider(
-                              create: (_) => QuranSearchCubit(QuranSearchRepository()),
-                              child: const QuranSearchView(),
-                            ),
-                          ),
-                        );
-                        if (result != null && mounted) {
-                          context.read<QuranReaderCubit>().goToPage(result.pageNumber);
-                          triggerHighlight(result.surahNumber, result.verseNumber);
-                        }
-                      },
-                      onSettings: () {
-                        SettingsBottomSheet.show(context, onSettingsChanged: () {
-                          _pageSpansCache.clear();
-                          getTranslationData();
-                          updateState(() {});
-                        });
-                      },
-                    ),
-                    // Floating Return Button with Page Number (AGENTS.md Section 14)
-                    BlocBuilder<QuranReaderCubit, QuranReadingState>(
-                      buildWhen: (prev, curr) => prev.returnPage != curr.returnPage,
-                      builder: (context, readerState) {
-                        return Positioned(
-                          bottom: isAppBarVisible ? 72.h : 24.h,
-                          right: 20.w,
-                          child: MushafReturnButton(
-                            returnPage: readerState.returnPage,
-                            onReturn: () {
-                              context.read<QuranReaderCubit>().returnToPreviousPage();
-                            },
-                            onDismiss: () {
-                              context.read<QuranReaderCubit>().dismissReturnPage();
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                    // Bottom Page Slider Toolbar (Ref 05)
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOutQuart,
-                      bottom: isAppBarVisible ? 0 : -90.h,
-                      left: 0,
-                      right: 0,
-                      child: BlocBuilder<QuranReaderCubit, QuranReadingState>(
-                        buildWhen: (prev, curr) =>
-                            prev.position.page != curr.position.page ||
-                            prev.isSliderDragging != curr.isSliderDragging ||
-                            prev.draggingPage != curr.draggingPage,
-                        builder: (context, readerState) {
-                          return Container(
-                            color: softOffWhites[getValue("quranPageolorsIndex")].withOpacity(0.96),
-                            padding: EdgeInsets.only(
-                              bottom: MediaQuery.of(context).padding.bottom + 4.h,
-                            ),
-                            child: MushafPageSlider(
-                              currentPage: readerState.position.page,
-                              onDragStarted: (startPage) {
-                                context.read<QuranReaderCubit>().onSliderDragStarted(startPage);
-                              },
-                              onScrubbing: (scrubPage) {
-                                context.read<QuranReaderCubit>().onSliderScrubbing(scrubPage);
-                              },
-                              onPageSelected: (selectedPage) {
-                                context.read<QuranReaderCubit>().onSliderDragEnded(selectedPage);
-                              },
-                              onTafseerPressed: () {
-                                final pageData = _metadataService.getPageData(index);
-                                if (pageData.isNotEmpty) {
-                                  final first = pageData.first;
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (_) => TafseerAndTranslateSheet(
-                                      surahNumber: first['surah'] as int,
-                                      verseNumber: first['start'] as int,
-                                      isVerseByVerseSelection: false,
-                                    ),
-                                  );
+                    ValueListenableBuilder<bool>(
+                      valueListenable: _chromeController,
+                      builder: (context, isChromeVisible, _) {
+                        return Stack(
+                          children: [
+                            // Floating App Bar
+                            FloatingQuranAppBar(
+                              isVisible: isChromeVisible,
+                              backgroundColor: softOffWhites[getValue("quranPageolorsIndex")],
+                              iconColor: secondaryColors[getValue("quranPageolorsIndex")],
+                              onIndex: () async {
+                                final result = await QuranDetailsPageState.showSurahNavigatorSheet(context);
+                                if (result != null) {
+                                  final readerCubit = context.read<QuranReaderCubit>();
+                                  if (result is int) {
+                                    readerCubit.goToPage(result);
+                                  } else if (result is Map) {
+                                    readerCubit.goToPage(result['pageNumber']);
+                                    triggerHighlight(result['surah'], result['ayah']);
+                                  }
                                 }
                               },
+                              onSearch: () async {
+                                final result = await Navigator.push<QuranSearchResult>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BlocProvider(
+                                      create: (_) => QuranSearchCubit(QuranSearchRepository()),
+                                      child: const QuranSearchView(),
+                                    ),
+                                  ),
+                                );
+                                if (result != null && mounted) {
+                                  context.read<QuranReaderCubit>().goToPage(result.pageNumber);
+                                  triggerHighlight(result.surahNumber, result.verseNumber);
+                                }
+                              },
+                              onToday: () {
+                                final todayCubit = context.read<TodayCubit>();
+                                todayCubit.loadTodayAyah();
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (_) => BlocProvider.value(
+                                    value: todayCubit,
+                                    child: TodayAyahSheet(
+                                      onShare: (ayah) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) => ShareAyahDialog(
+                                            surahNumber: ayah.surahNumber,
+                                            verseNumber: ayah.ayahNumber,
+                                            index: ayah.pageNumber,
+                                            jsonData: widget.jsonData ?? JsonAssetService.surahsData,
+                                            translationDataList: translationDataList,
+                                          ),
+                                        );
+                                      },
+                                      onTafsir: (ayah) {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (_) => TafseerAndTranslateSheet(
+                                            surahNumber: ayah.surahNumber,
+                                            verseNumber: ayah.ayahNumber,
+                                            isVerseByVerseSelection: false,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                              onSettings: () {
+                                SettingsBottomSheet.show(context, onSettingsChanged: () {
+                                  _pageSpansCache.clear();
+                                  getTranslationData();
+                                  updateState(() {});
+                                });
+                              },
                             ),
-                          );
-                        },
-                      ),
+                            // Floating Return Button with Page Number (AGENTS.md Section 14)
+                            BlocBuilder<QuranReaderCubit, QuranReadingState>(
+                              buildWhen: (prev, curr) => prev.returnPage != curr.returnPage,
+                              builder: (context, readerState) {
+                                return Positioned(
+                                  bottom: isChromeVisible ? 72.h : 24.h,
+                                  right: 20.w,
+                                  child: MushafReturnButton(
+                                    returnPage: readerState.returnPage,
+                                    onReturn: () {
+                                      context.read<QuranReaderCubit>().returnToPreviousPage();
+                                    },
+                                    onDismiss: () {
+                                      context.read<QuranReaderCubit>().dismissReturnPage();
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                            // Bottom Page Slider Toolbar (Ref 05)
+                            AnimatedPositioned(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOutQuart,
+                              bottom: isChromeVisible ? 0 : -90.h,
+                              left: 0,
+                              right: 0,
+                              child: BlocBuilder<QuranReaderCubit, QuranReadingState>(
+                                buildWhen: (prev, curr) =>
+                                    prev.position.page != curr.position.page ||
+                                    prev.isSliderDragging != curr.isSliderDragging ||
+                                    prev.draggingPage != curr.draggingPage,
+                                builder: (context, readerState) {
+                                  return Container(
+                                    color: softOffWhites[getValue("quranPageolorsIndex")].withOpacity(0.96),
+                                    padding: EdgeInsets.only(
+                                      bottom: MediaQuery.of(context).padding.bottom + 4.h,
+                                    ),
+                                    child: MushafPageSlider(
+                                      currentPage: readerState.position.page,
+                                      onDragStarted: (startPage) {
+                                        context.read<QuranReaderCubit>().onSliderDragStarted(startPage);
+                                      },
+                                      onScrubbing: (scrubPage) {
+                                        context.read<QuranReaderCubit>().onSliderScrubbing(scrubPage);
+                                      },
+                                      onPageSelected: (selectedPage) {
+                                        context.read<QuranReaderCubit>().onSliderDragEnded(selectedPage);
+                                      },
+                                      onTafseerPressed: () {
+                                        final pageData = _metadataService.getPageData(index);
+                                        if (pageData.isNotEmpty) {
+                                          final first = pageData.first;
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            backgroundColor: Colors.transparent,
+                                            builder: (_) => TafseerAndTranslateSheet(
+                                              surahNumber: first['surah'] as int,
+                                              verseNumber: first['start'] as int,
+                                              isVerseByVerseSelection: false,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),

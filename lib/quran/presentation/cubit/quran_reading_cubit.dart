@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class QuranReadingState {
   final bool isLoading;
   final ReadingPosition position;
-  final bool isChromeVisible;
 
   /// The page where the user started dragging the slider.
   /// When not null, the return button with arrow and number is displayed.
@@ -24,7 +23,6 @@ class QuranReadingState {
   const QuranReadingState({
     required this.isLoading,
     required this.position,
-    required this.isChromeVisible,
     this.returnPage,
     this.isSliderDragging = false,
     this.draggingPage,
@@ -35,7 +33,6 @@ class QuranReadingState {
     return const QuranReadingState(
       isLoading: true,
       position: ReadingPosition(page: 1, surahNumber: 1, ayahNumber: 1),
-      isChromeVisible: true,
       returnPage: null,
       isSliderDragging: false,
       draggingPage: null,
@@ -46,7 +43,6 @@ class QuranReadingState {
   QuranReadingState copyWith({
     bool? isLoading,
     ReadingPosition? position,
-    bool? isChromeVisible,
     int? returnPage,
     bool clearReturnPage = false,
     bool? isSliderDragging,
@@ -58,7 +54,6 @@ class QuranReadingState {
     return QuranReadingState(
       isLoading: isLoading ?? this.isLoading,
       position: position ?? this.position,
-      isChromeVisible: isChromeVisible ?? this.isChromeVisible,
       returnPage: clearReturnPage ? null : (returnPage ?? this.returnPage),
       isSliderDragging: isSliderDragging ?? this.isSliderDragging,
       draggingPage: clearDraggingPage ? null : (draggingPage ?? this.draggingPage),
@@ -272,15 +267,6 @@ class QuranReaderCubit extends Cubit<QuranReadingState> {
   /// Clear any pending verse highlight.
   void clearHighlight() {
     emit(state.copyWith(clearHighlight: true));
-  }
-
-  /// Toggle the visibility of the app chrome (AppBar / controls).
-  void toggleChrome() {
-    emit(
-      state.copyWith(
-        isChromeVisible: !state.isChromeVisible,
-      ),
-    );
   }
 
   /// Update only the view mode (e.g., page, vertical, verse-by-verse).

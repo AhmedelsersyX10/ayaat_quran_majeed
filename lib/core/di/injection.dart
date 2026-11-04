@@ -2,6 +2,10 @@ import 'package:ayaat_quran_majeed/core/network/api_client.dart';
 import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
 import 'package:ayaat_quran_majeed/core/storage/hive_storage_service.dart';
 import 'package:ayaat_quran_majeed/core/storage/preferences_storage.dart';
+import 'package:ayaat_quran_majeed/features/today/data/repositories/today_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
+import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
+import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/bookmark_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
@@ -51,6 +55,12 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<UmmAlQuraDateService>()) {
+    sl.registerLazySingleton<UmmAlQuraDateService>(
+      () => const UmmAlQuraDateService(),
+    );
+  }
+
   // ---------------------------------------------------------
   // 4. Repositories
   // ---------------------------------------------------------
@@ -72,6 +82,16 @@ Future<void> initInjection() async {
     sl.registerLazySingleton<QuranSearchRepository>(
       () => QuranSearchRepository(
         metadataService: sl<QuranMetadataService>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<TodayRepository>()) {
+    sl.registerLazySingleton<TodayRepository>(
+      () => TodayRepositoryImpl(
+        metadataService: sl<QuranMetadataService>(),
+        dateService: sl<UmmAlQuraDateService>(),
+        preferences: sl<AppPreferences>(),
       ),
     );
   }
@@ -105,6 +125,12 @@ Future<void> initInjection() async {
   if (!sl.isRegistered<QuranSearchCubit>()) {
     sl.registerFactory<QuranSearchCubit>(
       () => QuranSearchCubit(sl<QuranSearchRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<TodayCubit>()) {
+    sl.registerFactory<TodayCubit>(
+      () => TodayCubit(sl<TodayRepository>()),
     );
   }
 }

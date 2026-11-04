@@ -121,6 +121,13 @@ abstract class AppSizes {
   static double get iconMd => _r(24);
   static double get iconLg => _r(28);
   static double get iconXl => _r(32);
+
+  /// Fraction of screen height occupied by near-full-height sheets (reference 16)
+  static const double nearFullSheetHeightFactor = 0.95;
+
+  /// Measured date card horizontal layout tokens (reference 16)
+  static double get dateCardsOuterPadding => _w(56);
+  static double get dateCardsCenterGap => _w(48);
 }
 
 /// Animation durations and curves matching the reference app motion

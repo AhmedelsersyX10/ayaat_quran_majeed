@@ -8,6 +8,7 @@ import 'package:ayaat_quran_majeed/features/index/presentation/views/surahs_tab_
 import 'package:ayaat_quran_majeed/features/khatma/presentation/views/khatma_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/notes/presentation/views/notes_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/starred/presentation/views/starred_tab_view.dart';
+import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
@@ -78,6 +79,7 @@ abstract class AppRouter {
                 BlocProvider<BookmarkCubit>(
                   create: (_) => sl<BookmarkCubit>()..loadBookmarks(),
                 ),
+                BlocProvider<TodayCubit>(create: (_) => sl<TodayCubit>()),
               ],
               child: const QuranReadingPage(),
             );

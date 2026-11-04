@@ -158,6 +158,7 @@ abstract class AppStrings {
   static const String todayAyah = 'today_ayah';
   static const String hijriCalendar = 'hijri_calendar';
   static const String gregorianCalendar = 'gregorian_calendar';
+  static const String todayLoadFailed = 'today_load_failed';
 
   // Search (Screens 15, 21)
   static const String searchResults = 'search_results';
@@ -309,6 +310,7 @@ abstract class AppStrings {
     todayAyah: 'آية اليوم',
     hijriCalendar: 'التقويم الهجري',
     gregorianCalendar: 'التقويم الميلادي',
+    todayLoadFailed: 'تعذر تحميل آية اليوم',
     searchResults: 'نتائج البحث',
     noSearchResults: 'لا توجد نتائج بحث',
     settings: 'الإعدادات',

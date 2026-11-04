@@ -1,6 +1,9 @@
 import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/network/api_client.dart';
 import 'package:ayaat_quran_majeed/core/storage/hive_storage_service.dart';
+import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
+import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
+import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/bookmark_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
@@ -31,14 +34,17 @@ void main() {
       expect(sl.isRegistered<ApiClient>(), isTrue);
       expect(sl.isRegistered<HiveStorageService>(), isTrue);
       expect(sl.isRegistered<QuranMetadataService>(), isTrue);
+      expect(sl.isRegistered<UmmAlQuraDateService>(), isTrue);
       expect(sl.isRegistered<QuranReadingRepository>(), isTrue);
       expect(sl.isRegistered<BookmarkRepository>(), isTrue);
       expect(sl.isRegistered<QuranSearchRepository>(), isTrue);
+      expect(sl.isRegistered<TodayRepository>(), isTrue);
 
       expect(sl.isRegistered<QuranPagePlayerBloc>(), isTrue);
       expect(sl.isRegistered<QuranReaderCubit>(), isTrue);
       expect(sl.isRegistered<BookmarkCubit>(), isTrue);
       expect(sl.isRegistered<QuranSearchCubit>(), isTrue);
+      expect(sl.isRegistered<TodayCubit>(), isTrue);
     });
 
     test('Singletons return identical instances across multiple resolutions', () async {
@@ -74,4 +80,3 @@ void main() {
     });
   });
 }
-
