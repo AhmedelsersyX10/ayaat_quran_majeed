@@ -113,6 +113,10 @@ abstract class AppStrings {
 
   // Ayah Options & Recitation Settings (Screens 19, 20, 22, 38, 39, 40)
   static const String ayahOptions = 'ayah_options';
+  static const String redBookmark = 'red_bookmark';
+  static const String recitation = 'recitation';
+  static const String library = 'library';
+  static const String librarySubtitle = 'library_subtitle';
   static const String tafsir = 'tafsir';
   static const String play = 'play';
   static const String pause = 'pause';
@@ -249,7 +253,7 @@ abstract class AppStrings {
     emptyBookmarksTitle: 'لا توجد فواصل',
     emptyBookmarksDesc: 'أضف فواصل أثناء القراءة للرجوع إليها سريعاً في أي وقت',
     editBookmarks: 'تحرير',
-    anotherBookmark: 'علامة أخرى...',
+    anotherBookmark: 'فاصل آخر...',
     newBookmark: 'إضافة علامة مرجعية',
     bookmarkName: 'اسم العلامة المرجعية',
     bookmarkSaved: 'تم حفظ العلامة المرجعية',
@@ -271,6 +275,10 @@ abstract class AppStrings {
     noteSaved: 'تم حفظ الملاحظة',
     noteDeleted: 'تم حذف الملاحظة',
     ayahOptions: 'خيارات الآية',
+    redBookmark: 'الفاصل الأحمر',
+    recitation: 'تلاوة',
+    library: 'المكتبة',
+    librarySubtitle: 'التفسير ومعاني الكلمات',
     tafsir: 'التفسير',
     play: 'تشغيل',
     pause: 'إيقاف مؤقت',

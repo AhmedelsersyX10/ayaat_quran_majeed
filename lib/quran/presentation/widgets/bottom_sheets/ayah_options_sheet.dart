@@ -1,1877 +1,255 @@
-import 'dart:io';
-import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
-import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
-import 'package:ayaat_quran_majeed/main.dart';
-import 'package:ayaat_quran_majeed/quran/data/models/reciter_model.dart';
-import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/translation_info.dart';
-import 'package:ayaat_quran_majeed/quran/data/models/bookmark_model.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/tafseer_and_translation_sheet.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/widgets/dialogs/bookmark_dialog.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/widgets/dialogs/share_ayah_dialog.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
+import 'package:ayaat_quran_majeed/core/localization/arabic_numbers.dart';
+import 'package:ayaat_quran_majeed/core/theme/app_colors.dart';
+import 'package:ayaat_quran_majeed/core/theme/app_spacing.dart';
+import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart' as m;
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-
-const _metadataService = QuranMetadataService();
-
-class AyahOptionsSheet extends StatefulWidget {
+/// Modal bottom sheet presenting options for a selected Ayah.
+///
+/// Pixel-faithful replica of references 19 (half height ~48%) and 20 (expanded ~88%).
+/// Features:
+/// - Smooth draggable expansion between half height and full height via [DraggableScrollableSheet].
+/// - Header: Surah name + Eastern Arabic-Indic Ayah number (e.g. "البقرة : ٦"),
+///   star toggle icon, and share icon.
+/// - 4 white rounded section cards matching references 19 & 20:
+///   1. Bookmarks: "الفاصل الأحمر" (red ribbon) & "فاصل آخر..." (green ribbon)
+///   2. Recitation: "تلاوة" (play icon) & "تشغيل إلى..." (play-to icon)
+///   3. Library: "المكتبة" with subtitle "التفسير ومعاني الكلمات" (book icon)
+///   4. Notes: "المالملاحظات" (edit pencil icon)
+/// - Pure UI shell with interaction contracts only; business logic is deferred
+///   to feature-specific tasks per AGENTS.md rules.
+class AyahOptionsSheet extends StatelessWidget {
   final int surahNumber;
   final int verseNumber;
-  final int index;
-  final Set<String> starredVerses;
-  final List<dynamic> bookmarks;
-  final List<QuranPageReciter> reciters;
-  final List<TranslationData> translationDataList;
-  final GlobalKey? verseKey;
-  final Directory? appDir;
-  final dynamic jsonData;
-  final ItemScrollController? itemScrollController;
-
-  final VoidCallback onUpdate;
-  final Function(int surah, int verse) onAddStarredVerse;
-  final Function(int surah, int verse) onRemoveStarredVerse;
-  final VoidCallback onFetchBookmarks;
+  final bool isStarred;
+  final VoidCallback? onStarTap;
+  final VoidCallback? onShareTap;
+  final VoidCallback? onBookmarkTap;
+  final VoidCallback? onAnotherBookmarkTap;
+  final VoidCallback? onReciteTap;
+  final VoidCallback? onPlayToTap;
+  final VoidCallback? onLibraryTap;
+  final VoidCallback? onNotesTap;
+  final QuranMetadataService metadataService;
 
   const AyahOptionsSheet({
     super.key,
     required this.surahNumber,
     required this.verseNumber,
-    required this.index,
-    required this.starredVerses,
-    required this.bookmarks,
-    required this.reciters,
-    required this.translationDataList,
-    this.verseKey,
-    this.appDir,
-    this.jsonData,
-    this.itemScrollController,
-    required this.onUpdate,
-    required this.onAddStarredVerse,
-    required this.onRemoveStarredVerse,
-    required this.onFetchBookmarks,
+    this.isStarred = false,
+    this.onStarTap,
+    this.onShareTap,
+    this.onBookmarkTap,
+    this.onAnotherBookmarkTap,
+    this.onReciteTap,
+    this.onPlayToTap,
+    this.onLibraryTap,
+    this.onNotesTap,
+    this.metadataService = const QuranMetadataService(),
   });
 
-  @override
-  State<AyahOptionsSheet> createState() => _AyahOptionsSheetState();
-}
-
-class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProviderStateMixin {
-  // ============ Animation Controllers ============
-  late AnimationController _animationController;
-  late AnimationController _playButtonController;
-
-  // ============ Animations ============
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  // ============ State Variables ============
-  late int _currentColorIndex;
-  late int _currentReciterIndex;
-
-  // Repeat & Range playback state
-  int? _repeatCount = 1; // null = infinite
-  late int _startSurah;
-  late int _startVerse;
-  late int _endSurah;
-  late int _endVerse;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentColorIndex = getValue("quranPageolorsIndex");
-    _currentReciterIndex = getValue("reciterIndex");
-    _startSurah = widget.surahNumber;
-    _startVerse = widget.verseNumber;
-    _endSurah = widget.surahNumber;
-    _endVerse = widget.verseNumber;
-
-    // Main animation controller
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
+  /// Displays the Ayah Options sheet in a draggable modal bottom sheet.
+  static Future<T?> show<T>(
+    BuildContext context, {
+    required int surahNumber,
+    required int verseNumber,
+    bool isStarred = false,
+    VoidCallback? onStarTap,
+    VoidCallback? onShareTap,
+    VoidCallback? onBookmarkTap,
+    VoidCallback? onAnotherBookmarkTap,
+    VoidCallback? onReciteTap,
+    VoidCallback? onPlayToTap,
+    VoidCallback? onLibraryTap,
+    VoidCallback? onNotesTap,
+    QuranMetadataService metadataService = const QuranMetadataService(),
+  }) {
+    return showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: AppColors.scrim,
+      builder: (ctx) => AyahOptionsSheet(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+        isStarred: isStarred,
+        onStarTap: onStarTap,
+        onShareTap: onShareTap,
+        onBookmarkTap: onBookmarkTap,
+        onAnotherBookmarkTap: onAnotherBookmarkTap,
+        onReciteTap: onReciteTap,
+        onPlayToTap: onPlayToTap,
+        onLibraryTap: onLibraryTap,
+        onNotesTap: onNotesTap,
+        metadataService: metadataService,
+      ),
     );
-
-    // Play button pulse animation
-    _playButtonController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _animationController.forward();
   }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    _playButtonController.dispose();
-    super.dispose();
-  }
-
-  // ============ Getters ============
-  // bool get _isVerseStarred =>
-  //     widget.starredVerses.contains("${widget.surahNumber}:${widget.verseNumber}");
-
-  String get _surahName => context.locale.languageCode == "ar"
-      ? _metadataService.getSurahNameArabic(widget.surahNumber)
-      : _metadataService.getSurahNameEnglish(widget.surahNumber);
-
-  Color get _primaryColor => darkWarmBrowns[_currentColorIndex];
-  Color get _backgroundColor => softOffWhites[_currentColorIndex];
-  Color get _secondaryColor => secondaryColors[_currentColorIndex];
-  Color get _accentColor => highlightColors[_currentColorIndex];
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: Container(
-          decoration: BoxDecoration(
-            color: _backgroundColor,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(28.r),
-              topRight: Radius.circular(28.r),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: _primaryColor.withOpacity(0.08),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDragHandle(),
-              _buildHeader(),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(height: 8.h),
-                        // _buildQuickActions(),
-                        // SizedBox(height: 20.h),
-                        _buildBookmarksSection(),
-                        SizedBox(height: 16.h),
-                        _buildActionButtons(),
-                        SizedBox(height: 60.h),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+    final String surahName = metadataService.getSurahNameArabic(surahNumber);
+    final String ayahNumeral = toArabicDigits(verseNumber);
 
-  // ============ Drag Handle ============
-  Widget _buildDragHandle() {
-    return Container(
-      margin: EdgeInsets.only(top: 12.h, bottom: 8.h),
-      width: 40.w,
-      height: 4.h,
-      decoration: BoxDecoration(
-        color: _primaryColor.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(100),
-      ),
-    );
-  }
-
-  // ============ Header Section ============
-  Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-      child: Row(
-        children: [
-          // Surah Icon
-          Container(
-            padding: EdgeInsets.all(12.r),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  _primaryColor.withOpacity(0.1),
-                  _secondaryColor.withOpacity(0.1),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Icon(
-              Icons.menu_book,
-              color: _primaryColor,
-              size: 20.sp,
-            ),
-          ),
-          SizedBox(width: 12.w),
-          // Surah Name
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _surahName,
-                      style: TextStyle(
-                        fontFamily: "cairo",
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: _primaryColor,
-                      ),
-                    ),
-                    Text(
-                      "${"verse".tr()} ${widget.verseNumber}",
-                      style: TextStyle(
-                        fontFamily: "cairo",
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w500,
-                        color: _primaryColor.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-                _buildQuickActionCard(
-                  icon: Icons.share_rounded,
-                  label: "share".tr(),
-                  onTap: _handleShare,
-                  color: Colors.blue.shade600,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============ Quick Actions ============
-  // Widget _buildQuickActions() {
-  //   return Row(
-  //     children: [
-  //       // Expanded(
-  //       //   child: _buildQuickActionCard(
-  //       //     icon: _isVerseStarred ? FontAwesome.star : FontAwesome.star_empty,
-  //       //     label: _isVerseStarred ? "starred".tr() : "star".tr(),
-  //       //     onTap: _handleStarToggle,
-  //       //     color: Colors.amber.shade600,
-  //       //     isActive: _isVerseStarred,
-  //       //   ),
-  //       // ),
-  //       // SizedBox(width: 12.w),
-  //       Expanded(
-  //         child: _buildQuickActionCard(
-  //           icon: Icons.share_rounded,
-  //           label: "share".tr(),
-  //           onTap: _handleShare,
-  //           color: Colors.blue.shade600,
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
-
-  Widget _buildQuickActionCard({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    required Color color,
-    bool isActive = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16.r),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
-        decoration: BoxDecoration(
-          color: isActive ? color.withOpacity(0.15) : _primaryColor.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: isActive ? color.withOpacity(0.3) : _primaryColor.withOpacity(0.1),
-            width: 1.5,
-          ),
-        ),
-        child: Icon(
-          icon,
-          color: isActive ? color : _primaryColor,
-          size: 20.sp,
-        ),
-      ),
-    );
-  }
-
-  // ============ Bookmarks Section ============
-  Widget _buildBookmarksSection() {
-    return BlocBuilder<BookmarkCubit, BookmarkState>(
-      builder: (context, state) {
-        final bookmarks = state.bookmarks;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          decoration: BoxDecoration(
-            color: _primaryColor.withOpacity(0.04),
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(
-              color: _primaryColor.withOpacity(0.08),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.all(16.r),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.bookmark_rounded,
-                      color: _secondaryColor,
-                      size: 20.sp,
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      "bookmarks".tr(),
-                      style: TextStyle(
-                        fontFamily: "cairo",
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                        color: _primaryColor,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: _secondaryColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Text(
-                        "${bookmarks.length}",
-                        style: TextStyle(
-                          fontFamily: "cairo",
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w700,
-                          color: _secondaryColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (bookmarks.isNotEmpty) ...[
-                Divider(
-                  color: _primaryColor.withOpacity(0.1),
-                  height: 1,
-                  indent: 16,
-                  endIndent: 16,
-                ),
-                _buildBookmarksList(bookmarks),
-                Divider(
-                  color: _primaryColor.withOpacity(0.1),
-                  height: 1,
-                  indent: 16,
-                  endIndent: 16,
-                ),
-              ],
-              _buildAddBookmarkButton(),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildBookmarksList(List<BookmarkModel> bookmarks) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: bookmarks.length,
-      itemBuilder: (context, index) {
-        final bookmark = bookmarks[index];
-        return _ModernBookmarkItem(
-          bookmark: bookmark,
-          primaryColor: _primaryColor,
-          onTap: () => _handleBookmarkUpdate(index),
-          onDelete: () => _handleBookmarkDelete(index),
-          index: index,
-        );
-      },
-    );
-  }
-
-  Widget _buildAddBookmarkButton() {
-    return InkWell(
-      onTap: _handleAddBookmark,
-      borderRadius: BorderRadius.only(
-        bottomLeft: Radius.circular(20.r),
-        bottomRight: Radius.circular(20.r),
-      ),
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(8.r),
-              decoration: BoxDecoration(
-                color: _secondaryColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Icon(
-                Icons.add_rounded,
-                color: _secondaryColor,
-                size: 18.sp,
-              ),
-            ),
-            SizedBox(width: 12.w),
-            Text(
-              "newBookmark".tr(),
-              style: TextStyle(
-                fontFamily: "cairo",
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: _secondaryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============ Action Buttons ============
-  Widget _buildActionButtons() {
-    return Column(
-      children: [
-        _buildTafseerButton(),
-        SizedBox(height: 12.h),
-        _buildPlayButton(),
-        SizedBox(height: 12.h),
-        _buildRepeatOption(),
-        SizedBox(height: 10.h),
-        _buildPlayRangeOption(),
-      ],
-    );
-  }
-
-  Widget _buildTafseerButton() {
-    return InkWell(
-      onTap: handleTafseer,
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        padding: EdgeInsets.all(16.r),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              _primaryColor.withOpacity(0.08),
-              _secondaryColor.withOpacity(0.08),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: _primaryColor.withOpacity(0.15),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(12.r),
-              decoration: BoxDecoration(
-                color: isDarkModeNotifier.value
-                    ? _secondaryColor.withOpacity(0.2)
-                    : _primaryColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryColor.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.auto_stories,
-                color: _currentColorIndex == 0 ? _secondaryColor : _accentColor,
-                size: 20.sp,
-              ),
-            ),
-            SizedBox(width: 14.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${"tafseer".tr()} & ${"translation".tr()}",
-                    style: TextStyle(
-                      fontFamily: "cairo",
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: _primaryColor,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    "exploreVerseDetails".tr(),
-                    style: TextStyle(
-                      fontFamily: "cairo",
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w500,
-                      color: _primaryColor.withOpacity(0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: _primaryColor.withOpacity(0.4),
-              size: 16.sp,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============ Enhanced Play Button ============
-  Widget _buildPlayButton() {
-    return InkWell(
-      onTap: _handlePlay,
-      borderRadius: BorderRadius.circular(20.r),
-      child: Container(
-        padding: EdgeInsets.all(18.r),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDarkModeNotifier.value
-                ? [
-                    _primaryColor.withOpacity(0.08),
-                    _secondaryColor.withOpacity(0.08),
-                  ]
-                : [
-                    _secondaryColor.withOpacity(0.1),
-                    _primaryColor.withOpacity(0.1),
-                  ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: _primaryColor.withOpacity(0.15),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Play Icon with animated background
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(12.r),
-                  decoration: BoxDecoration(
-                    color: isDarkModeNotifier.value
-                        ? _primaryColor.withOpacity(0.2)
-                        : _primaryColor.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(14.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.play_arrow_rounded,
-                    color: _primaryColor,
-                    size: 28.sp,
-                  ),
-                ),
-              ],
-            ),
-
-            SizedBox(width: 16.w),
-
-            // Text content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        "playVerse".tr(),
-                        style: TextStyle(
-                          fontFamily: "cairo",
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w800,
-                          color: _primaryColor,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      SizedBox(width: 6.w),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 2.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.headphones_rounded,
-                              color: Colors.white,
-                              size: 12.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              "HD",
-                              style: TextStyle(
-                                fontFamily: "cairo",
-                                fontSize: 9.sp,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 4.h),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person_rounded,
-                        color: _primaryColor,
-                        size: 14.sp,
-                      ),
-                      SizedBox(width: 4.w),
-                      Expanded(
-                        child: Text(
-                          context.locale.languageCode == "ar"
-                              ? widget.reciters[_currentReciterIndex].name
-                              : widget.reciters[_currentReciterIndex].englishName,
-                          style: TextStyle(
-                            fontFamily: "cairo",
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: _primaryColor,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(width: 8.w),
-
-            // Enhanced Dropdown
-            _buildEnhancedReciterDropdown(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Enhanced Reciter Dropdown
-  Widget _buildEnhancedReciterDropdown() {
-    return GestureDetector(
-      onTap: _showReciterPicker,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: isDarkModeNotifier.value ? Colors.white : _primaryColor,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.swap_vert_rounded,
-              color: Colors.white,
-              size: 18.sp,
-            ),
-            SizedBox(width: 4.w),
-            Text(
-              "change".tr(),
-              style: TextStyle(
-                fontFamily: "cairo",
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Modern Reciter Picker Bottom Sheet
-  void _showReciterPicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: BoxDecoration(
-          color: _backgroundColor,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(28.r),
-            topRight: Radius.circular(28.r),
-          ),
-        ),
-        child: Column(
-          children: [
-            // Handle
-            Container(
-              margin: EdgeInsets.only(top: 12.h, bottom: 8.h),
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: _primaryColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(100),
-              ),
-            ),
-
-            // Header
-            Padding(
-              padding: EdgeInsets.all(20.r),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(10.r),
-                    decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Icon(
-                      Icons.record_voice_over_rounded,
-                      color: _primaryColor,
-                      size: 24.sp,
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "selectReciter".tr(),
-                        style: TextStyle(
-                          fontFamily: "cairo",
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w800,
-                          color: _primaryColor,
-                        ),
-                      ),
-                      Text(
-                        "${widget.reciters.length} ${"reciters".tr()}",
-                        style: TextStyle(
-                          fontFamily: "cairo",
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: _primaryColor.withOpacity(0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            Divider(color: _primaryColor.withOpacity(0.1), height: 1),
-
-            // Reciters List
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                itemCount: widget.reciters.length,
-                itemBuilder: (context, index) {
-                  final reciter = widget.reciters[index];
-                  final isSelected = index == _currentReciterIndex;
-
-                  return _ReciterCard(
-                    reciter: reciter,
-                    isSelected: isSelected,
-                    primaryColor: _primaryColor,
-                    secondaryColor: _secondaryColor,
-                    onTap: () {
-                      _handleReciterChange(index);
-                      Navigator.pop(context);
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============ Event Handlers ============
-  // void _handleStarToggle() {
-  //   if (_isVerseStarred) {
-  //     widget.onRemoveStarredVerse(widget.surahNumber, widget.verseNumber);
-  //   } else {
-  //     widget.onAddStarredVerse(widget.surahNumber, widget.verseNumber);
-  //   }
-  //   setState(() {});
-  //   widget.onUpdate();
-  //   widget.verseKey?.currentState?.setState(() {});
-  // }
-
-  void _handleShare() {
-    showDialog(
-      context: context,
-      builder: (context) => ShareAyahDialog(
-        surahNumber: widget.surahNumber,
-        verseNumber: widget.verseNumber,
-        index: widget.index,
-        jsonData: widget.jsonData,
-        translationDataList: widget.translationDataList,
-      ),
-    );
-  }
-
-  Future<void> _handleBookmarkUpdate(int index) async {
-    try {
-      final cubit = context.read<BookmarkCubit>();
-      final current = List<BookmarkModel>.from(cubit.state.bookmarks);
-
-      if (index < 0 || index >= current.length) return;
-
-      final existing = current[index];
-      final updated = BookmarkModel(
-        name: existing.name,
-        suraNumber: widget.surahNumber,
-        verseNumber: widget.verseNumber,
-        color: existing.color,
-      );
-
-      current[index] = updated;
-      await cubit.repository.saveBookmarks(current);
-      await cubit.loadBookmarks();
-
-      widget.onUpdate();
-      widget.onFetchBookmarks();
-
-      if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("✓ ${"bookmarkUpdated".tr()}"),
-            backgroundColor: Colors.green.shade600,
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      }
-    } catch (e) {
-      _showError("errorUpdatingBookmark".tr());
-    }
-  }
-
-  Future<void> _handleBookmarkDelete(int index) async {
-    try {
-      final cubit = context.read<BookmarkCubit>();
-      final current = List<BookmarkModel>.from(cubit.state.bookmarks);
-      if (index < 0 || index >= current.length) return;
-
-      final bookmarkName = current[index].name;
-      final target = current[index];
-
-      current.remove(target);
-      await cubit.repository.saveBookmarks(current);
-      await cubit.loadBookmarks();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("✓ $bookmarkName ${"removed".tr()}"),
-            backgroundColor: Colors.red.shade600,
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      }
-
-      widget.onUpdate();
-
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      _showError("errorDeletingBookmark".tr());
-    }
-  }
-
-  Future<void> _handleAddBookmark() async {
-    final bookmarkCubit = context.read<BookmarkCubit>();
-    await showDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.6),
-      builder: (context) => BlocProvider.value(
-        value: bookmarkCubit,
-        child: BookmarksDialog(
-          suraNumber: widget.surahNumber,
-          verseNumber: widget.verseNumber,
-        ),
-      ),
-    );
-    widget.onFetchBookmarks();
-  }
-
-  void handleTafseer() {
-    showMaterialModalBottomSheet(
-      enableDrag: true,
-      context: context,
-      animationCurve: Curves.easeInOutQuart,
-      elevation: 0,
-      bounce: true,
-      duration: const Duration(milliseconds: 400),
-      backgroundColor: softOffWhite,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(28.r),
-          topLeft: Radius.circular(28.r),
-        ),
-      ),
-      isDismissible: true,
-      builder: (context) => TafseerAndTranslateSheet(
-        surahNumber: widget.surahNumber,
-        isVerseByVerseSelection: false,
-        verseNumber: widget.verseNumber,
-      ),
-    );
-  }
-
-  Future<void> _handlePlay() async {
-    try {
-      Navigator.pop(context);
-
-      final quranPagePlayerBloc = BlocProvider.of<QuranPagePlayerBloc>(context, listen: false);
-
-      if (quranPagePlayerBloc.state is QuranPagePlayerPlaying) {
-        quranPagePlayerBloc.add(KillPlayerEvent());
-      }
-
-      // Single-ayah shortcut: same surah, same verse start == end, 1 repeat
-      final isSingleAyah = _repeatCount == 1 &&
-          _startSurah == widget.surahNumber &&
-          _startVerse == widget.verseNumber &&
-          _endSurah == widget.surahNumber &&
-          _endVerse == widget.verseNumber;
-
-      if (isSingleAyah) {
-        // Backward-compatible single-ayah playback
-        quranPagePlayerBloc.add(
-          PlayFromVerse(
-            widget.verseNumber,
-            widget.reciters[_currentReciterIndex].identifier,
-            widget.surahNumber,
-            _metadataService.getSurahNameEnglish(widget.surahNumber),
-          ),
-        );
-      } else {
-        // Cross-surah range + repeat playback
-        quranPagePlayerBloc.add(
-          PlayRangeWithRepeat(
-            startSurahNumber: _startSurah,
-            startVerse: _startVerse,
-            endSurahNumber: _endSurah,
-            endVerse: _endVerse,
-            reciterIdentifier: widget.reciters[_currentReciterIndex].identifier,
-            repeatCount: _repeatCount,
-          ) as QuranPagePlayerEvent,
-        );
-      }
-
-      await _handleScrollIfNeeded();
-    } catch (e) {
-      _showError("errorPlayingVerse".tr());
-    }
-  }
-
-  Future<void> _handleScrollIfNeeded() async {
-    if (getValue("alignmentType") == "verticalview" &&
-        _metadataService.getPageNumber(widget.surahNumber, widget.verseNumber) > 600) {
-      await Future.delayed(const Duration(milliseconds: 1000));
-      widget.itemScrollController?.jumpTo(
-        index: _metadataService.getPageNumber(widget.surahNumber, widget.verseNumber),
-      );
-    }
-  }
-
-  void _handleReciterChange(int? newIndex) {
-    if (newIndex != null) {
-      setState(() {
-        _currentReciterIndex = newIndex;
-      });
-      updateValue("reciterIndex", newIndex);
-      widget.onUpdate();
-    }
-  }
-
-  void _showError(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("✗ $message"),
-          backgroundColor: Colors.red.shade600,
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    }
-  }
-
-  // ============ Repeat Option Card ============
-  Widget _buildRepeatOption() {
-    final repeatLabel = _repeatCount == null ? '∞' : '$_repeatCount×';
-
-    return InkWell(
-      onTap: _showRepeatPicker,
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: _primaryColor.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: _primaryColor.withOpacity(0.14),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(10.r),
-              decoration: BoxDecoration(
-                color: _secondaryColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Icon(
-                Icons.repeat_rounded,
-                color: _secondaryColor,
-                size: 20.sp,
-              ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'repeat'.tr(),
-                    style: TextStyle(
-                      fontFamily: 'cairo',
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: _primaryColor,
-                    ),
-                  ),
-                  Text(
-                    _repeatCount == null
-                        ? 'infiniteRepeat'.tr()
-                        : 'repeatNTimes'.tr(args: [_repeatCount.toString()]),
-                    style: TextStyle(
-                      fontFamily: 'cairo',
-                      fontSize: 11.sp,
-                      color: _primaryColor.withOpacity(0.55),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: _secondaryColor.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    repeatLabel,
-                    style: TextStyle(
-                      fontFamily: 'cairo',
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w800,
-                      color: _secondaryColor,
-                    ),
-                  ),
-                  SizedBox(width: 4.w),
-                  Icon(
-                    Icons.expand_more_rounded,
-                    color: _secondaryColor,
-                    size: 18.sp,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============ Play Range Option Card ============
-  Widget _buildPlayRangeOption() {
-    final isDefault = _startSurah == widget.surahNumber &&
-        _startVerse == widget.verseNumber &&
-        _endSurah == widget.surahNumber &&
-        _endVerse == widget.verseNumber;
-
-    return InkWell(
-      onTap: _showRangePicker,
-      borderRadius: BorderRadius.circular(16.r),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: _primaryColor.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: _primaryColor.withOpacity(0.14),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(10.r),
-              decoration: BoxDecoration(
-                color: _secondaryColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Icon(
-                Icons.linear_scale_rounded,
-                color: _primaryColor,
-                size: 20.sp,
-              ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'playRange'.tr(),
-                    style: TextStyle(
-                      fontFamily: 'cairo',
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: _primaryColor,
-                    ),
-                  ),
-                  Text(
-                    _startSurah == _endSurah
-                        ? '${_metadataService.getSurahNameArabic(_startSurah)} $_startVerse → $_endVerse'
-                        : '${_metadataService.getSurahNameArabic(_startSurah)}:$_startVerse → ${_metadataService.getSurahNameArabic(_endSurah)}:$_endVerse',
-                    style: TextStyle(
-                      fontFamily: 'cairo',
-                      fontSize: 11.sp,
-                      color: _primaryColor.withOpacity(0.55),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: _primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _startSurah == _endSurah
-                        ? '$_startVerse–$_endVerse'
-                        : '$_startSurah:$_startVerse–$_endSurah:$_endVerse',
-                    style: TextStyle(
-                      fontFamily: 'cairo',
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w800,
-                      color: _primaryColor,
-                    ),
-                  ),
-                  SizedBox(width: 4.w),
-                  Icon(
-                    Icons.expand_more_rounded,
-                    color: _primaryColor.withOpacity(0.7),
-                    size: 18.sp,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============ Repeat Picker Bottom Sheet ============
-  void _showRepeatPicker() {
-    final options = [
-      {'label': '1×', 'sublabel': 'once'.tr(), 'value': 1},
-      {'label': '2×', 'sublabel': 'twice'.tr(), 'value': 2},
-      {'label': '3×', 'sublabel': 'threeTimes'.tr(), 'value': 3},
-      {'label': '5×', 'sublabel': 'fiveTimes'.tr(), 'value': 5},
-      {'label': '10×', 'sublabel': 'tenTimes'.tr(), 'value': 10},
-      {'label': '20×', 'sublabel': 'twentyTimes'.tr(), 'value': 20},
-      {'label': '∞', 'sublabel': 'infiniteRepeat'.tr(), 'value': null},
-    ];
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Container(
-          decoration: BoxDecoration(
-            color: _backgroundColor,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(28.r),
-              topRight: Radius.circular(28.r),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag handle
-              Container(
-                margin: EdgeInsets.only(top: 12.h, bottom: 8.h),
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-              ),
-              // Header
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(10.r),
-                      decoration: BoxDecoration(
-                        color: _secondaryColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Icon(
-                        Icons.repeat_rounded,
-                        color: _secondaryColor,
-                        size: 22.sp,
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Text(
-                      'selectRepeat'.tr(),
-                      style: TextStyle(
-                        fontFamily: 'cairo',
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w800,
-                        color: _primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(color: _primaryColor.withOpacity(0.1), height: 1),
-              // Options list
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                itemCount: options.length,
-                itemBuilder: (_, i) {
-                  final opt = options[i];
-                  final val = opt['value'] as int?;
-                  final isSelected = _repeatCount == val;
-
-                  return GestureDetector(
-                    onTap: () {
-                      setSheetState(() {});
-                      setState(() => _repeatCount = val);
-                      Navigator.pop(ctx);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: EdgeInsets.only(bottom: 8.h),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 14.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? _secondaryColor.withOpacity(0.15)
-                            : _primaryColor.withOpacity(0.04),
-                        borderRadius: BorderRadius.circular(14.r),
-                        border: Border.all(
-                          color: isSelected
-                              ? _secondaryColor.withOpacity(0.5)
-                              : _primaryColor.withOpacity(0.08),
-                          width: isSelected ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 44.w,
-                            alignment: Alignment.center,
-                            child: Text(
-                              opt['label'] as String,
-                              style: TextStyle(
-                                fontFamily: 'cairo',
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.w800,
-                                color: isSelected ? _secondaryColor : _primaryColor,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Text(
-                              opt['sublabel'] as String,
-                              style: TextStyle(
-                                fontFamily: 'cairo',
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w500,
-                                color: _primaryColor.withOpacity(0.7),
-                              ),
-                            ),
-                          ),
-                          if (isSelected)
-                            Container(
-                              padding: EdgeInsets.all(5.r),
-                              decoration: BoxDecoration(
-                                color: _secondaryColor,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.check_rounded,
-                                color: Colors.white,
-                                size: 14.sp,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              SizedBox(height: 16.h),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ============ Range Picker Bottom Sheet (cross-surah) ============
-  void _showRangePicker() {
-    // Working copies
-    int tempStartSurah = _startSurah;
-    int tempStartVerse = _startVerse;
-    int tempEndSurah = _endSurah;
-    int tempEndVerse = _endVerse;
-
-    // Total surahs in the Quran
-    const totalSurahs = 114;
-
-    // Scroll controllers for the 4 wheels
-    final startSurahCtrl = FixedExtentScrollController(initialItem: tempStartSurah - 1);
-    final startVerseCtrl = FixedExtentScrollController(initialItem: tempStartVerse - 1);
-    final endSurahCtrl = FixedExtentScrollController(initialItem: tempEndSurah - 1);
-    final endVerseCtrl = FixedExtentScrollController(initialItem: tempEndVerse - 1);
-
-    // Helper: is end >= start?
-    bool isValid(int ss, int sv, int es, int ev) => es > ss || (es == ss && ev >= sv);
-
-    // Helper: clamp end-verse when end-surah changes
-    void clampEndVerse(void Function(void Function()) setS) {
-      final maxV = _metadataService.getVerseCount(tempEndSurah);
-      if (tempEndVerse > maxV) {
-        tempEndVerse = maxV;
-        endVerseCtrl.jumpToItem(maxV - 1);
-      }
-      // Also ensure end >= start
-      if (!isValid(tempStartSurah, tempStartVerse, tempEndSurah, tempEndVerse)) {
-        tempEndSurah = tempStartSurah;
-        tempEndVerse = tempStartVerse;
-        endSurahCtrl.animateToItem(
-          tempEndSurah - 1,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-        endVerseCtrl.animateToItem(
-          tempEndVerse - 1,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-      setS(() {});
-    }
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          final startVerseCount = _metadataService.getVerseCount(tempStartSurah);
-          final endVerseCount = _metadataService.getVerseCount(tempEndSurah);
-          final valid = isValid(tempStartSurah, tempStartVerse, tempEndSurah, tempEndVerse);
-
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.48,
+        minChildSize: 0.35,
+        maxChildSize: 0.88,
+        snap: true,
+        snapSizes: const [0.48, 0.88],
+        builder: (context, scrollController) {
           return Container(
             decoration: BoxDecoration(
-              color: _backgroundColor,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(28.r),
-                topRight: Radius.circular(28.r),
+              color: AppColors.scaffoldLight,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppRadii.xl),
               ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 16,
+                  offset: Offset(0, -4),
+                ),
+              ],
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Drag handle ───────────────────────────────────────────
-                Container(
-                  margin: EdgeInsets.only(top: 12.h, bottom: 8.h),
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: _primaryColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(100),
+                // 1. Drag Handle
+                Center(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 10.h, bottom: 6.h),
+                    width: AppSizes.dragHandleWidth,
+                    height: AppSizes.dragHandleHeight,
+                    decoration: BoxDecoration(
+                      color: AppColors.textMuted.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
                   ),
                 ),
 
-                // ── Header ────────────────────────────────────────────────
+                // 2. Top Header Row (Ref 19 & 20: Title on right, Star & Share on left)
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: EdgeInsets.all(10.r),
-                        decoration: BoxDecoration(
-                          color: _primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: Icon(
-                          Icons.linear_scale_rounded,
-                          color: _primaryColor,
-                          size: 22.sp,
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
+                      // Right: Surah Name : Ayah Number (e.g. "البقرة : ٦")
                       Text(
-                        'selectRange'.tr(),
-                        style: TextStyle(
-                          fontFamily: 'cairo',
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w800,
-                          color: _primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(color: _primaryColor.withOpacity(0.1), height: 1),
-                SizedBox(height: 10.h),
-
-                // ── Column labels ─────────────────────────────────────────
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w),
-                  child: Row(
-                    children: [
-                      // Start labels
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Center(
-                                child: Text(
-                                  'startSurah'.tr(),
-                                  style: TextStyle(
-                                    fontFamily: 'cairo',
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: _secondaryColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Center(
-                                child: Text(
-                                  'startVerse'.tr(),
-                                  style: TextStyle(
-                                    fontFamily: 'cairo',
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: _secondaryColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Arrow
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 6.w),
-                        child: Icon(
-                          Icons.arrow_forward_rounded,
-                          color: _primaryColor,
-                          size: 16.sp,
-                        ),
-                      ),
-                      // End labels
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Center(
-                                child: Text(
-                                  'endSurah'.tr(),
-                                  style: TextStyle(
-                                    fontFamily: 'cairo',
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: _primaryColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Center(
-                                child: Text(
-                                  'endVerse'.tr(),
-                                  style: TextStyle(
-                                    fontFamily: 'cairo',
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: _primaryColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 6.h),
-
-                // ── Four wheels: startSurah | startVerse | endSurah | endVerse ──
-                SizedBox(
-                  height: 200.h,
-                  child: Row(
-                    children: [
-                      // ── Start surah ──
-                      Expanded(
-                        child: ListWheelScrollView.useDelegate(
-                          controller: startSurahCtrl,
-                          itemExtent: 46.h,
-                          perspective: 0.003,
-                          diameterRatio: 1.6,
-                          physics: const FixedExtentScrollPhysics(),
-                          onSelectedItemChanged: (idx) {
-                            tempStartSurah = idx + 1;
-                            // clamp start verse
-                            final maxV = _metadataService.getVerseCount(tempStartSurah);
-                            if (tempStartVerse > maxV) {
-                              tempStartVerse = maxV;
-                              startVerseCtrl.animateToItem(
-                                maxV - 1,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeOut,
-                              );
-                            }
-                            clampEndVerse(setSheetState);
-                          },
-                          childDelegate: ListWheelChildBuilderDelegate(
-                            childCount: totalSurahs,
-                            builder: (ctx, idx) {
-                              final s = idx + 1;
-                              final isSel = s == tempStartSurah;
-                              return Center(
-                                child: AnimatedDefaultTextStyle(
-                                  duration: const Duration(milliseconds: 150),
-                                  style: TextStyle(
-                                    fontFamily: 'cairo',
-                                    fontSize: isSel ? 15.sp : 12.sp,
-                                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w400,
-                                    color: isSel ? _secondaryColor : _primaryColor.withOpacity(0.4),
-                                  ),
-                                  child: Text(
-                                    _metadataService.getSurahNameArabic(s),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-
-                      // ── Start verse ──
-                      Expanded(
-                        child: ListWheelScrollView.useDelegate(
-                          controller: startVerseCtrl,
-                          itemExtent: 46.h,
-                          perspective: 0.003,
-                          diameterRatio: 1.6,
-                          physics: const FixedExtentScrollPhysics(),
-                          onSelectedItemChanged: (idx) {
-                            tempStartVerse = idx + 1;
-                            clampEndVerse(setSheetState);
-                          },
-                          childDelegate: ListWheelChildBuilderDelegate(
-                            childCount: startVerseCount,
-                            builder: (ctx, idx) {
-                              final v = idx + 1;
-                              final isSel = v == tempStartVerse;
-                              return Center(
-                                child: AnimatedDefaultTextStyle(
-                                  duration: const Duration(milliseconds: 150),
-                                  style: TextStyle(
-                                    fontFamily: 'cairo',
-                                    fontSize: isSel ? 20.sp : 15.sp,
-                                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w400,
-                                    color:
-                                        isSel ? _secondaryColor : _primaryColor.withOpacity(0.45),
-                                  ),
-                                  child: Text('$v'),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-
-                      // ── Centre arrow divider ──
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4.w),
-                        child: Icon(
-                          Icons.arrow_forward_rounded,
-                          color: _primaryColor.withOpacity(0.3),
-                          size: 16.sp,
-                        ),
-                      ),
-
-                      // ── End surah ──
-                      Expanded(
-                        child: ListWheelScrollView.useDelegate(
-                          controller: endSurahCtrl,
-                          itemExtent: 46.h,
-                          perspective: 0.003,
-                          diameterRatio: 1.6,
-                          physics: const FixedExtentScrollPhysics(),
-                          onSelectedItemChanged: (idx) {
-                            tempEndSurah = idx + 1;
-                            clampEndVerse(setSheetState);
-                          },
-                          childDelegate: ListWheelChildBuilderDelegate(
-                            childCount: totalSurahs,
-                            builder: (ctx, idx) {
-                              final s = idx + 1;
-                              final isSel = s == tempEndSurah;
-                              // Invalid if end surah < start surah
-                              final isInvalid = s < tempStartSurah;
-                              return Center(
-                                child: AnimatedDefaultTextStyle(
-                                  duration: const Duration(milliseconds: 150),
-                                  style: TextStyle(
-                                    fontFamily: 'cairo',
-                                    fontSize: isSel ? 15.sp : 12.sp,
-                                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w400,
-                                    color: isInvalid
-                                        ? _primaryColor.withOpacity(0.15)
-                                        : isSel
-                                            ? _primaryColor
-                                            : _primaryColor.withOpacity(0.4),
-                                  ),
-                                  child: Text(
-                                    _metadataService.getSurahNameArabic(s),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-
-                      // ── End verse ──
-                      Expanded(
-                        child: ListWheelScrollView.useDelegate(
-                          controller: endVerseCtrl,
-                          itemExtent: 46.h,
-                          perspective: 0.003,
-                          diameterRatio: 1.6,
-                          physics: const FixedExtentScrollPhysics(),
-                          onSelectedItemChanged: (idx) {
-                            final newEnd = idx + 1;
-                            // If same surah, end must be >= start verse
-                            if (tempEndSurah == tempStartSurah && newEnd < tempStartVerse) {
-                              endVerseCtrl.animateToItem(
-                                tempStartVerse - 1,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeOut,
-                              );
-                              return;
-                            }
-                            setSheetState(() => tempEndVerse = newEnd);
-                          },
-                          childDelegate: ListWheelChildBuilderDelegate(
-                            childCount: endVerseCount,
-                            builder: (ctx, idx) {
-                              final v = idx + 1;
-                              final isSel = v == tempEndVerse;
-                              final isInvalid =
-                                  tempEndSurah == tempStartSurah && v < tempStartVerse;
-                              return Center(
-                                child: AnimatedDefaultTextStyle(
-                                  duration: const Duration(milliseconds: 150),
-                                  style: TextStyle(
-                                    fontFamily: 'cairo',
-                                    fontSize: isSel ? 20.sp : 15.sp,
-                                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w400,
-                                    color: isInvalid
-                                        ? _primaryColor.withOpacity(0.2)
-                                        : isSel
-                                            ? _primaryColor
-                                            : _primaryColor.withOpacity(0.45),
-                                  ),
-                                  child: Text('$v'),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 12.h),
-
-                // ── Validation hint ───────────────────────────────────────
-                AnimatedOpacity(
-                  opacity: valid ? 0.0 : 1.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.info_outline_rounded, color: Colors.red.shade400, size: 14.sp),
-                        SizedBox(width: 6.w),
-                        Text(
-                          'endMustBeAfterStart'.tr(),
-                          style: TextStyle(
-                            fontFamily: 'cairo',
-                            fontSize: 11.sp,
-                            color: Colors.red.shade400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 12.h),
-
-                // ── Confirm button ────────────────────────────────────────
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: valid
-                          ? () {
-                              setState(() {
-                                _startSurah = tempStartSurah;
-                                _startVerse = tempStartVerse;
-                                _endSurah = tempEndSurah;
-                                _endVerse = tempEndVerse;
-                              });
-                              Navigator.pop(ctx);
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _secondaryColor,
-                        disabledBackgroundColor: _primaryColor.withOpacity(0.15),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'confirm'.tr(),
-                        style: TextStyle(
-                          fontFamily: 'cairo',
-                          fontSize: 15.sp,
+                        '$surahName : $ayahNumeral',
+                        style: AppTypography.titleLarge.copyWith(
                           fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                    ),
+
+                      // Left: Star and Share actions
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Icons.share_outlined,
+                              color: AppColors.primary,
+                              size: 24.sp,
+                            ),
+                            tooltip: AppStrings.tr(AppStrings.share),
+                            onPressed: onShareTap,
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              isStarred ? Icons.star_rounded : Icons.star_border_rounded,
+                              color: isStarred ? AppColors.bookmarkYellow : AppColors.primary,
+                              size: 26.sp,
+                            ),
+                            tooltip: AppStrings.tr(AppStrings.starAyah),
+                            onPressed: onStarTap,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 24.h),
+
+                // 3. Scrollable Cards Content
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                    children: [
+                      // Card 1: Bookmarks
+                      _buildOptionsCard(
+                        children: [
+                          _buildActionRow(
+                            title: AppStrings.tr(AppStrings.redBookmark),
+                            icon: Icons.bookmark_border_rounded,
+                            iconColor: AppColors.bookmarkPink,
+                            onTap: onBookmarkTap,
+                          ),
+                          _buildDivider(),
+                          _buildActionRow(
+                            title: AppStrings.tr(AppStrings.anotherBookmark),
+                            icon: Icons.bookmark_border_rounded,
+                            iconColor: AppColors.primary,
+                            onTap: onAnotherBookmarkTap,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+
+                      // Card 2: Recitation
+                      _buildOptionsCard(
+                        children: [
+                          _buildActionRow(
+                            title: AppStrings.tr(AppStrings.recitation),
+                            icon: Icons.play_arrow_rounded,
+                            iconColor: AppColors.primary,
+                            onTap: onReciteTap,
+                          ),
+                          _buildDivider(),
+                          _buildActionRow(
+                            title: AppStrings.tr(AppStrings.playTo),
+                            icon: Icons.skip_next_rounded,
+                            iconColor: AppColors.primary,
+                            onTap: onPlayToTap,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+
+                      // Card 3: Library / Tafsir
+                      _buildOptionsCard(
+                        children: [
+                          _buildActionRow(
+                            title: AppStrings.tr(AppStrings.library),
+                            subtitle: AppStrings.tr(AppStrings.librarySubtitle),
+                            icon: Icons.menu_book_rounded,
+                            iconColor: AppColors.primary,
+                            onTap: onLibraryTap,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+
+                      // Card 4: Notes
+                      _buildOptionsCard(
+                        children: [
+                          _buildActionRow(
+                            title: AppStrings.tr(AppStrings.notesTitle),
+                            icon: Icons.edit_outlined,
+                            iconColor: AppColors.primary,
+                            onTap: onNotesTap,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 24.h),
+                    ],
+                  ),
+                ),
               ],
             ),
           );
@@ -1879,256 +257,87 @@ class _AyahOptionsSheetState extends State<AyahOptionsSheet> with TickerProvider
       ),
     );
   }
-}
 
-// ============ Modern Bookmark Item Widget ============
-class _ModernBookmarkItem extends StatefulWidget {
-  final BookmarkModel bookmark;
-  final Color primaryColor;
-  final VoidCallback onTap;
-  final VoidCallback onDelete;
-  final int index;
-
-  const _ModernBookmarkItem({
-    required this.bookmark,
-    required this.primaryColor,
-    required this.onTap,
-    required this.onDelete,
-    required this.index,
-  });
-
-  @override
-  State<_ModernBookmarkItem> createState() => _ModernBookmarkItemState();
-}
-
-class _ModernBookmarkItemState extends State<_ModernBookmarkItem>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bookmarkColor = Color(int.parse("0x${widget.bookmark.color}"));
-
-    return ScaleTransition(
-      scale: _scaleAnimation,
-      child: InkWell(
-        onTap: () {
-          _controller.forward().then((_) => _controller.reverse());
-          widget.onTap();
-        },
-        borderRadius: BorderRadius.circular(12.r),
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-          padding: EdgeInsets.all(12.r),
-          decoration: BoxDecoration(
-            color: bookmarkColor.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: bookmarkColor.withOpacity(0.2),
-              width: 1,
-            ),
+  Widget _buildOptionsCard({required List<Widget> children}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8.r),
-                decoration: BoxDecoration(
-                  color: bookmarkColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Icon(
-                  Icons.bookmark_rounded,
-                  color: bookmarkColor,
-                  size: 18.sp,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.bookmark.name,
-                      style: TextStyle(
-                        fontFamily: "cairo",
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w700,
-                        color: widget.primaryColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      "${"surah".tr()} ${widget.bookmark.suraNumber} - ${"verse".tr()} ${widget.bookmark.verseNumber}",
-                      style: TextStyle(
-                        fontFamily: "cairo",
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w500,
-                        color: widget.primaryColor.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                flex: 3,
-                child: Text(
-                  _metadataService.getVerse(
-                    widget.bookmark.suraNumber,
-                    widget.bookmark.verseNumber,
-                  ),
-                  textDirection: m.TextDirection.rtl,
-                  style: TextStyle(
-                    fontFamily: fontFamilies[0],
-                    fontSize: 11.sp,
-                    color: widget.primaryColor.withOpacity(0.8),
-                    height: 1.6,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
-                ),
-              ),
-              IconButton(
-                onPressed: widget.onDelete,
-                icon: Container(
-                  padding: EdgeInsets.all(6.r),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Icon(
-                    Icons.delete_outline_rounded,
-                    color: Colors.red.shade600,
-                    size: 18.sp,
-                  ),
-                ),
-                tooltip: "delete".tr(),
-              ),
-            ],
-          ),
-        ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: children,
       ),
     );
   }
-}
 
-// ============ Reciter Card Widget ============
-class _ReciterCard extends StatelessWidget {
-  final QuranPageReciter reciter;
-  final bool isSelected;
-  final Color primaryColor;
-  final Color secondaryColor;
-  final VoidCallback onTap;
-
-  const _ReciterCard({
-    required this.reciter,
-    required this.isSelected,
-    required this.primaryColor,
-    required this.secondaryColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
+  Widget _buildActionRow({
+    required String title,
+    String? subtitle,
+    required IconData icon,
+    required Color iconColor,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        margin: EdgeInsets.only(bottom: 12.h),
-        padding: EdgeInsets.all(16.r),
-        decoration: BoxDecoration(
-          color: isSelected ? secondaryColor.withOpacity(0.15) : primaryColor.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: isSelected ? secondaryColor.withOpacity(0.5) : primaryColor.withOpacity(0.1),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
+      borderRadius: BorderRadius.circular(16.r),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Avatar
-            Container(
-              padding: EdgeInsets.all(12.r),
-              decoration: BoxDecoration(
-                color:
-                    isSelected ? secondaryColor.withOpacity(0.2) : primaryColor.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Icon(
-                Icons.person_rounded,
-                color: isSelected ? secondaryColor : primaryColor,
-                size: 24.sp,
-              ),
-            ),
-
-            SizedBox(width: 14.w),
-
-            // Names
+            // Right: Title & optional subtitle
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    reciter.name,
-                    style: TextStyle(
-                      fontFamily: "cairo",
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: primaryColor,
+                    title,
+                    style: AppTypography.bodyLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    reciter.englishName,
-                    style: TextStyle(
-                      fontFamily: "cairo",
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w500,
-                      color: primaryColor.withOpacity(0.6),
+                  if (subtitle != null) ...[
+                    SizedBox(height: 2.h),
+                    Text(
+                      subtitle,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
 
-            // Check icon
-            if (isSelected)
-              Container(
-                padding: EdgeInsets.all(6.r),
-                decoration: BoxDecoration(
-                  color: secondaryColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 16.sp,
-                ),
-              ),
+            // Left: Icon
+            Icon(
+              icon,
+              color: iconColor,
+              size: 24.sp,
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: AppColors.divider,
+      indent: 16.w,
+      endIndent: 16.w,
     );
   }
 }

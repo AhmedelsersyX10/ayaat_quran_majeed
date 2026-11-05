@@ -101,8 +101,19 @@ extension PageViewExtension on QuranDetailsPageState {
       );
     }
 
-    // Selected or searched verse highlight
-    if (selectedSpan.isNotEmpty && selectedSpan.contains(':')) {
+    // Reader selected ayah highlight (Task 2.05)
+    final readerState = context.watch<QuranReaderCubit>().state;
+    if (readerState.selectedAyah != null) {
+      final sel = readerState.selectedAyah!;
+      activeHighlights.add(
+        qp.HighlightVerse(
+          surah: sel.surahNumber,
+          verseNumber: sel.ayahNumber,
+          page: sel.pageNumber,
+          color: AppColors.playbackHighlight,
+        ),
+      );
+    } else if (selectedSpan.isNotEmpty && selectedSpan.contains(':')) {
       final parts = selectedSpan.split(':');
       final s = int.tryParse(parts[0]) ?? 1;
       final a = int.tryParse(parts[1]) ?? 1;
@@ -111,7 +122,7 @@ extension PageViewExtension on QuranDetailsPageState {
           surah: s,
           verseNumber: a,
           page: _metadataService.getPageNumber(s, a),
-          color: secondaryColors[getValue("quranPageolorsIndex")].withOpacity(0.35),
+          color: AppColors.playbackHighlight,
         ),
       );
     } else if (shouldHighlightText && highlightVerse is String && highlightVerse.contains(':')) {
@@ -123,7 +134,7 @@ extension PageViewExtension on QuranDetailsPageState {
           surah: s,
           verseNumber: a,
           page: _metadataService.getPageNumber(s, a),
-          color: secondaryColors[getValue("quranPageolorsIndex")].withOpacity(0.35),
+          color: AppColors.playbackHighlight,
         ),
       );
     }
@@ -159,6 +170,7 @@ extension PageViewExtension on QuranDetailsPageState {
             updateState(() {
               selectedSpan = "$surah:$verse";
             });
+            context.read<QuranReaderCubit>().selectAyah(surah, verse);
             final page = _metadataService.getPageNumber(surah, verse);
             showAyahOptionsSheet(page, surah, verse);
           },

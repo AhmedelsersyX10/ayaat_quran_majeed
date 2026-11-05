@@ -1,4 +1,5 @@
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
+import 'package:ayaat_quran_majeed/quran/data/models/selected_ayah.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -20,6 +21,9 @@ class QuranReadingState {
   /// Target verse to temporarily highlight on navigation (e.g. "2:255").
   final String? targetHighlightVerse;
 
+  /// Currently selected ayah in the reader (for options sheet & visual highlight).
+  final SelectedAyah? selectedAyah;
+
   const QuranReadingState({
     required this.isLoading,
     required this.position,
@@ -27,6 +31,7 @@ class QuranReadingState {
     this.isSliderDragging = false,
     this.draggingPage,
     this.targetHighlightVerse,
+    this.selectedAyah,
   });
 
   factory QuranReadingState.initial() {
@@ -37,6 +42,7 @@ class QuranReadingState {
       isSliderDragging: false,
       draggingPage: null,
       targetHighlightVerse: null,
+      selectedAyah: null,
     );
   }
 
@@ -50,6 +56,8 @@ class QuranReadingState {
     bool clearDraggingPage = false,
     String? targetHighlightVerse,
     bool clearHighlight = false,
+    SelectedAyah? selectedAyah,
+    bool clearSelectedAyah = false,
   }) {
     return QuranReadingState(
       isLoading: isLoading ?? this.isLoading,
@@ -59,6 +67,8 @@ class QuranReadingState {
       draggingPage: clearDraggingPage ? null : (draggingPage ?? this.draggingPage),
       targetHighlightVerse:
           clearHighlight ? null : (targetHighlightVerse ?? this.targetHighlightVerse),
+      selectedAyah:
+          clearSelectedAyah ? null : (selectedAyah ?? this.selectedAyah),
     );
   }
 }
@@ -267,6 +277,29 @@ class QuranReaderCubit extends Cubit<QuranReadingState> {
   /// Clear any pending verse highlight.
   void clearHighlight() {
     emit(state.copyWith(clearHighlight: true));
+  }
+
+  /// Selects an ayah, updating reader state and highlighting it on the page.
+  void selectAyah(int surahNumber, int ayahNumber) {
+    final safeSurah = surahNumber.clamp(1, 114);
+    final maxAyah = _metadataService.getVerseCount(safeSurah);
+    final safeAyah = ayahNumber.clamp(1, maxAyah);
+    final page = _metadataService.getPageNumber(safeSurah, safeAyah);
+
+    emit(
+      state.copyWith(
+        selectedAyah: SelectedAyah(
+          surahNumber: safeSurah,
+          ayahNumber: safeAyah,
+          pageNumber: page,
+        ),
+      ),
+    );
+  }
+
+  /// Clears the currently selected ayah and its highlight.
+  void clearSelectedAyah() {
+    emit(state.copyWith(clearSelectedAyah: true));
   }
 
   /// Update only the view mode (e.g., page, vertical, verse-by-verse).

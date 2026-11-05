@@ -1,6 +1,7 @@
 // ignore_for_file: unrelated_type_equality_checks, depend_on_referenced_packages, file_names
 import 'dart:async';
 import 'dart:convert';
+import 'package:ayaat_quran_majeed/core/theme/app_colors.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
@@ -42,8 +43,6 @@ import 'package:flutter/foundation.dart' as flutter_foundation;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:qcf_quran_plus/qcf_quran_plus.dart' as qp;
@@ -983,55 +982,55 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
   ) {
     if (!mounted) return;
 
-    final bookmarkCubit = context.read<BookmarkCubit>();
     final quranReaderCubit = context.read<QuranReaderCubit>();
+    quranReaderCubit.selectAyah(surahNumber, verseNumber);
 
-    showMaterialModalBottomSheet(
-        enableDrag: true,
-        duration: const Duration(milliseconds: 500),
-        backgroundColor: Colors.transparent,
-        context: context,
-        animationCurve: Curves.easeInOutQuart,
-        elevation: 0,
-        bounce: true,
-        builder: (c) => MultiBlocProvider(
-              providers: [
-                BlocProvider.value(value: bookmarkCubit),
-                BlocProvider.value(value: quranReaderCubit),
-              ],
-              child: AyahOptionsSheet(
-                surahNumber: surahNumber,
-                verseNumber: verseNumber,
-                index: index,
-                starredVerses: starredVerses,
-                bookmarks: bookmarks,
-                reciters: reciters,
-                translationDataList: translationDataList,
-                verseKey: (index - 1 >= 0 && index - 1 < richTextKeys.length)
-                    ? richTextKeys[index - 1]
-                    : null,
-                appDir: appDir,
-                jsonData: widget.jsonData,
-                itemScrollController: itemScrollController,
-                onUpdate: () {
-                  if (mounted) {
-                    // مسح cache الـ spans لإعادة بناء الآيات بألوان البوكمارك الجديدة
-                    _verticalSpansCache.clear();
-                    _pageSpansCache.clear();
-                    setState(() {
-                      selectedSpan = ""; // مسح التظليل المؤقت أيضاً
-                    });
-                  }
-                },
-                onAddStarredVerse: addStarredVerse,
-                onRemoveStarredVerse: removeStarredVerse,
-                onFetchBookmarks: fetchBookmarks,
-              ),
-            )).then((_) {
-      // Clear manual highlight when bottom sheet is dismissed
+    AyahOptionsSheet.show(
+      context,
+      surahNumber: surahNumber,
+      verseNumber: verseNumber,
+      isStarred: isVerseStarred(surahNumber, verseNumber),
+      onStarTap: () {
+        if (isVerseStarred(surahNumber, verseNumber)) {
+          removeStarredVerse(surahNumber, verseNumber);
+        } else {
+          addStarredVerse(surahNumber, verseNumber);
+        }
+        setState(() {});
+      },
+      onShareTap: () {
+        showDialog(
+          context: context,
+          builder: (_) => ShareAyahDialog(
+            surahNumber: surahNumber,
+            verseNumber: verseNumber,
+            index: index,
+            jsonData: widget.jsonData ?? JsonAssetService.surahsData,
+            translationDataList: translationDataList,
+          ),
+        );
+      },
+      onBookmarkTap: () {
+        // Feature action contract: bookmarks task
+      },
+      onAnotherBookmarkTap: () {
+        // Feature action contract: bookmarks task
+      },
+      onReciteTap: () {
+        // Feature action contract: audio task
+      },
+      onPlayToTap: () {
+        // Feature action contract: audio task
+      },
+      onLibraryTap: () {
+        // Feature action contract: tafsir task
+      },
+      onNotesTap: () {
+        // Feature action contract: notes task
+      },
+    ).then((_) {
       if (mounted) {
-        _pageSpansCache.remove(index);
-        _verticalSpansCache.remove(index);
+        quranReaderCubit.clearSelectedAyah();
         setState(() {
           selectedSpan = "";
         });
