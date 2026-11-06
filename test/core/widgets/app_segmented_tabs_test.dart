@@ -63,6 +63,25 @@ void main() {
 
       expect(selected, equals(2));
     });
+
+    testWidgets('renders outlined variant with custom width and border styling', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          AppSegmentedTabs(
+            width: 200,
+            variant: AppSegmentedTabVariant.outlined,
+            tabs: const ['السور', 'الأرباع'],
+            selectedIndex: 1,
+            onTabChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('السور'), findsOneWidget);
+      expect(find.text('الأرباع'), findsOneWidget);
+      expect(find.byType(AppSegmentedTabs), findsOneWidget);
+    });
   });
 }
 

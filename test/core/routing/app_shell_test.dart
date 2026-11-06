@@ -4,6 +4,7 @@ import 'package:ayaat_quran_majeed/core/theme/app_theme.dart';
 import 'package:ayaat_quran_majeed/core/widgets/app_bottom_nav.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/presentation/views/bookmarks_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/views/surahs_tab_view.dart';
+import 'package:ayaat_quran_majeed/features/index/presentation/widgets/index_sheet_shell.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/views/khatma_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/notes/presentation/views/notes_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/starred/presentation/views/starred_tab_view.dart';
@@ -190,7 +191,7 @@ void main() {
 
       // Verify that SurahsTabView state was preserved (still on "الأرباع" tab)
       expect(find.byType(SurahsTabView), findsOneWidget);
-      expect(find.text('الفهرس'), findsOneWidget);
+      expect(find.byType(IndexSheetShell), findsOneWidget);
     });
   });
 }

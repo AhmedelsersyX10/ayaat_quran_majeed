@@ -2,6 +2,9 @@ import 'package:ayaat_quran_majeed/core/network/api_client.dart';
 import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
 import 'package:ayaat_quran_majeed/core/storage/hive_storage_service.dart';
 import 'package:ayaat_quran_majeed/core/storage/preferences_storage.dart';
+import 'package:ayaat_quran_majeed/features/index/data/repositories/index_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
+import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
 import 'package:ayaat_quran_majeed/features/today/data/repositories/today_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
 import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
@@ -96,6 +99,12 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<IndexRepository>()) {
+    sl.registerLazySingleton<IndexRepository>(
+      () => IndexRepositoryImpl(preferences: sl<AppPreferences>()),
+    );
+  }
+
   // ---------------------------------------------------------
   // 3. Presentation / Cubits & Blocs (Factories)
   // ---------------------------------------------------------
@@ -131,6 +140,12 @@ Future<void> initInjection() async {
   if (!sl.isRegistered<TodayCubit>()) {
     sl.registerFactory<TodayCubit>(
       () => TodayCubit(sl<TodayRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<IndexCubit>()) {
+    sl.registerFactory<IndexCubit>(
+      () => IndexCubit(sl<IndexRepository>()),
     );
   }
 }

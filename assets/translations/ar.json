@@ -121,6 +121,8 @@
   "index_title": "الفهرس",
   "tab_surahs": "السور",
   "tab_quarters": "الأرباع",
+  "index_load_failed": "تعذر تحميل الفهرس",
+  "empty_index": "لا توجد بيانات للفهرس",
   "khatma_title": "الختمة",
   "new_khatma": "ختمة جديدة",
   "suggested_khatma": "مقترحة",

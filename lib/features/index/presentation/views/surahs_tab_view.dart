@@ -1,30 +1,59 @@
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
+import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
 import 'package:ayaat_quran_majeed/core/localization/arabic_numbers.dart';
 import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_spacing.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
-import 'package:ayaat_quran_majeed/core/widgets/app_segmented_tabs.dart';
 import 'package:ayaat_quran_majeed/core/widgets/hizb_quarter_circle.dart';
+import 'package:ayaat_quran_majeed/features/index/domain/entities/index_tab.dart';
+import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
+import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
+import 'package:ayaat_quran_majeed/features/index/presentation/widgets/index_sheet_shell.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/json_asset_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 /// Tab 0: Surahs & Quarters Index View.
 /// Conforms to reference screenshots 03_index_surahs_tab and 04_index_quarters_tab.
-class SurahsTabView extends StatefulWidget {
+/// Uses [IndexSheetShell] driven by [IndexCubit], keeping the container separate from list data.
+class SurahsTabView extends StatelessWidget {
   const SurahsTabView({super.key});
 
   @override
-  State<SurahsTabView> createState() => _SurahsTabViewState();
+  Widget build(BuildContext context) {
+    return BlocProvider<IndexCubit>(
+      create: (_) => sl.isRegistered<IndexCubit>()
+          ? (sl<IndexCubit>()..loadState())
+          : (IndexCubit(const _FallbackIndexRepository())..loadState()),
+      child: const _SurahsTabViewContent(),
+    );
+  }
 }
 
-class _SurahsTabViewState extends State<SurahsTabView>
+class _FallbackIndexRepository implements IndexRepository {
+  const _FallbackIndexRepository();
+
+  @override
+  Future<IndexTab> getActiveTab() async => IndexTab.surahs;
+
+  @override
+  Future<void> setActiveTab(IndexTab tab) async {}
+}
+
+class _SurahsTabViewContent extends StatefulWidget {
+  const _SurahsTabViewContent();
+
+  @override
+  State<_SurahsTabViewContent> createState() => _SurahsTabViewContentState();
+}
+
+class _SurahsTabViewContentState extends State<_SurahsTabViewContent>
     with AutomaticKeepAliveClientMixin {
   final QuranMetadataService _metadataService = const QuranMetadataService();
-  int _selectedSegment = 0;
   int _lastReadSurah = 1;
 
   @override
@@ -75,58 +104,12 @@ class _SurahsTabViewState extends State<SurahsTabView>
 
     return Scaffold(
       backgroundColor: colors.scaffoldBackground,
-      appBar: AppBar(
-        backgroundColor: colors.scaffoldBackground,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        title: Text(
-          AppStrings.tr(AppStrings.indexTitle),
-          style: AppTypography.displayLarge.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colors.textPrimary,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.close_rounded,
-              color: colors.textPrimary,
-              size: AppSizes.iconMd,
-            ),
-            tooltip: AppStrings.tr(AppStrings.close),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go(AppRoutes.reader);
-              }
-            },
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.xs,
-            ),
-            child: AppSegmentedTabs(
-              tabs: [
-                AppStrings.tr(AppStrings.tabSurahs),
-                AppStrings.tr(AppStrings.tabQuarters),
-              ],
-              selectedIndex: _selectedSegment,
-              onTabChanged: (index) {
-                setState(() => _selectedSegment = index);
-              },
-            ),
-          ),
-        ),
+      body: IndexSheetShell(
+        heightFactor: 1.0,
+        showDragHandle: false,
+        surahsBuilder: (_) => _buildSurahsList(colors),
+        quartersBuilder: (_) => _buildQuartersList(colors),
       ),
-      body: _selectedSegment == 0
-          ? _buildSurahsList(colors)
-          : _buildQuartersList(colors),
     );
   }
 

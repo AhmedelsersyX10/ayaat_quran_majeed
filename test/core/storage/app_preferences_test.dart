@@ -22,6 +22,7 @@ void main() {
       expect(preferences.keepScreenAwake, isTrue);
       expect(preferences.hijriOffset, equals(0));
       expect(preferences.mushafFontSize, equals(23.0));
+      expect(preferences.indexActiveTab, equals(0));
     });
 
     test('persists and updates dark mode preference', () async {
@@ -51,6 +52,14 @@ void main() {
     test('persists and updates mushaf font size preference', () async {
       await preferences.setMushafFontSize(28.0);
       expect(preferences.mushafFontSize, equals(28.0));
+    });
+
+    test('persists and updates index active tab preference', () async {
+      await preferences.setIndexActiveTab(1);
+      expect(preferences.indexActiveTab, equals(1));
+
+      await preferences.setIndexActiveTab(0);
+      expect(preferences.indexActiveTab, equals(0));
     });
   });
 }

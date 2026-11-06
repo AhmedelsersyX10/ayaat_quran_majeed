@@ -121,6 +121,8 @@
   "index_title": "Index",
   "tab_surahs": "Surahs",
   "tab_quarters": "Quarters",
+  "index_load_failed": "Failed to load index",
+  "empty_index": "No index data available",
   "khatma_title": "Khatma",
   "new_khatma": "New Khatma",
   "suggested_khatma": "Suggested",

@@ -35,5 +35,12 @@ class AppPreferences {
 
   Future<bool> setMushafFontSize(double value) =>
       _storage.setDouble(AppStorageKeys.mushafFontSize, value);
+
+  /// Active tab index in Quran Index (0: Surahs, 1: Quarters). Default is `0`.
+  int get indexActiveTab =>
+      _storage.getInt(AppStorageKeys.indexActiveTab) ?? 0;
+
+  Future<bool> setIndexActiveTab(int value) =>
+      _storage.setInt(AppStorageKeys.indexActiveTab, value);
 }
 

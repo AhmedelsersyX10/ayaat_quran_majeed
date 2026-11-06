@@ -36,6 +36,8 @@ abstract class AppStrings {
   static const String indexTitle = 'index_title';
   static const String tabSurahs = 'tab_surahs';
   static const String tabQuarters = 'tab_quarters';
+  static const String indexLoadFailed = 'index_load_failed';
+  static const String emptyIndex = 'empty_index';
   static const String searchQuranHint = 'search_quran_hint';
   static const String page = 'page';
   static const String surah = 'surah';
@@ -206,6 +208,8 @@ abstract class AppStrings {
     indexTitle: 'الفهرس',
     tabSurahs: 'السور',
     tabQuarters: 'الأرباع',
+    indexLoadFailed: 'تعذر تحميل الفهرس',
+    emptyIndex: 'لا توجد بيانات للفهرس',
     searchQuranHint: 'ابحث عن سورة أو آية أو صفحة',
     page: 'صفحة',
     surah: 'سورة',

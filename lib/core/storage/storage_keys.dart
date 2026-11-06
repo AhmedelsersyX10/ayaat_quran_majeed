@@ -9,6 +9,7 @@ abstract class AppStorageKeys {
   static const String keepScreenAwake = 'setting_keep_screen_awake';
   static const String hijriOffset = 'setting_hijri_offset';
   static const String mushafFontSize = 'setting_mushaf_font_size';
+  static const String indexActiveTab = 'index_active_tab';
 
   // Legacy Storage Keys (migrated from legacy Hive box)
   static const String legacyDarkMode = 'darkMode';
