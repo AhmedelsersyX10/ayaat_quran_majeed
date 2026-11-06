@@ -80,6 +80,27 @@ void main() {
       expect(juz30[114], [1, 6]);
     });
 
+    test('isMakki correctly differentiates Makki and Madani surahs', () {
+      expect(service.isMakki(1), isTrue); // Al-Fatihah is Makki
+      expect(service.isMakki(2), isFalse); // Al-Baqarah is Madani
+      expect(service.isMakki(3), isFalse); // Al-Imran is Madani
+      expect(service.isMakki(112), isTrue); // Al-Ikhlas is Makki
+      expect(service.isMakki(114), isTrue); // An-Nas is Makki
+    });
+
+    test('getJuzStartPage returns accurate starting page for each Juz', () {
+      expect(service.getJuzStartPage(1), 1);
+      expect(service.getJuzStartPage(2), 22);
+      expect(service.getJuzStartPage(3), 42);
+      expect(service.getJuzStartPage(4), 62);
+      expect(service.getJuzStartPage(5), 82);
+      expect(service.getJuzStartPage(6), 102);
+      expect(service.getJuzStartPage(30), 582);
+
+      expect(() => service.getJuzStartPage(0), throwsArgumentError);
+      expect(() => service.getJuzStartPage(31), throwsArgumentError);
+    });
+
     test('getVerse returns non-empty Arabic text and symbols', () {
       final fatiha1 = service.getVerse(1, 1);
       expect(fatiha1, isNotEmpty);

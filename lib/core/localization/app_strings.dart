@@ -50,6 +50,8 @@ abstract class AppStrings {
   static const String madani = 'madani';
   static const String lastRead = 'last_read';
   static const String alQuran = 'al_quran';
+  static const String alJuz = 'al_juz';
+  static const String alPage = 'al_page';
 
   // Khatma (Screens 06-10, 14, 23, 24, 25, 26, 31, 32, 33, 35)
   static const String khatmaTitle = 'khatma_title';
@@ -222,6 +224,8 @@ abstract class AppStrings {
     madani: 'مدنية',
     lastRead: 'آخر ما تم قراءته',
     alQuran: 'القرآن الكريم',
+    alJuz: 'الجزء',
+    alPage: 'الصفحة',
     khatmaTitle: 'الختمة',
     newKhatma: 'ختمة جديدة',
     suggestedKhatma: 'مقترحة',

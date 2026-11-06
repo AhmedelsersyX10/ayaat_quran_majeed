@@ -101,7 +101,11 @@ Future<void> initInjection() async {
 
   if (!sl.isRegistered<IndexRepository>()) {
     sl.registerLazySingleton<IndexRepository>(
-      () => IndexRepositoryImpl(preferences: sl<AppPreferences>()),
+      () => IndexRepositoryImpl(
+        preferences: sl<AppPreferences>(),
+        metadataService: sl<QuranMetadataService>(),
+        readingRepository: sl<QuranReadingRepository>(),
+      ),
     );
   }
 

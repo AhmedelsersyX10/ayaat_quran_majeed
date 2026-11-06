@@ -1,5 +1,7 @@
 import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/entities/index_tab.dart';
+import 'package:ayaat_quran_majeed/features/index/domain/entities/juz_group.dart';
+import 'package:ayaat_quran_majeed/features/index/domain/entities/surah_index_item.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_state.dart';
@@ -8,6 +10,24 @@ import 'package:flutter_test/flutter_test.dart';
 class MockIndexRepository implements IndexRepository {
   IndexTab activeTab = IndexTab.surahs;
   bool shouldThrow = false;
+  List<JuzGroup> groupsToReturn = [
+    const JuzGroup(
+      juzNumber: 1,
+      nameArabic: 'الأول',
+      startPage: 1,
+      surahs: [
+        SurahIndexItem(
+          number: 1,
+          nameArabic: 'الفاتحة',
+          pageNumber: 1,
+          verseCount: 7,
+          isMakki: true,
+          startJuz: 1,
+        ),
+      ],
+    ),
+  ];
+  int currentSurahToReturn = 2;
 
   @override
   Future<IndexTab> getActiveTab() async {
@@ -19,6 +39,18 @@ class MockIndexRepository implements IndexRepository {
   Future<void> setActiveTab(IndexTab tab) async {
     if (shouldThrow) throw Exception('Storage error');
     activeTab = tab;
+  }
+
+  @override
+  Future<List<JuzGroup>> getSurahsGroupedByJuz() async {
+    if (shouldThrow) throw Exception('Metadata error');
+    return groupsToReturn;
+  }
+
+  @override
+  Future<int> getCurrentReadingSurah() async {
+    if (shouldThrow) throw Exception('Reading error');
+    return currentSurahToReturn;
   }
 }
 
@@ -43,10 +75,13 @@ void main() {
       expect(cubit.state.isSuccess, isFalse);
       expect(cubit.state.isFailure, isFalse);
       expect(cubit.state.isEmpty, isFalse);
+      expect(cubit.state.juzGroups, isEmpty);
+      expect(cubit.state.currentReadingSurah, equals(1));
     });
 
-    test('loadState loads saved tab and emits success', () async {
+    test('loadState loads saved tab, groups, and reading surah then emits success', () async {
       repository.activeTab = IndexTab.quarters;
+      repository.currentSurahToReturn = 2;
 
       final states = <IndexState>[];
       final subscription = cubit.stream.listen(states.add);
@@ -58,6 +93,24 @@ void main() {
       expect(states[0].status, equals(IndexStatus.loading));
       expect(states[1].status, equals(IndexStatus.success));
       expect(states[1].selectedTab, equals(IndexTab.quarters));
+      expect(states[1].juzGroups.length, equals(1));
+      expect(states[1].currentReadingSurah, equals(2));
+
+      await subscription.cancel();
+    });
+
+    test('loadState emits empty status when juzGroups is empty', () async {
+      repository.groupsToReturn = [];
+
+      final states = <IndexState>[];
+      final subscription = cubit.stream.listen(states.add);
+
+      await cubit.loadState();
+      await Future.delayed(Duration.zero);
+
+      expect(states.length, equals(2));
+      expect(states[0].status, equals(IndexStatus.loading));
+      expect(states[1].status, equals(IndexStatus.empty));
 
       await subscription.cancel();
     });
@@ -100,6 +153,15 @@ void main() {
       expect(cubit.state, equals(initialStatesCount));
     });
 
+    test('refreshReadingPosition updates currentReadingSurah when changed', () async {
+      await cubit.loadState();
+      expect(cubit.state.currentReadingSurah, equals(2));
+
+      repository.currentSurahToReturn = 36;
+      await cubit.refreshReadingPosition();
+      expect(cubit.state.currentReadingSurah, equals(36));
+    });
+
     test('setStatus updates status and error message cleanly', () {
       cubit.setStatus(IndexStatus.empty);
       expect(cubit.state.isEmpty, isTrue);
@@ -118,4 +180,3 @@ void main() {
     });
   });
 }
-

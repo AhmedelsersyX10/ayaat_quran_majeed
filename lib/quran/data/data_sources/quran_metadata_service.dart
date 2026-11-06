@@ -152,6 +152,23 @@ class QuranMetadataService {
     return qp.removeDiacritics(input);
   }
 
+  /// Returns `true` if [surahNumber] was revealed in Makkah (Makki),
+  /// and `false` if revealed in Madinah (Madani).
+  bool isMakki(int surahNumber) {
+    return qp.getPlaceOfRevelation(surahNumber).toLowerCase() == 'makkah';
+  }
+
+  /// Returns the starting page number (1-604) for [juzNumber] (1-30).
+  int getJuzStartPage(int juzNumber) {
+    if (juzNumber < 1 || juzNumber > 30) {
+      throw ArgumentError.value(juzNumber, 'juzNumber', 'Must be between 1 and 30');
+    }
+    final versesMap = getSurahAndVersesFromJuz(juzNumber);
+    final firstSurah = versesMap.keys.first;
+    final firstAyah = versesMap[firstSurah]!.first;
+    return getPageNumber(firstSurah, firstAyah);
+  }
+
   /// Returns the surahs and their ayah ranges for a given [juzNumber] (1-30).
   ///
   /// Maps each surah number to a 2-element list `[startAyah, endAyah]`.
