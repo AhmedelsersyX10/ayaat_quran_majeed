@@ -3,6 +3,7 @@ import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/widgets/index_sheet_shell.dart';
+import 'package:ayaat_quran_majeed/features/index/presentation/widgets/quarters_list_view.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/widgets/surahs_grouped_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -50,7 +51,20 @@ abstract class IndexBottomSheet {
                           },
                         );
                       }),
-            quartersBuilder: quartersBuilder,
+            quartersBuilder: quartersBuilder ??
+                (quartersChild != null
+                    ? null
+                    : (ctx) {
+                        final state = ctx.watch<IndexCubit>().state;
+                        return QuartersListView(
+                          quarters: state.quarters,
+                          currentReadingQuarter: state.currentReadingQuarter,
+                          onQuarterSelected: (page, _) {
+                            Navigator.of(sheetContext).maybePop(page);
+                            context.go('${AppRoutes.reader}?page=$page');
+                          },
+                        );
+                      }),
             surahsChild: surahsChild,
             quartersChild: quartersChild,
             heightFactor: heightFactor,

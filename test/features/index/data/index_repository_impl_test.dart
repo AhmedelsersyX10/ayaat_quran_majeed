@@ -128,6 +128,60 @@ void main() {
       final currentSurah = await repository.getCurrentReadingSurah();
       expect(currentSurah, equals(1));
     });
+
+    test('getQuarters returns exactly 240 quarters with deterministic sequence and metadata', () async {
+      final quarters = await repository.getQuarters();
+
+      expect(quarters.length, equals(240));
+
+      // Quarter 1: Al-Fatihah 1:1, Hizb 1, quarter 1 of Hizb, page 1
+      final q1 = quarters[0];
+      expect(q1.quarterNumber, equals(1));
+      expect(q1.hizbNumber, equals(1));
+      expect(q1.quarterInHizb, equals(1));
+      expect(q1.surahNumber, equals(1));
+      expect(q1.ayahNumber, equals(1));
+      expect(q1.surahNameArabic, equals('الفاتحة'));
+      expect(q1.pageNumber, equals(1));
+      expect(q1.ayahText, isNotEmpty);
+      expect(q1.ayahText, contains('بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ'));
+
+      // Quarter 2: Al-Baqarah 2:26, Hizb 1, quarter 2 of Hizb, page 5
+      final q2 = quarters[1];
+      expect(q2.quarterNumber, equals(2));
+      expect(q2.hizbNumber, equals(1));
+      expect(q2.quarterInHizb, equals(2));
+      expect(q2.surahNumber, equals(2));
+      expect(q2.ayahNumber, equals(26));
+      expect(q2.surahNameArabic, equals('البقرة'));
+      expect(q2.pageNumber, equals(5));
+      expect(q2.ayahText, isNotEmpty);
+      expect(q2.ayahText, isNot(contains('\u06DE')));
+
+      // Quarter 5: Al-Baqarah 2:75, Hizb 2, quarter 1 of Hizb, page 11
+      final q5 = quarters[4];
+      expect(q5.quarterNumber, equals(5));
+      expect(q5.hizbNumber, equals(2));
+      expect(q5.quarterInHizb, equals(1));
+      expect(q5.surahNumber, equals(2));
+      expect(q5.ayahNumber, equals(75));
+      expect(q5.pageNumber, equals(11));
+
+      // Quarter 240: Last quarter
+      final q240 = quarters.last;
+      expect(q240.quarterNumber, equals(240));
+      expect(q240.hizbNumber, equals(60));
+      expect(q240.quarterInHizb, equals(4));
+
+      // In-memory cache returns identical list instance
+      final cached = await repository.getQuarters();
+      expect(identical(quarters, cached), isTrue);
+    });
+
+    test('getCurrentReadingQuarter returns 1 when storage is empty', () async {
+      final currentQuarter = await repository.getCurrentReadingQuarter();
+      expect(currentQuarter, equals(1));
+    });
   });
 }
 

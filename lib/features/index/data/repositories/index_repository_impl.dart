@@ -1,6 +1,7 @@
 import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/entities/index_tab.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/entities/juz_group.dart';
+import 'package:ayaat_quran_majeed/features/index/domain/entities/quarter_index_item.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/entities/surah_index_item.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
@@ -13,6 +14,8 @@ class IndexRepositoryImpl implements IndexRepository {
   final AppPreferences _preferences;
   final QuranMetadataService _metadataService;
   final QuranReadingRepository _readingRepository;
+
+  static List<QuarterIndexItem>? _cachedQuarters;
 
   const IndexRepositoryImpl({
     required AppPreferences preferences,
@@ -80,6 +83,70 @@ class IndexRepositoryImpl implements IndexRepository {
     } catch (_) {
       return 1;
     }
+  }
+
+  @override
+  Future<List<QuarterIndexItem>> getQuarters() async {
+    if (_cachedQuarters != null) {
+      return _cachedQuarters!;
+    }
+
+    final rawQuarters = _metadataService.quartersRaw;
+    final List<QuarterIndexItem> items = [];
+
+    for (int i = 0; i < rawQuarters.length; i++) {
+      final quarterIndex = i + 1;
+      final hizbNumber = (i ~/ 4) + 1;
+      final quarterInHizb = (i % 4) + 1;
+      final surahNumber = (rawQuarters[i]['surah'] as num?)?.toInt() ?? 1;
+      final ayahNumber = (rawQuarters[i]['ayah'] as num?)?.toInt() ?? 1;
+
+      final surahName = _metadataService.getSurahNameArabic(surahNumber);
+      final pageNumber = _metadataService.getPageNumber(surahNumber, ayahNumber);
+      final rawText = _metadataService.getVerse(surahNumber, ayahNumber);
+      final sanitizedText = _sanitizeVerseText(rawText);
+
+      items.add(
+        QuarterIndexItem(
+          quarterNumber: quarterIndex,
+          hizbNumber: hizbNumber,
+          quarterInHizb: quarterInHizb,
+          surahNumber: surahNumber,
+          surahNameArabic: surahName,
+          ayahNumber: ayahNumber,
+          pageNumber: pageNumber,
+          ayahText: sanitizedText,
+        ),
+      );
+    }
+
+    _cachedQuarters = List<QuarterIndexItem>.unmodifiable(items);
+    return _cachedQuarters!;
+  }
+
+  @override
+  Future<int> getCurrentReadingQuarter() async {
+    try {
+      final position = await _readingRepository.loadLastPosition();
+      final quarter = _metadataService.getQuarterNumber(
+        position.surahNumber,
+        position.ayahNumber,
+      );
+      return quarter.clamp(1, 240);
+    } catch (_) {
+      return 1;
+    }
+  }
+
+  String _sanitizeVerseText(String text) {
+    var cleaned = text
+        .replaceAll('\u06DE', '') // Remove rub el hizb mark ۞
+        .replaceAll('\u06E9', '') // Remove sajdah marker ۩
+        .replaceAll('\n', ' ')
+        .replaceAll('\r', ' ');
+    // Remove trailing verse numbers if attached
+    cleaned = cleaned.replaceAll(RegExp(r'[\s0-9\u0660-\u0669\u06F0-\u06F9]+$'), '');
+    return cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 }
 

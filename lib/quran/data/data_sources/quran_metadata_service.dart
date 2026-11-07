@@ -44,6 +44,15 @@ class QuranMetadataService {
     return qp.getVerseCount(surahNumber);
   }
 
+  /// Raw quarters list (240 entries mapping surah and ayah).
+  List<Map<String, dynamic>> get quartersRaw =>
+      List<Map<String, dynamic>>.from(qp.quarters);
+
+  /// Returns the Quarter (Rub el Hizb) number (1-240) based on [surahNumber] and [ayahNumber].
+  int getQuarterNumber(int surahNumber, int ayahNumber) {
+    return qp.getQuarterNumber(surahNumber, ayahNumber);
+  }
+
   /// Returns the Arabic name of the Surah (e.g. "الفَاتِحة").
   String getSurahNameArabic(int surahNumber) {
     return qp.getSurahNameArabic(surahNumber);

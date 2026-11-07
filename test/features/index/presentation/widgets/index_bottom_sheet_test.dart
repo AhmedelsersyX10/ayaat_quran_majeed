@@ -2,6 +2,7 @@ import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/entities/index_tab.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/entities/juz_group.dart';
+import 'package:ayaat_quran_majeed/features/index/domain/entities/quarter_index_item.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/widgets/index_bottom_sheet.dart';
@@ -26,6 +27,12 @@ class MockIndexRepository implements IndexRepository {
 
   @override
   Future<int> getCurrentReadingSurah() async => 1;
+
+  @override
+  Future<List<QuarterIndexItem>> getQuarters() async => const [];
+
+  @override
+  Future<int> getCurrentReadingQuarter() async => 1;
 }
 
 void main() {
