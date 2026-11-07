@@ -18,6 +18,7 @@ abstract class ArabicNumbers {
   };
 
   static const Map<String, String> _arabicToWesternMap = {
+    // Standard Arabic-Indic digits (\u0660 - \u0669)
     '٠': '0',
     '١': '1',
     '٢': '2',
@@ -28,6 +29,17 @@ abstract class ArabicNumbers {
     '٧': '7',
     '٨': '8',
     '٩': '9',
+    // Extended Arabic-Indic / Persian digits (\u06F0 - \u06F9)
+    '۰': '0',
+    '۱': '1',
+    '۲': '2',
+    '۳': '3',
+    '۴': '4',
+    '۵': '5',
+    '۶': '6',
+    '۷': '7',
+    '۸': '8',
+    '۹': '9',
   };
 
   /// Arabic names for Gregorian calendar months (Mashriq/standard).

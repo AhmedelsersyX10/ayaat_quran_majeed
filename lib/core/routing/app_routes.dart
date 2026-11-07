@@ -6,6 +6,9 @@ abstract class AppRoutes {
   static const String reader = '/reader';
   static const String readerName = 'reader';
 
+  static const String search = '/search';
+  static const String searchName = 'search';
+
   // Shell Tabs (Screens 03, 10, 11, 12, 13)
   static const String surahs = '/surahs';
   static const String surahsName = 'surahs';

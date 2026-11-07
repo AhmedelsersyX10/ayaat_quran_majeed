@@ -3,6 +3,8 @@ import 'package:ayaat_quran_majeed/core/network/api_client.dart';
 import 'package:ayaat_quran_majeed/core/storage/hive_storage_service.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
+import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
+import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
 import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
 import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
 import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
@@ -40,6 +42,7 @@ void main() {
       expect(sl.isRegistered<QuranReadingRepository>(), isTrue);
       expect(sl.isRegistered<BookmarkRepository>(), isTrue);
       expect(sl.isRegistered<QuranSearchRepository>(), isTrue);
+      expect(sl.isRegistered<SearchRepository>(), isTrue);
       expect(sl.isRegistered<TodayRepository>(), isTrue);
       expect(sl.isRegistered<IndexRepository>(), isTrue);
 
@@ -47,6 +50,7 @@ void main() {
       expect(sl.isRegistered<QuranReaderCubit>(), isTrue);
       expect(sl.isRegistered<BookmarkCubit>(), isTrue);
       expect(sl.isRegistered<QuranSearchCubit>(), isTrue);
+      expect(sl.isRegistered<SearchCubit>(), isTrue);
       expect(sl.isRegistered<TodayCubit>(), isTrue);
       expect(sl.isRegistered<IndexCubit>(), isTrue);
     });

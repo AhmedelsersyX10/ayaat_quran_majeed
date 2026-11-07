@@ -1,7 +1,10 @@
 // ignore_for_file: unrelated_type_equality_checks, depend_on_referenced_packages, file_names
 import 'dart:async';
 import 'dart:convert';
+import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_colors.dart';
+import 'package:ayaat_quran_majeed/features/search/domain/entities/search_navigation_target.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
@@ -11,14 +14,10 @@ import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/get_trans
     as get_translation_data;
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/translationdata.dart';
 import 'package:ayaat_quran_majeed/quran/data/models/bookmark_model.dart';
-import 'package:ayaat_quran_majeed/quran/data/models/quran_search_result.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/json_asset_service.dart';
-import 'package:ayaat_quran_majeed/quran/data/repositories/quran_search_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/utils/convert_number_to_ar.dart';
 import 'package:ayaat_quran_majeed/quran/data/utils/remove_html_tags.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_search_cubit.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/views/quran_search_view.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/views/quran_sura_list.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/ayah_options_sheet.dart'
     show AyahOptionsSheet;
@@ -767,18 +766,12 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                                 }
                               },
                               onSearch: () async {
-                                final result = await Navigator.push<QuranSearchResult>(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => BlocProvider(
-                                      create: (_) => QuranSearchCubit(QuranSearchRepository()),
-                                      child: const QuranSearchView(),
-                                    ),
-                                  ),
-                                );
+                                final result = await context.push<SearchNavigationTarget>(AppRoutes.search);
                                 if (result != null && mounted) {
                                   context.read<QuranReaderCubit>().goToPage(result.pageNumber);
-                                  triggerHighlight(result.surahNumber, result.verseNumber);
+                                  if (result.surahNumber != null && result.ayahNumber != null) {
+                                    triggerHighlight(result.surahNumber!, result.ayahNumber!);
+                                  }
                                 }
                               },
                               onToday: () {

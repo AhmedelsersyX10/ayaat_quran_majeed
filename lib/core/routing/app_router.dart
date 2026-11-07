@@ -7,6 +7,8 @@ import 'package:ayaat_quran_majeed/features/bookmarks/presentation/views/bookmar
 import 'package:ayaat_quran_majeed/features/index/presentation/views/surahs_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/views/khatma_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/notes/presentation/views/notes_tab_view.dart';
+import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
+import 'package:ayaat_quran_majeed/features/search/presentation/views/search_page.dart';
 import 'package:ayaat_quran_majeed/features/starred/presentation/views/starred_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
@@ -84,6 +86,22 @@ abstract class AppRouter {
               child: const QuranReadingPage(),
             );
           },
+        ),
+        GoRoute(
+          path: AppRoutes.search,
+          name: AppRoutes.searchName,
+          parentNavigatorKey: rootNavigatorKey,
+          pageBuilder: (context, state) => CustomTransitionPage(
+            key: state.pageKey,
+            opaque: false,
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            child: BlocProvider<SearchCubit>(
+              create: (_) => sl<SearchCubit>(),
+              child: const SearchPage(),
+            ),
+          ),
         ),
 
         // Stateful App Shell containing the 5 bottom tabs in RTL order

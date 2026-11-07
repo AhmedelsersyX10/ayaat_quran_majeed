@@ -11,6 +11,8 @@ void main() {
       expect(AppRoutes.splashName, equals('splash'));
       expect(AppRoutes.reader, equals('/reader'));
       expect(AppRoutes.readerName, equals('reader'));
+      expect(AppRoutes.search, equals('/search'));
+      expect(AppRoutes.searchName, equals('search'));
 
       // 5 Shell tabs
       expect(AppRoutes.surahs, equals('/surahs'));
@@ -40,6 +42,7 @@ void main() {
 
         expect(goRoutes.map((r) => r.path), contains(AppRoutes.splash));
         expect(goRoutes.map((r) => r.path), contains(AppRoutes.reader));
+        expect(goRoutes.map((r) => r.path), contains(AppRoutes.search));
 
         // StatefulShellRoute with 5 branches
         expect(shellRoutes, hasLength(1));

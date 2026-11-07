@@ -5,6 +5,9 @@ import 'package:ayaat_quran_majeed/core/storage/preferences_storage.dart';
 import 'package:ayaat_quran_majeed/features/index/data/repositories/index_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
+import 'package:ayaat_quran_majeed/features/search/data/repositories/search_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
+import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
 import 'package:ayaat_quran_majeed/features/today/data/repositories/today_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
 import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
@@ -89,6 +92,14 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<SearchRepository>()) {
+    sl.registerLazySingleton<SearchRepository>(
+      () => SearchRepositoryImpl(
+        metadataService: sl<QuranMetadataService>(),
+      ),
+    );
+  }
+
   if (!sl.isRegistered<TodayRepository>()) {
     sl.registerLazySingleton<TodayRepository>(
       () => TodayRepositoryImpl(
@@ -138,6 +149,12 @@ Future<void> initInjection() async {
   if (!sl.isRegistered<QuranSearchCubit>()) {
     sl.registerFactory<QuranSearchCubit>(
       () => QuranSearchCubit(sl<QuranSearchRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<SearchCubit>()) {
+    sl.registerFactory<SearchCubit>(
+      () => SearchCubit(sl<SearchRepository>()),
     );
   }
 

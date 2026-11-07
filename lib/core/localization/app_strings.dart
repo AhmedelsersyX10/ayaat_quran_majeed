@@ -169,6 +169,9 @@ abstract class AppStrings {
   static const String todayLoadFailed = 'today_load_failed';
 
   // Search (Screens 15, 21)
+  static const String searchHint = 'search_hint';
+  static const String searchVersesHeader = 'search_verses_header';
+  static const String goToPage = 'go_to_page';
   static const String searchResults = 'search_results';
   static const String noSearchResults = 'no_search_results';
 
@@ -327,8 +330,11 @@ abstract class AppStrings {
     hijriCalendar: 'التقويم الهجري',
     gregorianCalendar: 'التقويم الميلادي',
     todayLoadFailed: 'تعذر تحميل آية اليوم',
+    searchHint: 'ابحث أو أدخل رقم صفحة',
+    searchVersesHeader: 'الآيات',
+    goToPage: 'الانتقال إلى صفحة',
     searchResults: 'نتائج البحث',
-    noSearchResults: 'لا توجد نتائج بحث',
+    noSearchResults: 'لا توجد نتائج مطابقة لبحثك',
     settings: 'الإعدادات',
     theme: 'وضع السمة',
     pageNotFound: 'الصفحة غير موجودة',
