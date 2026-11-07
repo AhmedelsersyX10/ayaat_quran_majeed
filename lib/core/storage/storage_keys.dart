@@ -22,5 +22,8 @@ abstract class AppStorageKeys {
 abstract class AppBoxNames {
   /// Legacy single box used for backward compatibility.
   static const String legacyBox = 'name';
+
+  /// Audio and reciters cache box.
+  static const String audioCache = 'audio_cache_box';
 }
 

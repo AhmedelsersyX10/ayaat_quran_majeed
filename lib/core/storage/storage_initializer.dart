@@ -30,8 +30,9 @@ abstract class StorageInitializer {
       sl.registerSingleton<HiveStorageService>(hiveStorage);
     }
 
-    // 3. Open baseline box with corruption recovery
+    // 3. Open baseline box and audio cache with corruption recovery
     await hiveStorage.openBox(AppBoxNames.legacyBox);
+    await hiveStorage.openBox(AppBoxNames.audioCache);
 
     // 4. Execute migrations
     final migrationManager = StorageMigrationManager(

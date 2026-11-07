@@ -1,6 +1,9 @@
 import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/network/api_client.dart';
 import 'package:ayaat_quran_majeed/core/storage/hive_storage_service.dart';
+import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_cache_data_source.dart';
+import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_remote_data_source.dart';
+import 'package:ayaat_quran_majeed/features/audio/domain/repositories/audio_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
@@ -45,6 +48,9 @@ void main() {
       expect(sl.isRegistered<SearchRepository>(), isTrue);
       expect(sl.isRegistered<TodayRepository>(), isTrue);
       expect(sl.isRegistered<IndexRepository>(), isTrue);
+      expect(sl.isRegistered<AudioRemoteDataSource>(), isTrue);
+      expect(sl.isRegistered<AudioCacheDataSource>(), isTrue);
+      expect(sl.isRegistered<AudioRepository>(), isTrue);
 
       expect(sl.isRegistered<QuranPagePlayerBloc>(), isTrue);
       expect(sl.isRegistered<QuranReaderCubit>(), isTrue);
