@@ -42,5 +42,19 @@ class AppPreferences {
 
   Future<bool> setIndexActiveTab(int value) =>
       _storage.setInt(AppStorageKeys.indexActiveTab, value);
+
+  /// Selected Quran reciter identifier. Null if not explicitly set yet.
+  int? get selectedReciterId =>
+      _storage.getInt(AppStorageKeys.selectedReciterId);
+
+  Future<bool> setSelectedReciterId(int id) =>
+      _storage.setInt(AppStorageKeys.selectedReciterId, id);
+
+  /// Selected Moshaf edition identifier. Null if not explicitly set yet.
+  int? get selectedMoshafId =>
+      _storage.getInt(AppStorageKeys.selectedMoshafId);
+
+  Future<bool> setSelectedMoshafId(int id) =>
+      _storage.setInt(AppStorageKeys.selectedMoshafId, id);
 }
 

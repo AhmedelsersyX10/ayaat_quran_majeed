@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:ayaat_quran_majeed/core/errors/exceptions.dart';
 import 'package:ayaat_quran_majeed/core/errors/failure.dart';
+import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_cache_data_source.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_remote_data_source.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/entities/ayah_timing.dart';
@@ -18,16 +19,19 @@ class AudioRepositoryImpl implements AudioRepository {
   final AudioRemoteDataSource _remoteDataSource;
   final AudioCacheDataSource _cacheDataSource;
   final QuranMetadataService _metadataService;
+  final AppPreferences? _preferences;
   final Future<String> Function() _documentsPathProvider;
 
   AudioRepositoryImpl({
     required AudioRemoteDataSource remoteDataSource,
     required AudioCacheDataSource cacheDataSource,
     required QuranMetadataService metadataService,
+    AppPreferences? preferences,
     Future<String> Function()? documentsPathProvider,
   })  : _remoteDataSource = remoteDataSource,
         _cacheDataSource = cacheDataSource,
         _metadataService = metadataService,
+        _preferences = preferences,
         _documentsPathProvider = documentsPathProvider ??
             (() async => (await getApplicationDocumentsDirectory()).path);
 
@@ -302,6 +306,66 @@ class AudioRepositoryImpl implements AudioRepository {
       }
     } catch (e) {
       throw CacheFailure('Failed to delete downloaded surah: $e');
+    }
+  }
+
+  @override
+  Future<Reciter?> getSelectedReciter() async {
+    final reciters = await getReciters();
+    if (reciters.isEmpty) return null;
+
+    final savedId = _preferences?.selectedReciterId;
+    if (savedId != null) {
+      for (final r in reciters) {
+        if (r.id == savedId) return r;
+      }
+    }
+
+    // Default: prioritize Mahmoud Khalil Al-Hosary with timing (matching ref 05)
+    for (final r in reciters) {
+      if (r.hasAnyTimingSupport &&
+          (r.name.contains('الحصري') || r.name.contains('حصري'))) {
+        return r;
+      }
+    }
+
+    // Fallback: first reciter with timing support
+    for (final r in reciters) {
+      if (r.hasAnyTimingSupport) return r;
+    }
+
+    // Ultimate fallback: first reciter in list
+    return reciters.first;
+  }
+
+  @override
+  Future<Moshaf?> getSelectedMoshaf() async {
+    final reciter = await getSelectedReciter();
+    if (reciter == null || reciter.moshafs.isEmpty) return null;
+
+    final savedMoshafId = _preferences?.selectedMoshafId;
+    if (savedMoshafId != null) {
+      for (final m in reciter.moshafs) {
+        if (m.id == savedMoshafId) return m;
+      }
+    }
+
+    // Fallback: reciter's default moshaf (prioritizes timing)
+    return reciter.defaultMoshaf;
+  }
+
+  @override
+  Future<void> setSelectedReciterAndMoshaf({
+    required int reciterId,
+    required int moshafId,
+  }) async {
+    try {
+      if (_preferences != null) {
+        await _preferences.setSelectedReciterId(reciterId);
+        await _preferences.setSelectedMoshafId(moshafId);
+      }
+    } catch (e) {
+      throw CacheFailure('Failed to save selected reciter and moshaf: $e');
     }
   }
 

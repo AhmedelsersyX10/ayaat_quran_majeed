@@ -65,4 +65,16 @@ abstract class AudioRepository {
     required int readId,
     required int surahNumber,
   });
+
+  /// Retrieves the persisted selected reciter, or default if none chosen yet.
+  Future<Reciter?> getSelectedReciter();
+
+  /// Retrieves the persisted selected moshaf, or default if none chosen yet.
+  Future<Moshaf?> getSelectedMoshaf();
+
+  /// Persists the selected reciter and moshaf identifiers.
+  Future<void> setSelectedReciterAndMoshaf({
+    required int reciterId,
+    required int moshafId,
+  });
 }

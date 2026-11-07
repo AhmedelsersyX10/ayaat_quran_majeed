@@ -6,6 +6,7 @@ import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_cache_d
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_remote_data_source.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/repositories/audio_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/repositories/audio_repository.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_selection_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/data/repositories/index_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
@@ -142,6 +143,7 @@ Future<void> initInjection() async {
         remoteDataSource: sl<AudioRemoteDataSource>(),
         cacheDataSource: sl<AudioCacheDataSource>(),
         metadataService: sl<QuranMetadataService>(),
+        preferences: sl.isRegistered<AppPreferences>() ? sl<AppPreferences>() : null,
       ),
     );
   }
@@ -193,6 +195,14 @@ Future<void> initInjection() async {
   if (!sl.isRegistered<IndexCubit>()) {
     sl.registerFactory<IndexCubit>(
       () => IndexCubit(sl<IndexRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<ReciterSelectionCubit>()) {
+    sl.registerFactory<ReciterSelectionCubit>(
+      () => ReciterSelectionCubit(
+        audioRepository: sl<AudioRepository>(),
+      ),
     );
   }
 }

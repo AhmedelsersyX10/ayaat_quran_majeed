@@ -26,6 +26,10 @@ class Reciter {
   /// Whether at least one moshaf edition for this reciter has verified timing support.
   bool get hasAnyTimingSupport => moshafs.any((m) => m.hasTiming);
 
+  /// List of moshaf editions for this reciter that have verified ayah timing support.
+  List<Moshaf> get qualifiedMoshafs =>
+      moshafs.where((m) => m.hasTiming).toList();
+
   /// Default moshaf edition for this reciter.
   ///
   /// Prioritizes the first edition with verified timing support; falls back

@@ -144,6 +144,10 @@ abstract class AppStrings {
   static const String stopAfter = 'stop_after';
 
   // Reciters & Surah Downloads (Screens 18, 36)
+  static const String selectReciter = 'select_reciter';
+  static const String recitations = 'recitations';
+  static const String noRecitersFound = 'no_reciters_found';
+  static const String chooseMoshafEdition = 'choose_moshaf_edition';
   static const String recitersTitle = 'reciters_title';
   static const String searchReciter = 'search_reciter';
   static const String allReciters = 'all_reciters';
@@ -311,6 +315,10 @@ abstract class AppStrings {
     endOfJuz: 'نهاية الجزء',
     customAyah: 'آية معينة',
     stopAfter: 'توقف بعد',
+    selectReciter: 'اختيار القارئ',
+    recitations: 'التلاوات',
+    noRecitersFound: 'لا يوجد قرّاء متاحون',
+    chooseMoshafEdition: 'اختر الرواية / المصحف',
     recitersTitle: 'القراء',
     searchReciter: 'ابحث عن قارئ',
     allReciters: 'جميع القراء',

@@ -4,6 +4,7 @@ import 'package:ayaat_quran_majeed/core/storage/hive_storage_service.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_cache_data_source.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_remote_data_source.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/repositories/audio_repository.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_selection_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
@@ -59,6 +60,7 @@ void main() {
       expect(sl.isRegistered<SearchCubit>(), isTrue);
       expect(sl.isRegistered<TodayCubit>(), isTrue);
       expect(sl.isRegistered<IndexCubit>(), isTrue);
+      expect(sl.isRegistered<ReciterSelectionCubit>(), isTrue);
     });
 
     test('Singletons return identical instances across multiple resolutions', () async {

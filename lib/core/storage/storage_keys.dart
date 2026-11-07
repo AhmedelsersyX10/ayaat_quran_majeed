@@ -10,6 +10,8 @@ abstract class AppStorageKeys {
   static const String hijriOffset = 'setting_hijri_offset';
   static const String mushafFontSize = 'setting_mushaf_font_size';
   static const String indexActiveTab = 'index_active_tab';
+  static const String selectedReciterId = 'audio_selected_reciter_id';
+  static const String selectedMoshafId = 'audio_selected_moshaf_id';
 
   // Legacy Storage Keys (migrated from legacy Hive box)
   static const String legacyDarkMode = 'darkMode';
