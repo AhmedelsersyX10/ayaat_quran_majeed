@@ -3,7 +3,10 @@ import 'package:ayaat_quran_majeed/core/network/api_client.dart';
 import 'package:ayaat_quran_majeed/core/storage/hive_storage_service.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_cache_data_source.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_remote_data_source.dart';
+import 'package:ayaat_quran_majeed/features/audio/data/services/audio_player_service.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/repositories/audio_repository.dart';
+import 'package:ayaat_quran_majeed/features/audio/domain/repositories/playback_repository.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_cubit.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_selection_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
@@ -51,7 +54,9 @@ void main() {
       expect(sl.isRegistered<IndexRepository>(), isTrue);
       expect(sl.isRegistered<AudioRemoteDataSource>(), isTrue);
       expect(sl.isRegistered<AudioCacheDataSource>(), isTrue);
+      expect(sl.isRegistered<AudioPlayerService>(), isTrue);
       expect(sl.isRegistered<AudioRepository>(), isTrue);
+      expect(sl.isRegistered<PlaybackRepository>(), isTrue);
 
       expect(sl.isRegistered<QuranPagePlayerBloc>(), isTrue);
       expect(sl.isRegistered<QuranReaderCubit>(), isTrue);
@@ -61,6 +66,7 @@ void main() {
       expect(sl.isRegistered<TodayCubit>(), isTrue);
       expect(sl.isRegistered<IndexCubit>(), isTrue);
       expect(sl.isRegistered<ReciterSelectionCubit>(), isTrue);
+      expect(sl.isRegistered<AudioPlaybackCubit>(), isTrue);
     });
 
     test('Singletons return identical instances across multiple resolutions', () async {

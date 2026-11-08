@@ -5,7 +5,12 @@ import 'package:ayaat_quran_majeed/core/storage/preferences_storage.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_cache_data_source.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_remote_data_source.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/repositories/audio_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/audio/data/repositories/playback_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/audio/data/services/audio_player_service.dart';
+import 'package:ayaat_quran_majeed/features/audio/data/services/just_audio_player_service.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/repositories/audio_repository.dart';
+import 'package:ayaat_quran_majeed/features/audio/domain/repositories/playback_repository.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_cubit.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_selection_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/data/repositories/index_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
@@ -84,6 +89,12 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<AudioPlayerService>()) {
+    sl.registerLazySingleton<AudioPlayerService>(
+      () => JustAudioPlayerServiceImpl(player: sl<AudioPlayer>()),
+    );
+  }
+
   // ---------------------------------------------------------
   // 4. Repositories
   // ---------------------------------------------------------
@@ -148,6 +159,16 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<PlaybackRepository>()) {
+    sl.registerLazySingleton<PlaybackRepository>(
+      () => PlaybackRepositoryImpl(
+        playerService: sl<AudioPlayerService>(),
+        audioRepository: sl<AudioRepository>(),
+        metadataService: sl<QuranMetadataService>(),
+      ),
+    );
+  }
+
   // ---------------------------------------------------------
   // 3. Presentation / Cubits & Blocs (Factories)
   // ---------------------------------------------------------
@@ -205,10 +226,23 @@ Future<void> initInjection() async {
       ),
     );
   }
+
+  if (!sl.isRegistered<AudioPlaybackCubit>()) {
+    sl.registerLazySingleton<AudioPlaybackCubit>(
+      () => AudioPlaybackCubit(
+        playbackRepository: sl<PlaybackRepository>(),
+      ),
+    );
+  }
 }
 
 /// Resets all registrations in the service locator (useful for test isolation).
 Future<void> resetInjection() async {
+  if (sl.isRegistered<PlaybackRepository>()) {
+    try {
+      await sl<PlaybackRepository>().dispose();
+    } catch (_) {}
+  }
   if (sl.isRegistered<HiveStorageService>()) {
     try {
       await sl<HiveStorageService>().closeAll();
