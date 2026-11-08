@@ -8,6 +8,7 @@ import 'package:ayaat_quran_majeed/features/audio/domain/repositories/audio_repo
 import 'package:ayaat_quran_majeed/features/audio/domain/repositories/playback_repository.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_cubit.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_selection_cubit.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_surahs_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
@@ -66,6 +67,7 @@ void main() {
       expect(sl.isRegistered<TodayCubit>(), isTrue);
       expect(sl.isRegistered<IndexCubit>(), isTrue);
       expect(sl.isRegistered<ReciterSelectionCubit>(), isTrue);
+      expect(sl.isRegistered<ReciterSurahsCubit>(), isTrue);
       expect(sl.isRegistered<AudioPlaybackCubit>(), isTrue);
     });
 

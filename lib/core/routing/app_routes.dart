@@ -9,6 +9,10 @@ abstract class AppRoutes {
   static const String search = '/search';
   static const String searchName = 'search';
 
+  // Reciter Surahs & Downloads (Screen 36)
+  static const String reciterSurahs = '/reciter-surahs';
+  static const String reciterSurahsName = 'reciterSurahs';
+
   // Shell Tabs (Screens 03, 10, 11, 12, 13)
   static const String surahs = '/surahs';
   static const String surahsName = 'surahs';

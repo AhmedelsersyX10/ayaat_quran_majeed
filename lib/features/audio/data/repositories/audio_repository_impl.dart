@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:ayaat_quran_majeed/core/errors/exceptions.dart';
@@ -5,12 +6,14 @@ import 'package:ayaat_quran_majeed/core/errors/failure.dart';
 import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_cache_data_source.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_remote_data_source.dart';
+import 'package:ayaat_quran_majeed/features/audio/data/models/ayah_timing_model.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/entities/ayah_timing.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/entities/moshaf.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/entities/reciter.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/entities/reciter_surah.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/repositories/audio_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
+import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Implementation of [AudioRepository] managing remote API calls, Hive caching,
@@ -151,7 +154,7 @@ class AudioRepositoryImpl implements AudioRepository {
     required int readId,
     required int surahNumber,
   }) async {
-    // 1. Check local cache
+    // 1. Check local Hive cache
     try {
       final cached = await _cacheDataSource.getCachedAyahTiming(readId, surahNumber);
       if (cached != null && cached.isNotEmpty) {
@@ -159,7 +162,25 @@ class AudioRepositoryImpl implements AudioRepository {
       }
     } catch (_) {}
 
-    // 2. Fetch from remote API
+    // 2. Check local timing JSON file on disk (offline storage)
+    try {
+      final audioPath = await _getSurahFilePath(readId, surahNumber);
+      final timingFile = File('$audioPath.timing.json');
+      if (timingFile.existsSync()) {
+        final content = await timingFile.readAsString();
+        final List<dynamic> list = jsonDecode(content) as List<dynamic>;
+        final models = list
+            .map((item) => AyahTimingModel.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList();
+        if (models.isNotEmpty) {
+          // Re-populate cache for faster subsequent lookups
+          await _cacheDataSource.cacheAyahTiming(readId, surahNumber, models);
+          return models.map((m) => m.toEntity()).toList();
+        }
+      }
+    } catch (_) {}
+
+    // 3. Fetch from remote API
     try {
       final models = await _remoteDataSource.getAyahTiming(
         surahNumber: surahNumber,
@@ -231,7 +252,8 @@ class AudioRepositoryImpl implements AudioRepository {
   }) async {
     try {
       final filePath = await _getSurahFilePath(readId, surahNumber);
-      return File(filePath).existsSync();
+      final file = File(filePath);
+      return file.existsSync() && file.lengthSync() > 1024;
     } catch (_) {
       return false;
     }
@@ -262,33 +284,101 @@ class AudioRepositoryImpl implements AudioRepository {
     dynamic cancelToken,
   }) async {
     final finalPath = await _getSurahFilePath(moshaf.id, surahNumber);
-    final tempPath = '$finalPath.tmp';
+    final tempAudioPath = '$finalPath.part';
+    final finalTimingPath = '$finalPath.timing.json';
+    final tempTimingPath = '$finalTimingPath.tmp';
     final url = moshaf.getSurahAudioUrl(surahNumber);
 
     try {
-      // Ensure target directory exists
+      // 1. Ensure target directory exists (app-safe storage)
       final dir = File(finalPath).parent;
       if (!dir.existsSync()) {
         await dir.create(recursive: true);
       }
 
-      // Download into temporary file first to guarantee atomic write
+      // 2. Download audio into temporary partial file first
+      int reportedTotal = 0;
       await _remoteDataSource.downloadSurahFile(
         url: url,
-        savePath: tempPath,
-        onProgress: onProgress,
+        savePath: tempAudioPath,
+        onProgress: (received, total) {
+          reportedTotal = total;
+          onProgress?.call(received, total);
+        },
         cancelToken: cancelToken,
       );
 
-      final tempFile = File(tempPath);
-      if (tempFile.existsSync()) {
-        await tempFile.rename(finalPath);
+      // 3. Integrity and size validation
+      final tempAudioFile = File(tempAudioPath);
+      if (!tempAudioFile.existsSync()) {
+        throw const ServerException(
+          'Downloaded file is missing',
+          'DOWNLOAD_MISSING',
+        );
       }
+
+      final fileSize = tempAudioFile.lengthSync();
+      // Sanity threshold: genuine MP3 should be > 1KB (not empty or short HTML error)
+      if (fileSize < 1024) {
+        _cleanUpTempFile(tempAudioPath);
+        throw const ServerException(
+          'Downloaded file is corrupted or too small',
+          'CORRUPTED_FILE',
+        );
+      }
+
+      if (reportedTotal > 0 && fileSize < reportedTotal) {
+        _cleanUpTempFile(tempAudioPath);
+        throw const ServerException(
+          'Incomplete download',
+          'INCOMPLETE_DOWNLOAD',
+        );
+      }
+
+      // 4. Download and cache timing JSON alongside matching audio
+      if (moshaf.hasTiming) {
+        try {
+          final timings = await _remoteDataSource.getAyahTiming(
+            surahNumber: surahNumber,
+            readId: moshaf.id,
+          );
+          if (timings.isNotEmpty) {
+            // Write to disk alongside audio
+            final jsonStr = jsonEncode(timings.map((t) => t.toJson()).toList());
+            final timingTempFile = File(tempTimingPath);
+            await timingTempFile.writeAsString(jsonStr, flush: true);
+            if (timingTempFile.existsSync()) {
+              await timingTempFile.rename(finalTimingPath);
+            }
+            // Also cache in memory / Hive
+            await _cacheDataSource.cacheAyahTiming(moshaf.id, surahNumber, timings);
+          }
+        } catch (_) {
+          // If timing fetch fails remotely, proceed with audio
+        }
+      }
+
+      // 5. Atomic completion: rename temp file to final audio path
+      await tempAudioFile.rename(finalPath);
+    } on DioException catch (e) {
+      _cleanUpTempFile(tempAudioPath);
+      _cleanUpTempFile(tempTimingPath);
+      if (e.type == DioExceptionType.cancel) {
+        throw const GeneralFailure('Download cancelled');
+      }
+      throw ServerFailure(e.message ?? 'Download failed', e.type.name);
+    } on FileSystemException catch (e) {
+      _cleanUpTempFile(tempAudioPath);
+      _cleanUpTempFile(tempTimingPath);
+      throw CacheFailure('Storage error: ${e.message}');
     } on AppException catch (e) {
-      _cleanUpTempFile(tempPath);
+      _cleanUpTempFile(tempAudioPath);
+      _cleanUpTempFile(tempTimingPath);
       throw ServerFailure(e.message, e.code);
     } catch (e) {
-      _cleanUpTempFile(tempPath);
+      _cleanUpTempFile(tempAudioPath);
+      _cleanUpTempFile(tempTimingPath);
+      if (e is Failure) rethrow;
       throw GeneralFailure('Failed to download surah $surahNumber: $e');
     }
   }
@@ -300,9 +390,13 @@ class AudioRepositoryImpl implements AudioRepository {
   }) async {
     try {
       final filePath = await _getSurahFilePath(readId, surahNumber);
-      final file = File(filePath);
-      if (file.existsSync()) {
-        await file.delete();
+      final audioFile = File(filePath);
+      if (audioFile.existsSync()) {
+        await audioFile.delete();
+      }
+      final timingFile = File('$filePath.timing.json');
+      if (timingFile.existsSync()) {
+        await timingFile.delete();
       }
     } catch (e) {
       throw CacheFailure('Failed to delete downloaded surah: $e');

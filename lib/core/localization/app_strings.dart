@@ -157,6 +157,15 @@ abstract class AppStrings {
   static const String allReciters = 'all_reciters';
   static const String downloadSurah = 'download_surah';
   static const String downloadedSurah = 'downloaded_surah';
+  static const String reciterSurahs = 'reciter_surahs';
+  static const String downloading = 'downloading';
+  static const String downloadFailed = 'download_failed';
+  static const String cancelDownload = 'cancel_download';
+  static const String deleteDownload = 'delete_download';
+  static const String deleteDownloadConfirm = 'delete_download_confirm';
+  static const String surahDownloadedSuccess = 'surah_downloaded_success';
+  static const String noSpaceLeft = 'no_space_left';
+  static const String storageError = 'storage_error';
   static const String reciterNotFound = 'reciter_not_found';
   static const String playbackError = 'playback_error';
   static const String playbackStopped = 'playback_stopped';
@@ -335,6 +344,15 @@ abstract class AppStrings {
     allReciters: 'جميع القراء',
     downloadSurah: 'تحميل السورة',
     downloadedSurah: 'تم التحميل',
+    reciterSurahs: 'سور القارئ',
+    downloading: 'جاري التحميل...',
+    downloadFailed: 'فشل التحميل',
+    cancelDownload: 'إلغاء التحميل',
+    deleteDownload: 'حذف السورة المحملة',
+    deleteDownloadConfirm: 'هل تريد حذف هذا الملف الصوتي من جهازك؟',
+    surahDownloadedSuccess: 'تم تحميل السورة بنجاح',
+    noSpaceLeft: 'لا توجد مساحة كافية على الجهاز',
+    storageError: 'خطأ في التخزين',
     reciterNotFound: 'لم يتم العثور على القارئ',
     playbackError: 'خطأ في التشغيل',
     playbackStopped: 'تم إيقاف التشغيل',

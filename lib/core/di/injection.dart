@@ -12,6 +12,7 @@ import 'package:ayaat_quran_majeed/features/audio/domain/repositories/audio_repo
 import 'package:ayaat_quran_majeed/features/audio/domain/repositories/playback_repository.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_cubit.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_selection_cubit.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_surahs_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/data/repositories/index_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
@@ -222,6 +223,14 @@ Future<void> initInjection() async {
   if (!sl.isRegistered<ReciterSelectionCubit>()) {
     sl.registerFactory<ReciterSelectionCubit>(
       () => ReciterSelectionCubit(
+        audioRepository: sl<AudioRepository>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<ReciterSurahsCubit>()) {
+    sl.registerFactory<ReciterSurahsCubit>(
+      () => ReciterSurahsCubit(
         audioRepository: sl<AudioRepository>(),
       ),
     );

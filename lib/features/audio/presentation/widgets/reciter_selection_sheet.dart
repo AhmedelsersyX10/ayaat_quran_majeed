@@ -1,4 +1,5 @@
 import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
+import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_spacing.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
@@ -13,6 +14,7 @@ import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_sel
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 /// Modal bottom sheet for choosing the active Quran reciter and moshaf edition
 /// matching reference 18.
@@ -209,7 +211,24 @@ class ReciterSelectionSheet extends StatelessWidget {
                                   reciter: reciter,
                                   currentSelection: success,
                                 ),
-                                onInfo: () => onReciterInfoTap?.call(reciter),
+                                onInfo: () {
+                                  if (onReciterInfoTap != null) {
+                                    onReciterInfoTap!(reciter);
+                                  } else {
+                                    final moshafId = reciter.defaultMoshaf?.id ??
+                                        (reciter.moshafs.isNotEmpty
+                                            ? reciter.moshafs.first.id
+                                            : null);
+                                    context.pushNamed(
+                                      AppRoutes.reciterSurahsName,
+                                      queryParameters: {
+                                        'reciterId': reciter.id.toString(),
+                                        if (moshafId != null)
+                                          'moshafId': moshafId.toString(),
+                                      },
+                                    );
+                                  }
+                                },
                               );
                             },
                           ),

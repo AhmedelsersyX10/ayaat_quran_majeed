@@ -70,7 +70,7 @@ class FakeAudioRemoteDataSource implements AudioRemoteDataSource {
     // Simulate successful file write
     final file = File(savePath);
     await file.parent.create(recursive: true);
-    await file.writeAsString('fake mp3 bytes');
+    await file.writeAsBytes(List<int>.filled(2048, 65));
   }
 }
 
