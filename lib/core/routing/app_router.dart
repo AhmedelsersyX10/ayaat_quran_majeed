@@ -4,6 +4,7 @@ import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/core/routing/app_shell.dart';
 import 'package:ayaat_quran_majeed/core/splash/splash_screen.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_cubit.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_selection_cubit.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/presentation/views/bookmarks_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/views/surahs_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/views/khatma_tab_view.dart';
@@ -65,6 +66,9 @@ abstract class AppRouter {
               providers: [
                 BlocProvider<AudioPlaybackCubit>.value(
                   value: sl<AudioPlaybackCubit>(),
+                ),
+                BlocProvider<ReciterSelectionCubit>(
+                  create: (_) => sl<ReciterSelectionCubit>()..loadReciters(),
                 ),
                 BlocProvider<QuranPagePlayerBloc>(
                   create: (_) => sl<QuranPagePlayerBloc>(),

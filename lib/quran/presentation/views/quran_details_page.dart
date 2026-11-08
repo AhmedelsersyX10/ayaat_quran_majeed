@@ -1,6 +1,7 @@
 // ignore_for_file: unrelated_type_equality_checks, depend_on_referenced_packages, file_names
 import 'dart:async';
 import 'dart:convert';
+import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
 import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_colors.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/entities/search_navigation_target.dart';
@@ -8,6 +9,10 @@ import 'package:go_router/go_router.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/hive_helper.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
+import 'package:ayaat_quran_majeed/features/audio/domain/entities/playback_state.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_cubit.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_state.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/widgets/floating_audio_player.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/quran/data/models/reciter_model.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/get_translation_data.dart'
@@ -660,6 +665,51 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                 }
               },
             ),
+            BlocListener<AudioPlaybackCubit, AudioPlaybackState>(
+              listenWhen: (prev, curr) =>
+                  prev.currentAyah != curr.currentAyah ||
+                  prev.surahNumber != curr.surahNumber ||
+                  prev.hasTiming != curr.hasTiming,
+              listener: (context, audioState) {
+                if (!mounted) return;
+                // Follow recitation position across page boundaries without misleading jumps:
+                // Only if timing is verified, ayah is valid (not Basmala), and user is not dragging slider.
+                if (audioState.hasTiming && audioState.currentAyah != null) {
+                  final ayahPage = _metadataService.getPageNumber(
+                    audioState.surahNumber,
+                    audioState.currentAyah!,
+                  );
+                  final readerCubit = context.read<QuranReaderCubit>();
+                  if (!readerCubit.state.isSliderDragging && ayahPage >= 1 && ayahPage <= 604) {
+                    final currentPage = _pageController.hasClients
+                        ? ((_pageController.page?.round() ?? 0) + 1)
+                        : index;
+                    if (ayahPage != currentPage) {
+                      setState(() {
+                        index = ayahPage;
+                      });
+                      readerCubit.updateFromPageChange(ayahPage);
+                      if (_pageController.hasClients) {
+                        final diff = (ayahPage - currentPage).abs();
+                        final zeroBased = (ayahPage - 1).clamp(0, 603);
+                        if (diff > 5) {
+                          _pageController.jumpToPage(zeroBased);
+                        } else {
+                          _pageController.animateToPage(
+                            zeroBased,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutQuart,
+                          );
+                        }
+                      }
+                      if (itemScrollController.isAttached) {
+                        itemScrollController.jumpTo(index: ayahPage);
+                      }
+                    }
+                  }
+                }
+              },
+            ),
             BlocListener<QuranReaderCubit, QuranReadingState>(
               listenWhen: (previous, current) =>
                   previous.position.page != current.position.page ||
@@ -825,7 +875,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                               buildWhen: (prev, curr) => prev.returnPage != curr.returnPage,
                               builder: (context, readerState) {
                                 return Positioned(
-                                  bottom: isChromeVisible ? 72.h : 24.h,
+                                  bottom: isChromeVisible ? 124.h : 74.h,
                                   right: 20.w,
                                   child: MushafReturnButton(
                                     returnPage: readerState.returnPage,
@@ -835,6 +885,52 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                                     onDismiss: () {
                                       context.read<QuranReaderCubit>().dismissReturnPage();
                                     },
+                                  ),
+                                );
+                              },
+                            ),
+                            // Floating Audio Player (Ref 05 & Video 37)
+                            BlocBuilder<AudioPlaybackCubit, AudioPlaybackState>(
+                              builder: (context, audioState) {
+                                final isAudioActive = audioState.status != PlaybackStatus.idle;
+                                final bool shouldShow = isChromeVisible || isAudioActive;
+
+                                final double bottomOffset = isChromeVisible
+                                    ? (MediaQuery.of(context).padding.bottom + 68.h)
+                                    : (MediaQuery.of(context).padding.bottom + 16.h);
+
+                                return AnimatedPositioned(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOutQuart,
+                                  bottom: shouldShow ? bottomOffset : -160.h,
+                                  left: 0,
+                                  right: 0,
+                                  child: Center(
+                                    child: FloatingAudioPlayer(
+                                      onPlayFallback: () {
+                                        final pageData = _metadataService.getPageData(index);
+                                        if (pageData.isNotEmpty) {
+                                          final first = pageData.first;
+                                          context.read<AudioPlaybackCubit>().playAyah(
+                                                first['surah'] as int,
+                                                first['start'] as int,
+                                              );
+                                        } else {
+                                          context.read<AudioPlaybackCubit>().playAyah(1, 1);
+                                        }
+                                      },
+                                      onSettingsPressed: () {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              AppStrings.tr(AppStrings.recitationSettings),
+                                              textDirection: m.TextDirection.rtl,
+                                            ),
+                                            duration: const Duration(seconds: 1),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                 );
                               },
@@ -1010,7 +1106,8 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
         // Feature action contract: bookmarks task
       },
       onReciteTap: () {
-        // Feature action contract: audio task
+        Navigator.of(context).pop();
+        context.read<AudioPlaybackCubit>().playAyah(surahNumber, verseNumber);
       },
       onPlayToTap: () {
         // Feature action contract: audio task

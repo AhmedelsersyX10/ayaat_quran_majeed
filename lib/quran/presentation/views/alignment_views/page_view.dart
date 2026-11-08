@@ -139,6 +139,25 @@ extension PageViewExtension on QuranDetailsPageState {
       );
     }
 
+    // Audio recitation follow-along highlight (Task 4.04, Video 37)
+    // Mandatory constraint: No highlight when timing is unavailable
+    try {
+      final audioState = context.watch<AudioPlaybackCubit>().state;
+      if (audioState.hasTiming && audioState.currentAyah != null) {
+        final currentSurah = audioState.surahNumber;
+        final currentAyah = audioState.currentAyah!;
+        final ayahPage = _metadataService.getPageNumber(currentSurah, currentAyah);
+        activeHighlights.add(
+          qp.HighlightVerse(
+            surah: currentSurah,
+            verseNumber: currentAyah,
+            page: ayahPage,
+            color: AppColors.playbackHighlight,
+          ),
+        );
+      }
+    } catch (_) {}
+
     return FutureBuilder<void>(
       future: qp.QcfFontLoader.ensureFontLoaded(index),
       builder: (context, snapshot) {

@@ -156,6 +156,9 @@ abstract class AppStrings {
   static const String reciterNotFound = 'reciter_not_found';
   static const String playbackError = 'playback_error';
   static const String playbackStopped = 'playback_stopped';
+  static const String loadingAudio = 'loading_audio';
+  static const String nextAyah = 'next_ayah';
+  static const String previousAyah = 'previous_ayah';
 
   // Tafsir & Library (Screens 17, 34)
   static const String muyassarTafsir = 'muyassar_tafsir';
@@ -327,6 +330,9 @@ abstract class AppStrings {
     reciterNotFound: 'لم يتم العثور على القارئ',
     playbackError: 'خطأ في التشغيل',
     playbackStopped: 'تم إيقاف التشغيل',
+    loadingAudio: 'جاري التحميل',
+    nextAyah: 'الآية التالية',
+    previousAyah: 'الآية السابقة',
     muyassarTafsir: 'التفسير الميسر',
     libraryEditTitle: 'تحرير المكتبة',
     myLibrary: 'مكتبتي',

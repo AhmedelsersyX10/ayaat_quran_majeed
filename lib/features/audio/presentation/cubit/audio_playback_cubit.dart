@@ -107,6 +107,24 @@ class AudioPlaybackCubit extends Cubit<AudioPlaybackState> {
     await _playbackRepository.seekToAyah(ayahNumber);
   }
 
+  /// Skips to the next ayah in recitation.
+  Future<void> skipNextAyah() async {
+    final curr = state.currentAyah;
+    if (curr != null) {
+      await _playbackRepository.seekToAyah(curr + 1);
+    }
+  }
+
+  /// Skips to the previous ayah in recitation.
+  Future<void> skipPreviousAyah() async {
+    final curr = state.currentAyah;
+    if (curr != null && curr > 1) {
+      await _playbackRepository.seekToAyah(curr - 1);
+    } else if (curr != null) {
+      await _playbackRepository.seekToAyah(1);
+    }
+  }
+
   /// Updates repeat settings dynamically (Reference 40).
   Future<void> setRepeatSettings(RepeatSettings settings) async {
     await _playbackRepository.setRepeatSettings(settings);

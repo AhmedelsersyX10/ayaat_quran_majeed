@@ -221,6 +221,41 @@ void main() {
       expect(failure.message, 'Network timeout during playback');
     });
 
+    test('skipNextAyah seeks to currentAyah + 1', () async {
+      mockRepository.emitSession(const PlaybackSession(
+        status: PlaybackStatus.playing,
+        surahNumber: 1,
+        currentAyah: 3,
+      ));
+      await pumpEventQueue();
+
+      await cubit.skipNextAyah();
+      expect(mockRepository.lastSeekAyah, equals(4));
+    });
+
+    test('skipPreviousAyah seeks to currentAyah - 1 or clamped to 1', () async {
+      mockRepository.emitSession(const PlaybackSession(
+        status: PlaybackStatus.playing,
+        surahNumber: 1,
+        currentAyah: 3,
+      ));
+      await pumpEventQueue();
+
+      await cubit.skipPreviousAyah();
+      expect(mockRepository.lastSeekAyah, equals(2));
+
+      // At Ayah 1, seek to 1
+      mockRepository.emitSession(const PlaybackSession(
+        status: PlaybackStatus.playing,
+        surahNumber: 1,
+        currentAyah: 1,
+      ));
+      await pumpEventQueue();
+
+      await cubit.skipPreviousAyah();
+      expect(mockRepository.lastSeekAyah, equals(1));
+    });
+
     test('loading session emits AudioPlaybackLoading', () async {
       mockRepository.emitSession(const PlaybackSession(
         status: PlaybackStatus.loading,
