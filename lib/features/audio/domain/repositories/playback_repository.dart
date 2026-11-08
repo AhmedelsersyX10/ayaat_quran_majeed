@@ -39,6 +39,11 @@ abstract class PlaybackRepository {
   /// playback if current position is within the new range, or starts playback if idle.
   Future<void> updateRange(PlaybackRange range);
 
+  /// Configures or updates the recitation range.
+  /// If active, dynamically adapts the running recitation boundaries.
+  /// If idle, updates the session range snapshot without auto-starting audio.
+  Future<void> configureRange(PlaybackRange range);
+
   /// Pauses the active recitation.
   Future<void> pause();
 

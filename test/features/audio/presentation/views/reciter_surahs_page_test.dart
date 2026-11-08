@@ -120,6 +120,9 @@ class _FakePlaybackRepository implements PlaybackRepository {
   Future<void> updateRange(PlaybackRange range) async {}
 
   @override
+  Future<void> configureRange(PlaybackRange range) async {}
+
+  @override
   Future<void> pause() async {}
 
   @override

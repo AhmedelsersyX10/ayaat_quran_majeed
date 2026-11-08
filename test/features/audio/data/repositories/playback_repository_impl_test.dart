@@ -290,5 +290,23 @@ void main() {
       expect(fakePlayer.playCalls, 1);
       expect(repository.currentSession.range, equals(range));
     });
+
+    test('configureRange updates session range when idle without auto-starting playback', () async {
+      expect(repository.currentSession.status, PlaybackStatus.idle);
+
+      const range = PlaybackRange(
+        startSurah: 2,
+        startAyah: 1,
+        endSurah: 2,
+        endAyah: 10,
+      );
+
+      await repository.configureRange(range);
+      expect(repository.currentSession.status, PlaybackStatus.idle);
+      expect(fakePlayer.playCalls, 0);
+      expect(repository.currentSession.range, equals(range));
+      expect(repository.currentSession.surahNumber, equals(2));
+      expect(repository.currentSession.currentAyah, equals(1));
+    });
   });
 }

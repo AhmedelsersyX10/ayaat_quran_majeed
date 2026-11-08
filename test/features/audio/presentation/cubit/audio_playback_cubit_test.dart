@@ -15,6 +15,7 @@ class MockPlaybackRepository implements PlaybackRepository {
   int playSurahCalls = 0;
   int playRangeCalls = 0;
   int updateRangeCalls = 0;
+  int configureRangeCalls = 0;
   int pauseCalls = 0;
   int resumeCalls = 0;
   int stopCalls = 0;
@@ -78,6 +79,14 @@ class MockPlaybackRepository implements PlaybackRepository {
   @override
   Future<void> updateRange(PlaybackRange range) async {
     updateRangeCalls++;
+    emitSession(_current.copyWith(
+      range: range,
+    ));
+  }
+
+  @override
+  Future<void> configureRange(PlaybackRange range) async {
+    configureRangeCalls++;
     emitSession(_current.copyWith(
       range: range,
     ));
@@ -322,6 +331,29 @@ void main() {
 
       expect(mockRepository.playRangeCalls, equals(1));
       expect(mockRepository.updateRangeCalls, equals(0));
+    });
+
+    test('configureRange delegates to repository configureRange and updates session range', () async {
+      const range = PlaybackRange(
+        startSurah: 1,
+        startAyah: 1,
+        endSurah: 1,
+        endAyah: 7,
+      );
+
+      await cubit.configureRange(range);
+      expect(mockRepository.configureRangeCalls, equals(1));
+      expect(cubit.state.range, equals(range));
+    });
+
+    test('setRepeatSettings delegates to repository and updates repeatSettings', () async {
+      const settings = RepeatSettings(
+        repeatRange: 3,
+        repeatAyah: 2,
+      );
+
+      await cubit.setRepeatSettings(settings);
+      expect(mockRepository.lastRepeatSettings, equals(settings));
     });
   });
 }

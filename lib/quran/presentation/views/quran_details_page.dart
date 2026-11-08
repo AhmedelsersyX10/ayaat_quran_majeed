@@ -1,7 +1,6 @@
 // ignore_for_file: unrelated_type_equality_checks, depend_on_referenced_packages, file_names
 import 'dart:async';
 import 'dart:convert';
-import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
 import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_colors.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/entities/search_navigation_target.dart';
@@ -14,6 +13,7 @@ import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playb
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_state.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/widgets/floating_audio_player.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/widgets/play_to_sheet.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/widgets/recitation_settings_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/quran/data/models/reciter_model.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/get_translation_data.dart'
@@ -921,15 +921,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                                         }
                                       },
                                       onSettingsPressed: () {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              AppStrings.tr(AppStrings.recitationSettings),
-                                              textDirection: m.TextDirection.rtl,
-                                            ),
-                                            duration: const Duration(seconds: 1),
-                                          ),
-                                        );
+                                        RecitationSettingsSheet.show(context);
                                       },
                                     ),
                                   ),
@@ -1036,12 +1028,13 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
     BuildContext context, {
     required int surahNumber,
     int? initialAyahNumber,
-  }) {
-    return AyahPickerSheet.show(
+  }) async {
+    final result = await AyahPickerSheet.show(
       context,
       surahNumber: surahNumber,
       initialAyahNumber: initialAyahNumber,
     );
+    return result?.ayahNumber;
   }
 
   // ==================== View Selection ====================

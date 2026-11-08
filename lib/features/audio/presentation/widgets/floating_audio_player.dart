@@ -7,6 +7,7 @@ import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playb
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_state.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_selection_cubit.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_selection_state.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/widgets/recitation_settings_sheet.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/widgets/reciter_selection_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -293,7 +294,8 @@ class FloatingAudioPlayerState extends State<FloatingAudioPlayer> {
                 button: true,
                 label: AppStrings.tr(AppStrings.recitationSettings),
                 child: InkWell(
-                  onTap: widget.onSettingsPressed,
+                  onTap: widget.onSettingsPressed ??
+                      () => RecitationSettingsSheet.show(context),
                   borderRadius: BorderRadius.circular(16.r),
                   child: Padding(
                     padding: EdgeInsets.all(4.w),

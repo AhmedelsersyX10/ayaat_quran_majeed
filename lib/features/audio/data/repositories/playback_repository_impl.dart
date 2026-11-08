@@ -154,6 +154,19 @@ class PlaybackRepositoryImpl implements PlaybackRepository {
     }
   }
 
+  @override
+  Future<void> configureRange(PlaybackRange range) async {
+    if (_session.isActive) {
+      await updateRange(range);
+    } else {
+      _emit(_session.copyWith(
+        range: range,
+        surahNumber: range.startSurah,
+        currentAyah: () => range.startAyah,
+      ));
+    }
+  }
+
   Future<void> _loadAndPlaySurah({
     required int surahNumber,
     required int startAyah,

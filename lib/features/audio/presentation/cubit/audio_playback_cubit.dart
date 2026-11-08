@@ -87,6 +87,12 @@ class AudioPlaybackCubit extends Cubit<AudioPlaybackState> {
     await _playbackRepository.updateRange(range);
   }
 
+  /// Configures recitation range with immediate adaptation during playback,
+  /// or updates session range snapshot when idle without auto-starting audio (Reference 40).
+  Future<void> configureRange(PlaybackRange range) async {
+    await _playbackRepository.configureRange(range);
+  }
+
   /// Sets or starts playback ending at [endSurah]:[endAyah].
   Future<void> playToAyah({
     required int startSurah,

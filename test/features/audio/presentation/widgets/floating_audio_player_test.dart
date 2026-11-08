@@ -7,6 +7,7 @@ import 'package:ayaat_quran_majeed/features/audio/domain/entities/reciter.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/repositories/playback_repository.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_cubit.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/widgets/floating_audio_player.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/widgets/recitation_settings_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -63,6 +64,11 @@ class FakePlaybackRepository implements PlaybackRepository {
 
   @override
   Future<void> updateRange(PlaybackRange range) async {
+    emit(_session.copyWith(range: range));
+  }
+
+  @override
+  Future<void> configureRange(PlaybackRange range) async {
     emit(_session.copyWith(range: range));
   }
 
@@ -321,6 +327,24 @@ void main() {
       await tester.pump();
 
       expect(settingsPressed, isTrue);
+    });
+
+    testWidgets('tapping [...] without onSettings callback opens RecitationSettingsSheet', (tester) async {
+      repository.emit(const PlaybackSession(
+        status: PlaybackStatus.playing,
+        surahNumber: 1,
+        reciter: testReciter,
+      ));
+
+      await tester.pumpWidget(buildTestableWidget(
+        isInitiallyExpanded: true,
+      ));
+      await tester.pump();
+
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(RecitationSettingsSheet), findsOneWidget);
     });
   });
 }

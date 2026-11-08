@@ -30,7 +30,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text(AppStrings.selectAyah), findsOneWidget);
+      expect(find.text(AppStrings.tr(AppStrings.selectAyah)), findsOneWidget);
       expect(find.text('الفاتحة'), findsWidgets);
       // Al-Fatiha has 7 verses
       expect(find.text('الفاتحة : ١'), findsOneWidget);
@@ -82,6 +82,34 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(chosenAyah, 2);
+    });
+
+    testWidgets('triggers onVerseSelected with both surah and ayah numbers', (tester) async {
+      int? chosenSurah;
+      int? chosenAyah;
+
+      await tester.pumpWidget(
+        createTestableWidget(
+          AyahPickerSheet(
+            surahNumber: 1,
+            initialAyahNumber: 1,
+            onVerseSelected: (s, a) {
+              chosenSurah = s;
+              chosenAyah = a;
+            },
+            metadataService: metadataService,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final verse3 = find.text('الفاتحة : ٣');
+      expect(verse3, findsOneWidget);
+      await tester.tap(verse3);
+      await tester.pumpAndSettle();
+
+      expect(chosenSurah, 1);
+      expect(chosenAyah, 3);
     });
   });
 }
