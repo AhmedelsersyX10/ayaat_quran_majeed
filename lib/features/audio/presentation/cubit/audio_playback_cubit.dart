@@ -82,6 +82,33 @@ class AudioPlaybackCubit extends Cubit<AudioPlaybackState> {
     );
   }
 
+  /// Updates the active playback range endpoint dynamically (Reference 22).
+  Future<void> updateRange(PlaybackRange range) async {
+    await _playbackRepository.updateRange(range);
+  }
+
+  /// Sets or starts playback ending at [endSurah]:[endAyah].
+  Future<void> playToAyah({
+    required int startSurah,
+    required int startAyah,
+    required int endSurah,
+    required int endAyah,
+    RepeatSettings? repeatSettings,
+  }) async {
+    final range = PlaybackRange(
+      startSurah: startSurah,
+      startAyah: startAyah,
+      endSurah: endSurah,
+      endAyah: endAyah,
+    );
+
+    if (state.isActive && state.surahNumber == startSurah) {
+      await updateRange(range);
+    } else {
+      await playRange(range, repeatSettings: repeatSettings);
+    }
+  }
+
   /// Pauses playback.
   Future<void> pause() async {
     await _playbackRepository.pause();

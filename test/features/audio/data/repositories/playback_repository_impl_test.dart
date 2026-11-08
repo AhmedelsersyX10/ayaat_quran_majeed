@@ -235,5 +235,60 @@ void main() {
       expect(repository.currentSession.status, PlaybackStatus.failure);
       expect(repository.currentSession.errorMessage, isNotNull);
     });
+
+    test('updateRange dynamically updates active range without interrupting audio', () async {
+      await repository.playAyah(surahNumber: 1, ayahNumber: 1);
+      expect(repository.currentSession.status, PlaybackStatus.playing);
+      expect(fakePlayer.playCalls, 1);
+
+      const newRange = PlaybackRange(
+        startSurah: 1,
+        startAyah: 1,
+        endSurah: 1,
+        endAyah: 5,
+      );
+
+      await repository.updateRange(newRange);
+      expect(repository.currentSession.range, equals(newRange));
+      // Does not restart audio
+      expect(fakePlayer.playCalls, 1);
+      expect(repository.currentSession.status, PlaybackStatus.playing);
+    });
+
+    test('updateRange pauses and marks completed if current position is past new end', () async {
+      await repository.playAyah(surahNumber: 1, ayahNumber: 1);
+      // Simulate position reaching ayah 3 (7000-10000ms)
+      fakePlayer.simulatePosition(const Duration(milliseconds: 7500));
+      await pumpEventQueue();
+      expect(repository.currentSession.currentAyah, equals(3));
+
+      // Update range to end at ayah 2 (which is already past)
+      const newRange = PlaybackRange(
+        startSurah: 1,
+        startAyah: 1,
+        endSurah: 1,
+        endAyah: 2,
+      );
+
+      await repository.updateRange(newRange);
+      expect(fakePlayer.pauseCalls, 1);
+      expect(repository.currentSession.status, PlaybackStatus.completed);
+    });
+
+    test('updateRange starts playback if session was idle', () async {
+      expect(repository.currentSession.status, PlaybackStatus.idle);
+
+      const range = PlaybackRange(
+        startSurah: 1,
+        startAyah: 1,
+        endSurah: 1,
+        endAyah: 7,
+      );
+
+      await repository.updateRange(range);
+      expect(repository.currentSession.status, PlaybackStatus.playing);
+      expect(fakePlayer.playCalls, 1);
+      expect(repository.currentSession.range, equals(range));
+    });
   });
 }

@@ -62,6 +62,11 @@ class FakePlaybackRepository implements PlaybackRepository {
   }) async {}
 
   @override
+  Future<void> updateRange(PlaybackRange range) async {
+    emit(_session.copyWith(range: range));
+  }
+
+  @override
   Future<void> pause() async {
     pauseCalls++;
     emit(_session.copyWith(status: PlaybackStatus.paused));

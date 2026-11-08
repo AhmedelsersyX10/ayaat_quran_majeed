@@ -98,7 +98,48 @@ class PlaybackRange {
   })  : assert(startSurah >= 1 && startSurah <= 114),
         assert(endSurah >= 1 && endSurah <= 114),
         assert(startAyah >= 1),
-        assert(endAyah >= 1);
+        assert(endAyah >= 1),
+        assert(
+          startSurah < endSurah ||
+              (startSurah == endSurah && startAyah <= endAyah),
+          'End verse cannot precede start verse: $startSurah:$startAyah to $endSurah:$endAyah',
+        );
+
+  /// Validates whether the given boundaries form an admissible playback range
+  /// where the end point is not before the start point.
+  static bool isValidRange(
+    int startSurah,
+    int startAyah,
+    int endSurah,
+    int endAyah,
+  ) {
+    if (startSurah < 1 || startSurah > 114) return false;
+    if (endSurah < 1 || endSurah > 114) return false;
+    if (startAyah < 1 || endAyah < 1) return false;
+    if (startSurah > endSurah) return false;
+    if (startSurah == endSurah && startAyah > endAyah) return false;
+    return true;
+  }
+
+  /// Validated factory that throws [ArgumentError] if boundaries are invalid.
+  factory PlaybackRange.validated({
+    required int startSurah,
+    required int startAyah,
+    required int endSurah,
+    required int endAyah,
+  }) {
+    if (!isValidRange(startSurah, startAyah, endSurah, endAyah)) {
+      throw ArgumentError(
+        'Invalid playback range: $startSurah:$startAyah to $endSurah:$endAyah',
+      );
+    }
+    return PlaybackRange(
+      startSurah: startSurah,
+      startAyah: startAyah,
+      endSurah: endSurah,
+      endAyah: endAyah,
+    );
+  }
 
   /// Convenient factory to play a single isolated ayah.
   factory PlaybackRange.singleAyah(int surah, int ayah) {
@@ -120,6 +161,48 @@ class PlaybackRange {
     );
   }
 
+  /// Convenient factory to play from [startSurah]:[startAyah] to the end of a given page.
+  factory PlaybackRange.page({
+    required int startSurah,
+    required int startAyah,
+    required int lastSurahOnPage,
+    required int lastAyahOnPage,
+  }) {
+    return PlaybackRange(
+      startSurah: startSurah,
+      startAyah: startAyah,
+      endSurah: lastSurahOnPage,
+      endAyah: lastAyahOnPage,
+    );
+  }
+
+  /// Convenient factory to play from [startSurah]:[startAyah] to the end of the current surah.
+  factory PlaybackRange.endOfSurah({
+    required int startSurah,
+    required int startAyah,
+    required int totalAyatInSurah,
+  }) {
+    return PlaybackRange(
+      startSurah: startSurah,
+      startAyah: startAyah,
+      endSurah: startSurah,
+      endAyah: totalAyatInSurah,
+    );
+  }
+
+  /// Convenient factory for continuous recitation up to the end of the Quran (114:6).
+  factory PlaybackRange.continuous({
+    required int startSurah,
+    required int startAyah,
+  }) {
+    return PlaybackRange(
+      startSurah: startSurah,
+      startAyah: startAyah,
+      endSurah: 114,
+      endAyah: 6,
+    );
+  }
+
   /// Custom range factory.
   factory PlaybackRange.custom({
     required int startSurah,
@@ -135,13 +218,39 @@ class PlaybackRange {
     );
   }
 
+  /// Creates a copy of this range with a new endpoint, enforcing end-before-start.
+  PlaybackRange copyWithNewEnd({
+    required int endSurah,
+    required int endAyah,
+  }) {
+    return PlaybackRange.validated(
+      startSurah: startSurah,
+      startAyah: startAyah,
+      endSurah: endSurah,
+      endAyah: endAyah,
+    );
+  }
+
+  /// Creates a copy of this range updating the start position to the current recitation position.
+  PlaybackRange withCurrentPositionAsStart({
+    required int currentSurah,
+    required int currentAyah,
+  }) {
+    return PlaybackRange.validated(
+      startSurah: currentSurah,
+      startAyah: currentAyah,
+      endSurah: endSurah,
+      endAyah: endAyah,
+    );
+  }
+
   /// Whether the range is restricted to a single verse.
   bool get isSingleAyah => startSurah == endSurah && startAyah == endAyah;
 
   /// Whether the range is contained within a single surah.
   bool get isSingleSurah => startSurah == endSurah;
 
-  /// Checks if [surah] and [ayah] fall within this range.
+  /// Checks if [surah] and [ayah] fall within this range (inclusive).
   bool contains(int surah, int ayah) {
     if (surah < startSurah || surah > endSurah) return false;
     if (surah == startSurah && ayah < startAyah) return false;
@@ -149,9 +258,30 @@ class PlaybackRange {
     return true;
   }
 
+  /// Checks if [surah] and [ayah] match the starting verse.
+  bool isStart(int surah, int ayah) =>
+      surah == startSurah && ayah == startAyah;
+
   /// Checks if [surah] and [ayah] represent the final verse in this range.
   bool isLastAyah(int surah, int ayah) =>
       surah == endSurah && ayah == endAyah;
+
+  /// Checks if [surah] and [ayah] represent the final verse in this range (alias).
+  bool isEnd(int surah, int ayah) => isLastAyah(surah, ayah);
+
+  /// Checks if [surah] and [ayah] precede the start of this range.
+  bool isBeforeStart(int surah, int ayah) {
+    if (surah < startSurah) return true;
+    if (surah == startSurah && ayah < startAyah) return true;
+    return false;
+  }
+
+  /// Checks if [surah] and [ayah] are past the end of this range.
+  bool isPastEnd(int surah, int ayah) {
+    if (surah > endSurah) return true;
+    if (surah == endSurah && ayah > endAyah) return true;
+    return false;
+  }
 
   @override
   bool operator ==(Object other) =>

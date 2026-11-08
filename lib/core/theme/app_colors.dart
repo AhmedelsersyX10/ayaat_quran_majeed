@@ -47,6 +47,9 @@ abstract class AppColors {
   /// Ayah card header background in Tafsir mode (#F7EBDD).
   static const Color ayahHeaderSurface = Color(0xFFF7EBDD);
 
+  /// Warm camel/tan accent fill used in segmented controls (Screen 22) (#BAA689).
+  static const Color tabPillActiveTan = Color(0xFFBAA689);
+
   /// Modal bottom sheet and dialog barrier scrim (45% black, blending to #ADAAA5).
   static const Color scrim = Color(0x73000000);
 

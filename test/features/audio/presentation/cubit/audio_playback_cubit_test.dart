@@ -14,6 +14,7 @@ class MockPlaybackRepository implements PlaybackRepository {
   int playAyahCalls = 0;
   int playSurahCalls = 0;
   int playRangeCalls = 0;
+  int updateRangeCalls = 0;
   int pauseCalls = 0;
   int resumeCalls = 0;
   int stopCalls = 0;
@@ -70,6 +71,14 @@ class MockPlaybackRepository implements PlaybackRepository {
       status: PlaybackStatus.playing,
       surahNumber: range.startSurah,
       currentAyah: () => range.startAyah,
+      range: range,
+    ));
+  }
+
+  @override
+  Future<void> updateRange(PlaybackRange range) async {
+    updateRangeCalls++;
+    emitSession(_current.copyWith(
       range: range,
     ));
   }
@@ -264,6 +273,55 @@ void main() {
       await pumpEventQueue();
 
       expect(cubit.state, isA<AudioPlaybackLoading>());
+    });
+
+    test('updateRange delegates directly to repository', () async {
+      const range = PlaybackRange(
+        startSurah: 2,
+        startAyah: 6,
+        endSurah: 2,
+        endAyah: 16,
+      );
+
+      await cubit.updateRange(range);
+      expect(mockRepository.updateRangeCalls, equals(1));
+      expect(cubit.state.range, equals(range));
+    });
+
+    test('playToAyah calls updateRange when session is active on same surah', () async {
+      mockRepository.emitSession(const PlaybackSession(
+        status: PlaybackStatus.playing,
+        surahNumber: 2,
+        currentAyah: 6,
+      ));
+      await pumpEventQueue();
+
+      await cubit.playToAyah(
+        startSurah: 2,
+        startAyah: 6,
+        endSurah: 2,
+        endAyah: 20,
+      );
+
+      expect(mockRepository.updateRangeCalls, equals(1));
+      expect(mockRepository.playRangeCalls, equals(0));
+    });
+
+    test('playToAyah calls playRange when session is idle', () async {
+      mockRepository.emitSession(const PlaybackSession(
+        status: PlaybackStatus.idle,
+      ));
+      await pumpEventQueue();
+
+      await cubit.playToAyah(
+        startSurah: 2,
+        startAyah: 1,
+        endSurah: 2,
+        endAyah: 10,
+      );
+
+      expect(mockRepository.playRangeCalls, equals(1));
+      expect(mockRepository.updateRangeCalls, equals(0));
     });
   });
 }

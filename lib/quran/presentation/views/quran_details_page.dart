@@ -13,6 +13,7 @@ import 'package:ayaat_quran_majeed/features/audio/domain/entities/playback_state
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_cubit.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_state.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/widgets/floating_audio_player.dart';
+import 'package:ayaat_quran_majeed/features/audio/presentation/widgets/play_to_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/quran/data/models/reciter_model.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/get_translation_data.dart'
@@ -1110,7 +1111,33 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
         context.read<AudioPlaybackCubit>().playAyah(surahNumber, verseNumber);
       },
       onPlayToTap: () {
-        // Feature action contract: audio task
+        Navigator.of(context).pop();
+        PlayToSheet.show(
+          context,
+          surahNumber: surahNumber,
+          verseNumber: verseNumber,
+          isStarred: isVerseStarred(surahNumber, verseNumber),
+          onStarTap: () {
+            if (isVerseStarred(surahNumber, verseNumber)) {
+              removeStarredVerse(surahNumber, verseNumber);
+            } else {
+              addStarredVerse(surahNumber, verseNumber);
+            }
+            setState(() {});
+          },
+          onShareTap: () {
+            showDialog(
+              context: context,
+              builder: (_) => ShareAyahDialog(
+                surahNumber: surahNumber,
+                verseNumber: verseNumber,
+                index: index,
+                jsonData: widget.jsonData ?? JsonAssetService.surahsData,
+                translationDataList: translationDataList,
+              ),
+            );
+          },
+        );
       },
       onLibraryTap: () {
         // Feature action contract: tafsir task

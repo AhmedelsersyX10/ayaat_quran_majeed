@@ -32,6 +32,8 @@ class FakePlaybackRepository implements PlaybackRepository {
   @override
   Future<void> playRange({required PlaybackRange range, RepeatSettings? repeatSettings}) async {}
   @override
+  Future<void> updateRange(PlaybackRange range) async {}
+  @override
   Future<void> pause() async {}
   @override
   Future<void> resume() async {}

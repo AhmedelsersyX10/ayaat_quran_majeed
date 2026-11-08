@@ -12,6 +12,9 @@ abstract class AudioPlaybackState {
   /// Current playback status.
   PlaybackStatus get status => session.status;
 
+  /// Whether playback is actively running, loading, or paused.
+  bool get isActive => session.isActive;
+
   /// Active surah number.
   int get surahNumber => session.surahNumber;
 

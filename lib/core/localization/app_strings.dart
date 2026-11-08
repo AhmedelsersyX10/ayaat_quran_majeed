@@ -140,6 +140,10 @@ abstract class AppStrings {
   static const String endOfSurah = 'end_of_surah';
   static const String endOfPage = 'end_of_page';
   static const String endOfJuz = 'end_of_juz';
+  static const String continuousRecitation = 'continuous_recitation';
+  static const String pages = 'pages';
+  static const String pagePrefix = 'page_prefix';
+  static const String ayatTab = 'ayat_tab';
   static const String customAyah = 'custom_ayah';
   static const String stopAfter = 'stop_after';
 
@@ -316,6 +320,10 @@ abstract class AppStrings {
     endOfSurah: 'نهاية السورة',
     endOfPage: 'نهاية الصفحة',
     endOfJuz: 'نهاية الجزء',
+    continuousRecitation: 'تلاوة مستمرة',
+    pages: 'الصفحات',
+    pagePrefix: 'الصفحة',
+    ayatTab: 'الآيات',
     customAyah: 'آية معينة',
     stopAfter: 'توقف بعد',
     selectReciter: 'اختيار القارئ',

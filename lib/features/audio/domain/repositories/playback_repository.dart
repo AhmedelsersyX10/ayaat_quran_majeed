@@ -35,6 +35,10 @@ abstract class PlaybackRepository {
     RepeatSettings? repeatSettings,
   });
 
+  /// Dynamically updates the active playback range endpoint without interrupting
+  /// playback if current position is within the new range, or starts playback if idle.
+  Future<void> updateRange(PlaybackRange range);
+
   /// Pauses the active recitation.
   Future<void> pause();
 

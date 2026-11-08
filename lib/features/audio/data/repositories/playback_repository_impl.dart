@@ -122,6 +122,38 @@ class PlaybackRepositoryImpl implements PlaybackRepository {
     );
   }
 
+  @override
+  Future<void> updateRange(PlaybackRange range) async {
+    // If playback session is actively running or paused
+    if (_session.isActive) {
+      final currentSurah = _session.surahNumber;
+      final currentAyah = _session.currentAyah ?? 1;
+
+      // If current position is past the new range end, stop/pause and complete
+      if (range.isPastEnd(currentSurah, currentAyah)) {
+        await _playerService.pause();
+        _emit(_session.copyWith(
+          range: range,
+          status: PlaybackStatus.completed,
+        ));
+        return;
+      }
+
+      // If current position is before the new range start, re-initialize at range start
+      if (range.isBeforeStart(currentSurah, currentAyah)) {
+        await playRange(range: range, repeatSettings: _session.repeatSettings);
+        return;
+      }
+
+      // Otherwise, position is within the new range:
+      // Update the boundary dynamically without interrupting ongoing playback
+      _emit(_session.copyWith(range: range));
+    } else {
+      // Not active: start playing from range start
+      await playRange(range: range, repeatSettings: _session.repeatSettings);
+    }
+  }
+
   Future<void> _loadAndPlaySurah({
     required int surahNumber,
     required int startAyah,
