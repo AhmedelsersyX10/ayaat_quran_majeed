@@ -13,6 +13,9 @@ import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repo
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_local_data_source.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_remote_data_source.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/repositories/tafsir_repository.dart';
 import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
 import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
 import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
@@ -58,6 +61,9 @@ void main() {
       expect(sl.isRegistered<AudioPlayerService>(), isTrue);
       expect(sl.isRegistered<AudioRepository>(), isTrue);
       expect(sl.isRegistered<PlaybackRepository>(), isTrue);
+      expect(sl.isRegistered<TafsirLocalDataSource>(), isTrue);
+      expect(sl.isRegistered<TafsirRemoteDataSource>(), isTrue);
+      expect(sl.isRegistered<TafsirRepository>(), isTrue);
 
       expect(sl.isRegistered<QuranPagePlayerBloc>(), isTrue);
       expect(sl.isRegistered<QuranReaderCubit>(), isTrue);

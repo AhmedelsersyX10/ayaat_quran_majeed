@@ -37,3 +37,27 @@ class NetworkException extends AppException {
   ]) : super(message, code: code);
 }
 
+/// Thrown when a requested Tafsir or translation book/verse is not found.
+class TafsirNotFoundException extends AppException {
+  const TafsirNotFoundException([
+    String message = 'Tafsir book or verse not found',
+    String? code,
+  ]) : super(message, code: code);
+}
+
+/// Thrown when downloading a Tafsir dataset fails.
+class TafsirDownloadException extends AppException {
+  const TafsirDownloadException([
+    String message = 'Failed to download Tafsir dataset',
+    String? code,
+  ]) : super(message, code: code);
+}
+
+/// Thrown when Tafsir JSON or binary data is malformed or corrupted.
+class TafsirCorruptedDataException extends AppException {
+  const TafsirCorruptedDataException([
+    String message = 'Tafsir dataset is corrupted or unreadable',
+    String? code,
+  ]) : super(message, code: code);
+}
+

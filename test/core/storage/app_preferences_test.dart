@@ -23,6 +23,9 @@ void main() {
       expect(preferences.hijriOffset, equals(0));
       expect(preferences.mushafFontSize, equals(23.0));
       expect(preferences.indexActiveTab, equals(0));
+      expect(preferences.selectedTafsirBookId, equals('ar_muyassar'));
+      expect(preferences.myLibraryBookIds, equals(const ['ar_muyassar', 'en_sahih']));
+      expect(preferences.tafsirSchemaVersion, equals(1));
     });
 
     test('persists and updates dark mode preference', () async {
@@ -60,6 +63,17 @@ void main() {
 
       await preferences.setIndexActiveTab(0);
       expect(preferences.indexActiveTab, equals(0));
+    });
+
+    test('persists and updates tafsir selected book and my library preferences', () async {
+      await preferences.setSelectedTafsirBookId('sa3dy');
+      expect(preferences.selectedTafsirBookId, equals('sa3dy'));
+
+      await preferences.setMyLibraryBookIds(['ar_muyassar', 'sa3dy', 'katheer']);
+      expect(preferences.myLibraryBookIds, equals(['ar_muyassar', 'sa3dy', 'katheer']));
+
+      await preferences.setTafsirSchemaVersion(2);
+      expect(preferences.tafsirSchemaVersion, equals(2));
     });
   });
 }

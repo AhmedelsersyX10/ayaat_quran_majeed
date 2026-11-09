@@ -19,6 +19,10 @@ import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit
 import 'package:ayaat_quran_majeed/features/search/data/repositories/search_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_local_data_source.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_remote_data_source.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/data/repositories/tafsir_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/repositories/tafsir_repository.dart';
 import 'package:ayaat_quran_majeed/features/today/data/repositories/today_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
 import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
@@ -96,6 +100,18 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<TafsirLocalDataSource>()) {
+    sl.registerLazySingleton<TafsirLocalDataSource>(
+      () => TafsirLocalDataSourceImpl(),
+    );
+  }
+
+  if (!sl.isRegistered<TafsirRemoteDataSource>()) {
+    sl.registerLazySingleton<TafsirRemoteDataSource>(
+      () => TafsirRemoteDataSourceImpl(apiClient: sl<ApiClient>()),
+    );
+  }
+
   // ---------------------------------------------------------
   // 4. Repositories
   // ---------------------------------------------------------
@@ -166,6 +182,16 @@ Future<void> initInjection() async {
         playerService: sl<AudioPlayerService>(),
         audioRepository: sl<AudioRepository>(),
         metadataService: sl<QuranMetadataService>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<TafsirRepository>()) {
+    sl.registerLazySingleton<TafsirRepository>(
+      () => TafsirRepositoryImpl(
+        localDataSource: sl<TafsirLocalDataSource>(),
+        remoteDataSource: sl<TafsirRemoteDataSource>(),
+        preferences: sl.isRegistered<AppPreferences>() ? sl<AppPreferences>() : null,
       ),
     );
   }

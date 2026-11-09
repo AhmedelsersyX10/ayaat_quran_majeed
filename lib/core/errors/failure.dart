@@ -37,3 +37,27 @@ class GeneralFailure extends Failure {
       : super(message, code: code);
 }
 
+/// Represents failure when a requested Tafsir book or verse is not found.
+class TafsirNotFoundFailure extends Failure {
+  const TafsirNotFoundFailure([
+    String message = 'كتاب التفسير أو الآية المطلوبة غير متوفرة',
+    String? code,
+  ]) : super(message, code: code);
+}
+
+/// Represents failure when downloading a Tafsir dataset fails.
+class TafsirDownloadFailure extends Failure {
+  const TafsirDownloadFailure([
+    String message = 'فشل تنزيل كتاب التفسير من الخادم',
+    String? code,
+  ]) : super(message, code: code);
+}
+
+/// Represents failure when Tafsir dataset is corrupted.
+class TafsirCorruptedDataFailure extends Failure {
+  const TafsirCorruptedDataFailure([
+    String message = 'بيانات التفسير تالفة أو غير صالحة للقراءة',
+    String? code,
+  ]) : super(message, code: code);
+}
+

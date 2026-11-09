@@ -56,5 +56,28 @@ class AppPreferences {
 
   Future<bool> setSelectedMoshafId(int id) =>
       _storage.setInt(AppStorageKeys.selectedMoshafId, id);
+
+  /// Selected Tafsir book identifier. Default is 'ar_muyassar' (Al-Tafsir Al-Muyassar).
+  String get selectedTafsirBookId =>
+      _storage.getString(AppStorageKeys.selectedTafsirBookId) ?? 'ar_muyassar';
+
+  Future<bool> setSelectedTafsirBookId(String id) =>
+      _storage.setString(AppStorageKeys.selectedTafsirBookId, id);
+
+  /// User's pinned books list ("مكتبتي" - Reference 34).
+  /// Defaults to ['ar_muyassar', 'en_sahih'].
+  List<String> get myLibraryBookIds =>
+      _storage.getStringList(AppStorageKeys.myLibraryBookIds) ??
+      const ['ar_muyassar', 'en_sahih'];
+
+  Future<bool> setMyLibraryBookIds(List<String> ids) =>
+      _storage.setStringList(AppStorageKeys.myLibraryBookIds, ids);
+
+  /// Tafsir data schema version for migrations and cache invalidation.
+  int get tafsirSchemaVersion =>
+      _storage.getInt(AppStorageKeys.tafsirSchemaVersion) ?? 1;
+
+  Future<bool> setTafsirSchemaVersion(int version) =>
+      _storage.setInt(AppStorageKeys.tafsirSchemaVersion, version);
 }
 

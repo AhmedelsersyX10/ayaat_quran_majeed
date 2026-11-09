@@ -13,6 +13,11 @@ abstract class AppStorageKeys {
   static const String selectedReciterId = 'audio_selected_reciter_id';
   static const String selectedMoshafId = 'audio_selected_moshaf_id';
 
+  // Tafsir & Library Settings (Screens 17, 34)
+  static const String selectedTafsirBookId = 'tafsir_selected_book_id';
+  static const String myLibraryBookIds = 'tafsir_my_library_book_ids';
+  static const String tafsirSchemaVersion = 'tafsir_schema_version';
+
   // Legacy Storage Keys (migrated from legacy Hive box)
   static const String legacyDarkMode = 'darkMode';
   static const String legacyLastRead = 'lastRead';
@@ -27,5 +32,8 @@ abstract class AppBoxNames {
 
   /// Audio and reciters cache box.
   static const String audioCache = 'audio_cache_box';
+
+  /// Tafsir and book cache box.
+  static const String tafsirCache = 'tafsir_cache_box';
 }
 
