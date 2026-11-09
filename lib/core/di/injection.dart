@@ -23,10 +23,18 @@ import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_local
 import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_remote_data_source.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/data/repositories/tafsir_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/domain/repositories/tafsir_repository.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/add_to_my_library_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/delete_downloaded_book_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/download_tafsir_book_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_all_catalog_books_use_case.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_available_tafsir_books_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_my_library_books_use_case.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_page_tafsir_use_case.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_selected_tafsir_book_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/remove_from_my_library_use_case.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/set_selected_tafsir_book_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/update_my_library_order_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/presentation/cubit/library_cubit.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/presentation/cubit/tafsir_cubit.dart';
 import 'package:ayaat_quran_majeed/features/today/data/repositories/today_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
@@ -228,6 +236,48 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<GetMyLibraryBooksUseCase>()) {
+    sl.registerLazySingleton<GetMyLibraryBooksUseCase>(
+      () => GetMyLibraryBooksUseCase(sl<TafsirRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<GetAllCatalogBooksUseCase>()) {
+    sl.registerLazySingleton<GetAllCatalogBooksUseCase>(
+      () => GetAllCatalogBooksUseCase(sl<TafsirRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<UpdateMyLibraryOrderUseCase>()) {
+    sl.registerLazySingleton<UpdateMyLibraryOrderUseCase>(
+      () => UpdateMyLibraryOrderUseCase(sl<TafsirRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<AddToMyLibraryUseCase>()) {
+    sl.registerLazySingleton<AddToMyLibraryUseCase>(
+      () => AddToMyLibraryUseCase(sl<TafsirRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<RemoveFromMyLibraryUseCase>()) {
+    sl.registerLazySingleton<RemoveFromMyLibraryUseCase>(
+      () => RemoveFromMyLibraryUseCase(sl<TafsirRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<DownloadTafsirBookUseCase>()) {
+    sl.registerLazySingleton<DownloadTafsirBookUseCase>(
+      () => DownloadTafsirBookUseCase(sl<TafsirRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<DeleteDownloadedBookUseCase>()) {
+    sl.registerLazySingleton<DeleteDownloadedBookUseCase>(
+      () => DeleteDownloadedBookUseCase(sl<TafsirRepository>()),
+    );
+  }
+
   // ---------------------------------------------------------
   // 3. Presentation / Cubits & Blocs (Factories)
   // ---------------------------------------------------------
@@ -309,6 +359,20 @@ Future<void> initInjection() async {
         getSelectedTafsirBookUseCase: sl<GetSelectedTafsirBookUseCase>(),
         setSelectedTafsirBookUseCase: sl<SetSelectedTafsirBookUseCase>(),
         getAvailableTafsirBooksUseCase: sl<GetAvailableTafsirBooksUseCase>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<LibraryCubit>()) {
+    sl.registerFactory<LibraryCubit>(
+      () => LibraryCubit(
+        getMyLibraryBooksUseCase: sl<GetMyLibraryBooksUseCase>(),
+        getAllCatalogBooksUseCase: sl<GetAllCatalogBooksUseCase>(),
+        updateMyLibraryOrderUseCase: sl<UpdateMyLibraryOrderUseCase>(),
+        addToMyLibraryUseCase: sl<AddToMyLibraryUseCase>(),
+        removeFromMyLibraryUseCase: sl<RemoveFromMyLibraryUseCase>(),
+        downloadTafsirBookUseCase: sl<DownloadTafsirBookUseCase>(),
+        deleteDownloadedBookUseCase: sl<DeleteDownloadedBookUseCase>(),
       ),
     );
   }

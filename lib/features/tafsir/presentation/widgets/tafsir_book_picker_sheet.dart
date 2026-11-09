@@ -1,3 +1,4 @@
+import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_colors.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_spacing.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../domain/entities/tafsir_book.dart';
 import '../cubit/tafsir_cubit.dart';
 import '../cubit/tafsir_state.dart';
+import 'library_edit_sheet.dart';
 
 /// Modal bottom sheet allowing the user to select the active Tafsir or Translation book.
 class TafsirBookPickerSheet extends StatelessWidget {
@@ -41,6 +43,21 @@ class TafsirBookPickerSheet extends StatelessWidget {
 
         return AppBottomSheetShell(
           title: 'كتب التفسير والترجمة',
+          trailing: TextButton(
+            onPressed: () async {
+              await LibraryEditSheet.show(context);
+              if (context.mounted) {
+                context.read<TafsirCubit>().loadAvailableBooks();
+              }
+            },
+            child: Text(
+              AppStrings.tr(AppStrings.edit),
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
           child: books.isEmpty
               ? Padding(
                   padding: EdgeInsets.all(AppSpacing.xxl),

@@ -115,6 +115,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('كتب التفسير والترجمة'), findsOneWidget);
+      expect(find.text('تعديل'), findsOneWidget);
       expect(find.text('التفسير الميسر'), findsOneWidget);
       expect(find.text('English - Sahih International'), findsOneWidget);
       expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
