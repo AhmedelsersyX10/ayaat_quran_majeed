@@ -18,6 +18,9 @@ abstract class AppStorageKeys {
   static const String myLibraryBookIds = 'tafsir_my_library_book_ids';
   static const String tafsirSchemaVersion = 'tafsir_schema_version';
 
+  // Khatma Settings & Keys (Screens 06-10, 24-26, 31)
+  static const String activeKhatmaKey = 'active_khatma';
+
   // Legacy Storage Keys (migrated from legacy Hive box)
   static const String legacyDarkMode = 'darkMode';
   static const String legacyLastRead = 'lastRead';
@@ -35,5 +38,8 @@ abstract class AppBoxNames {
 
   /// Tafsir and book cache box.
   static const String tafsirCache = 'tafsir_cache_box';
+
+  /// Active khatma and reading progress box.
+  static const String khatmaBox = 'khatma_box';
 }
 

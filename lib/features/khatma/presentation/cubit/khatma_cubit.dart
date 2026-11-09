@@ -1,0 +1,148 @@
+import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma_program.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/repositories/khatma_repository.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_clock.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'khatma_state.dart';
+
+/// Cubit orchestrating active Khatma lifecycle, progress, and scheduling state.
+class KhatmaCubit extends Cubit<KhatmaState> {
+  final KhatmaRepository _repository;
+  final KhatmaClock _clock;
+
+  KhatmaCubit({
+    required KhatmaRepository repository,
+    KhatmaClock clock = defaultKhatmaClock,
+  })  : _repository = repository,
+        _clock = clock,
+        super(const KhatmaInitial());
+
+  /// Loads the active Khatma. Emits [KhatmaEmpty] if none exists, or [KhatmaLoaded].
+  Future<void> loadKhatma({DateTime? currentDate}) async {
+    emit(const KhatmaLoading());
+    try {
+      final khatma = await _repository.getActiveKhatma();
+      if (khatma == null) {
+        emit(const KhatmaEmpty());
+        return;
+      }
+      _emitLoaded(khatma, currentDate: currentDate);
+    } catch (e) {
+      emit(KhatmaFailure('فشل تحميل الختمة: $e'));
+    }
+  }
+
+  /// Creates and starts a new Khatma.
+  Future<void> createKhatma({
+    required KhatmaProgram program,
+    required DateTime startDate,
+    int startWirdNumber = 1,
+    bool reminderEnabled = false,
+    int reminderHour = 19,
+    int reminderMinute = 0,
+  }) async {
+    emit(const KhatmaLoading());
+    try {
+      final khatma = await _repository.createKhatma(
+        program: program,
+        startDate: startDate,
+        startWirdNumber: startWirdNumber,
+        reminderEnabled: reminderEnabled,
+        reminderHour: reminderHour,
+        reminderMinute: reminderMinute,
+      );
+      _emitLoaded(khatma, currentDate: startDate);
+    } catch (e) {
+      emit(KhatmaFailure('فشل إنشاء الختمة: $e'));
+    }
+  }
+
+  /// Marks the current active uncompleted wird as completed.
+  Future<void> completeCurrentWird({DateTime? completionDate}) async {
+    try {
+      final updated = await _repository.completeCurrentWird(completionDate: completionDate);
+      _emitLoaded(updated, currentDate: completionDate, justCompletedWird: true);
+    } catch (e) {
+      emit(KhatmaFailure('فشل تسجيل إكمال الورد: $e'));
+    }
+  }
+
+  /// Marks a specific wird by [wirdNumber] as completed.
+  Future<void> completeWird(int wirdNumber, {DateTime? completionDate}) async {
+    try {
+      final updated = await _repository.completeWird(wirdNumber, completionDate: completionDate);
+      _emitLoaded(updated, currentDate: completionDate, justCompletedWird: true);
+    } catch (e) {
+      emit(KhatmaFailure('فشل تسجيل إكمال الورد: $e'));
+    }
+  }
+
+  /// Reverts completion status for a specific wird (undo).
+  Future<void> uncompleteWird(int wirdNumber) async {
+    try {
+      final updated = await _repository.uncompleteWird(wirdNumber);
+      _emitLoaded(updated);
+    } catch (e) {
+      emit(KhatmaFailure('فشل تعديل حالة الورد: $e'));
+    }
+  }
+
+  /// Deletes the active Khatma and returns state to [KhatmaEmpty].
+  Future<void> deleteKhatma() async {
+    emit(const KhatmaLoading());
+    try {
+      await _repository.deleteKhatma();
+      emit(const KhatmaEmpty());
+    } catch (e) {
+      emit(KhatmaFailure('فشل حذف الختمة: $e'));
+    }
+  }
+
+  /// Toggles the daily wird reminder switch on or off.
+  Future<void> toggleReminder(bool enabled) async {
+    try {
+      final updated = await _repository.updateReminder(enabled: enabled);
+      _emitLoaded(updated);
+    } catch (e) {
+      emit(KhatmaFailure('فشل تحديث التنبيه: $e'));
+    }
+  }
+
+  /// Updates the daily reminder scheduled time.
+  Future<void> updateReminderTime(int hour, int minute) async {
+    try {
+      final current = state is KhatmaLoaded ? (state as KhatmaLoaded).khatma : null;
+      final isEnabled = current?.reminderEnabled ?? true;
+      final updated = await _repository.updateReminder(
+        enabled: isEnabled,
+        hour: hour,
+        minute: minute,
+      );
+      _emitLoaded(updated);
+    } catch (e) {
+      emit(KhatmaFailure('فشل تحديث وقت التنبيه: $e'));
+    }
+  }
+
+  /// Helper to calculate relative day label and emit [KhatmaLoaded].
+  void _emitLoaded(
+    Khatma khatma, {
+    DateTime? currentDate,
+    bool justCompletedWird = false,
+  }) {
+    final now = currentDate ?? _clock();
+    final currentWird = khatma.currentWird;
+    final label = currentWird.relativeDayLabel(now);
+
+    emit(
+      KhatmaLoaded(
+        khatma: khatma,
+        currentWird: currentWird,
+        relativeDayLabel: label,
+        justCompletedWird: justCompletedWird,
+      ),
+    );
+  }
+}
+

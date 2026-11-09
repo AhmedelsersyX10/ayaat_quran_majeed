@@ -16,6 +16,11 @@ import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_sur
 import 'package:ayaat_quran_majeed/features/index/data/repositories/index_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
+import 'package:ayaat_quran_majeed/features/khatma/data/datasources/khatma_local_data_source.dart';
+import 'package:ayaat_quran_majeed/features/khatma/data/repositories/khatma_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/repositories/khatma_repository.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_wird_calculator.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/data/repositories/search_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
@@ -125,6 +130,18 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<KhatmaLocalDataSource>()) {
+    sl.registerLazySingleton<KhatmaLocalDataSource>(
+      () => KhatmaLocalDataSourceImpl(hiveStorage: sl<HiveStorageService>()),
+    );
+  }
+
+  if (!sl.isRegistered<KhatmaWirdCalculator>()) {
+    sl.registerLazySingleton<KhatmaWirdCalculator>(
+      () => KhatmaWirdCalculator(metadataService: sl<QuranMetadataService>()),
+    );
+  }
+
   // ---------------------------------------------------------
   // 4. Repositories
   // ---------------------------------------------------------
@@ -205,6 +222,16 @@ Future<void> initInjection() async {
         localDataSource: sl<TafsirLocalDataSource>(),
         remoteDataSource: sl<TafsirRemoteDataSource>(),
         preferences: sl.isRegistered<AppPreferences>() ? sl<AppPreferences>() : null,
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<KhatmaRepository>()) {
+    sl.registerLazySingleton<KhatmaRepository>(
+      () => KhatmaRepositoryImpl(
+        localDataSource: sl<KhatmaLocalDataSource>(),
+        metadataService: sl<QuranMetadataService>(),
+        calculator: sl<KhatmaWirdCalculator>(),
       ),
     );
   }
@@ -373,6 +400,14 @@ Future<void> initInjection() async {
         removeFromMyLibraryUseCase: sl<RemoveFromMyLibraryUseCase>(),
         downloadTafsirBookUseCase: sl<DownloadTafsirBookUseCase>(),
         deleteDownloadedBookUseCase: sl<DeleteDownloadedBookUseCase>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<KhatmaCubit>()) {
+    sl.registerFactory<KhatmaCubit>(
+      () => KhatmaCubit(
+        repository: sl<KhatmaRepository>(),
       ),
     );
   }

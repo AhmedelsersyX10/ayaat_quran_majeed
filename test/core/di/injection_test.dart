@@ -11,6 +11,10 @@ import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_sel
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_surahs_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
+import 'package:ayaat_quran_majeed/features/khatma/data/datasources/khatma_local_data_source.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/repositories/khatma_repository.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_wird_calculator.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_local_data_source.dart';
@@ -69,6 +73,9 @@ void main() {
       expect(sl.isRegistered<TafsirLocalDataSource>(), isTrue);
       expect(sl.isRegistered<TafsirRemoteDataSource>(), isTrue);
       expect(sl.isRegistered<TafsirRepository>(), isTrue);
+      expect(sl.isRegistered<KhatmaLocalDataSource>(), isTrue);
+      expect(sl.isRegistered<KhatmaWirdCalculator>(), isTrue);
+      expect(sl.isRegistered<KhatmaRepository>(), isTrue);
       expect(sl.isRegistered<GetPageTafsirUseCase>(), isTrue);
       expect(sl.isRegistered<GetSelectedTafsirBookUseCase>(), isTrue);
       expect(sl.isRegistered<SetSelectedTafsirBookUseCase>(), isTrue);
@@ -85,6 +92,7 @@ void main() {
       expect(sl.isRegistered<ReciterSurahsCubit>(), isTrue);
       expect(sl.isRegistered<AudioPlaybackCubit>(), isTrue);
       expect(sl.isRegistered<TafsirCubit>(), isTrue);
+      expect(sl.isRegistered<KhatmaCubit>(), isTrue);
     });
 
     test('Singletons return identical instances across multiple resolutions', () async {

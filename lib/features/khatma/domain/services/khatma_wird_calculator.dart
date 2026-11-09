@@ -1,0 +1,507 @@
+import 'package:ayaat_quran_majeed/core/localization/arabic_numbers.dart';
+import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
+
+import '../entities/khatma_program.dart';
+import '../entities/khatma_wird.dart';
+
+/// Helper representation for a raw wird definition before metadata enrichment.
+class _RawWirdDefinition {
+  final int startSurah;
+  final int startAyah;
+  final int endSurah;
+  final int endAyah;
+  final String? customTitle;
+  final String rangeText;
+
+  const _RawWirdDefinition({
+    required this.startSurah,
+    required this.startAyah,
+    required this.endSurah,
+    required this.endAyah,
+    this.customTitle,
+    required this.rangeText,
+  });
+}
+
+/// Service calculating deterministic daily Quran portions (Wirds) for any Khatma program.
+///
+/// Enriches range boundaries with live page numbers, Surah names, and verses
+/// directly from [QuranMetadataService] without duplicating data.
+class KhatmaWirdCalculator {
+  final QuranMetadataService _metadataService;
+
+  const KhatmaWirdCalculator({
+    QuranMetadataService metadataService = const QuranMetadataService(),
+  }) : _metadataService = metadataService;
+
+  /// Calculates the complete list of [KhatmaWird] for [program] starting at [startDate].
+  ///
+  /// If [startWirdNumber] > 1, preceding wirds are marked as completed,
+  /// and [startWirdNumber] is scheduled for [startDate].
+  List<KhatmaWird> calculateWirds({
+    required KhatmaProgram program,
+    required DateTime startDate,
+    int startWirdNumber = 1,
+  }) {
+    final definitions = _getDefinitionsForProgram(program);
+    final normalizedStartDate = DateTime(startDate.year, startDate.month, startDate.day);
+    final clampedStartWird = startWirdNumber.clamp(1, definitions.length);
+
+    final result = <KhatmaWird>[];
+
+    for (int i = 0; i < definitions.length; i++) {
+      final dayNumber = i + 1;
+      final def = definitions[i];
+      final isPreCompleted = dayNumber < clampedStartWird;
+
+      // Scheduled date offset: Day clampedStartWird falls on normalizedStartDate
+      final dayOffset = dayNumber - clampedStartWird;
+      final scheduledDate = DateTime(
+        normalizedStartDate.year,
+        normalizedStartDate.month,
+        normalizedStartDate.day + dayOffset,
+      );
+
+      final startSurahName = _metadataService.getSurahNameArabic(def.startSurah);
+      final endSurahName = _metadataService.getSurahNameArabic(def.endSurah);
+      final startPage = _metadataService.getPageNumber(def.startSurah, def.startAyah);
+      final endPage = _metadataService.getPageNumber(def.endSurah, def.endAyah);
+      final firstVerse = _metadataService.getVerse(def.startSurah, def.startAyah);
+      final lastVerse = _metadataService.getVerse(def.endSurah, def.endAyah);
+
+      result.add(
+        KhatmaWird(
+          dayNumber: dayNumber,
+          scheduledDate: scheduledDate,
+          startSurahNumber: def.startSurah,
+          startAyahNumber: def.startAyah,
+          endSurahNumber: def.endSurah,
+          endAyahNumber: def.endAyah,
+          startPageNumber: startPage,
+          endPageNumber: endPage,
+          startSurahName: startSurahName,
+          endSurahName: endSurahName,
+          firstVerseText: firstVerse,
+          lastVerseText: lastVerse,
+          customTitle: def.customTitle,
+          rangeText: def.rangeText,
+          isCompleted: isPreCompleted,
+          completedAt: isPreCompleted ? normalizedStartDate : null,
+        ),
+      );
+    }
+
+    return result;
+  }
+
+  /// Selects the raw wird definitions based on the program id.
+  List<_RawWirdDefinition> _getDefinitionsForProgram(KhatmaProgram program) {
+    if (program.id == 'meaning_29' || program.totalDays == 29) {
+      return _meaning29Definitions;
+    }
+    if (program.id == 'parts_30' || program.totalDays == 30) {
+      return _generateJuzDefinitions(30);
+    }
+    if (program.id == 'meaning_7' || program.totalDays == 7) {
+      return _meaning7Definitions;
+    }
+    if (program.category == KhatmaProgramCategory.partsAndQuarters ||
+        program.id.startsWith('quarters_') ||
+        program.id.startsWith('parts_')) {
+      return _generateQuartersBasedDefinitions(program.totalDays);
+    }
+    // Fallback: 29-day table
+    return _meaning29Definitions;
+  }
+
+  /// Canonical 29-day table matching AGENTS.md lines 230–232 and Screenshots 24, 25, 33, 35.
+  static final List<_RawWirdDefinition> _meaning29Definitions = [
+    // 1: Al-Fatihah 1:1 -> Al-Baqarah 2:141
+    const _RawWirdDefinition(
+      startSurah: 1,
+      startAyah: 1,
+      endSurah: 2,
+      endAyah: 141,
+      rangeText: 'من الفاتحة إلى البقرة: ١٤١',
+    ),
+    // 2: Al-Baqarah 2:142 -> 2:252
+    const _RawWirdDefinition(
+      startSurah: 2,
+      startAyah: 142,
+      endSurah: 2,
+      endAyah: 252,
+      rangeText: 'من البقرة: ١٤٢ إلى البقرة: ٢٥٢',
+    ),
+    // 3: Al-Baqarah 2:253 -> Aal-Imran 3:92
+    const _RawWirdDefinition(
+      startSurah: 2,
+      startAyah: 253,
+      endSurah: 3,
+      endAyah: 92,
+      rangeText: 'من البقرة: ٢٥٣ إلى آل عمران: ٩٢',
+    ),
+    // 4: Aal-Imran 3:93 -> An-Nisa 4:35
+    const _RawWirdDefinition(
+      startSurah: 3,
+      startAyah: 93,
+      endSurah: 4,
+      endAyah: 35,
+      rangeText: 'من آل عمران: ٩٣ إلى النساء: ٣٥',
+    ),
+    // 5: An-Nisa 4:36 -> An-Nisa 4:176 (end of An-Nisa)
+    const _RawWirdDefinition(
+      startSurah: 4,
+      startAyah: 36,
+      endSurah: 4,
+      endAyah: 176,
+      rangeText: 'من النساء: ٣٦ إلى نهاية النساء',
+    ),
+    // 6: Al-Ma'idah 5:1 -> 5:120 (complete Surah)
+    const _RawWirdDefinition(
+      startSurah: 5,
+      startAyah: 1,
+      endSurah: 5,
+      endAyah: 120,
+      customTitle: 'المائدة',
+      rangeText: 'المائدة',
+    ),
+    // 7: Al-An'am 6:1 -> 6:165 (complete Surah)
+    const _RawWirdDefinition(
+      startSurah: 6,
+      startAyah: 1,
+      endSurah: 6,
+      endAyah: 165,
+      customTitle: 'الأنعام',
+      rangeText: 'الأنعام',
+    ),
+    // 8: Al-A'raf 7:1 -> 7:206 (complete Surah)
+    const _RawWirdDefinition(
+      startSurah: 7,
+      startAyah: 1,
+      endSurah: 7,
+      endAyah: 206,
+      customTitle: 'الأعراف',
+      rangeText: 'الأعراف',
+    ),
+    // 9: Al-Anfal 8:1 -> At-Tawbah 9:72
+    const _RawWirdDefinition(
+      startSurah: 8,
+      startAyah: 1,
+      endSurah: 9,
+      endAyah: 72,
+      rangeText: 'من الأنفال إلى التوبة: ٧٢',
+    ),
+    // 10: At-Tawbah 9:73 -> Yunus 10:109 (end of Yunus)
+    const _RawWirdDefinition(
+      startSurah: 9,
+      startAyah: 73,
+      endSurah: 10,
+      endAyah: 109,
+      rangeText: 'من التوبة: ٧٣ إلى نهاية يونس',
+    ),
+    // 11: Hud 11:1 -> Yusuf 12:57
+    const _RawWirdDefinition(
+      startSurah: 11,
+      startAyah: 1,
+      endSurah: 12,
+      endAyah: 57,
+      rangeText: 'من هود إلى يوسف: ٥٧',
+    ),
+    // 12: Yusuf 12:58 -> Ibrahim 14:52 (end of Ibrahim)
+    const _RawWirdDefinition(
+      startSurah: 12,
+      startAyah: 58,
+      endSurah: 14,
+      endAyah: 52,
+      rangeText: 'من يوسف: ٥٨ إلى نهاية إبراهيم',
+    ),
+    // 13: Al-Hijr 15:1 -> An-Nahl 16:128
+    const _RawWirdDefinition(
+      startSurah: 15,
+      startAyah: 1,
+      endSurah: 16,
+      endAyah: 128,
+      customTitle: 'الحجر و النحل',
+      rangeText: 'الحجر و النحل',
+    ),
+    // 14: Al-Isra 17:1 -> Al-Kahf 18:110
+    const _RawWirdDefinition(
+      startSurah: 17,
+      startAyah: 1,
+      endSurah: 18,
+      endAyah: 110,
+      customTitle: 'الإسراء و الكهف',
+      rangeText: 'الإسراء و الكهف',
+    ),
+    // 15: Maryam 19:1 -> Ta-Ha 20:135
+    const _RawWirdDefinition(
+      startSurah: 19,
+      startAyah: 1,
+      endSurah: 20,
+      endAyah: 135,
+      customTitle: 'مريم و طه',
+      rangeText: 'مريم و طه',
+    ),
+    // 16: Al-Anbiya 21:1 -> Al-Hajj 22:78
+    const _RawWirdDefinition(
+      startSurah: 21,
+      startAyah: 1,
+      endSurah: 22,
+      endAyah: 78,
+      customTitle: 'الأنبياء و الحج',
+      rangeText: 'الأنبياء و الحج',
+    ),
+    // 17: Al-Mu'minun 23:1 -> An-Nur 24:64
+    const _RawWirdDefinition(
+      startSurah: 23,
+      startAyah: 1,
+      endSurah: 24,
+      endAyah: 64,
+      customTitle: 'المؤمنون و النور',
+      rangeText: 'المؤمنون و النور',
+    ),
+    // 18: Al-Furqan 25:1 -> Ash-Shu'ara 26:227
+    const _RawWirdDefinition(
+      startSurah: 25,
+      startAyah: 1,
+      endSurah: 26,
+      endAyah: 227,
+      customTitle: 'الفرقان و الشعراء',
+      rangeText: 'الفرقان و الشعراء',
+    ),
+    // 19: An-Naml 27:1 -> Al-Qasas 28:88
+    const _RawWirdDefinition(
+      startSurah: 27,
+      startAyah: 1,
+      endSurah: 28,
+      endAyah: 88,
+      customTitle: 'النمل و القصص',
+      rangeText: 'النمل و القصص',
+    ),
+    // 20: Al-Ankabut 29:1 -> As-Sajdah 32:30
+    const _RawWirdDefinition(
+      startSurah: 29,
+      startAyah: 1,
+      endSurah: 32,
+      endAyah: 30,
+      customTitle: 'العنكبوت و الروم و لقمان و السجدة',
+      rangeText: 'العنكبوت و الروم و لقمان و السجدة',
+    ),
+    // 21: Al-Ahzab 33:1 -> Fatir 35:45
+    const _RawWirdDefinition(
+      startSurah: 33,
+      startAyah: 1,
+      endSurah: 35,
+      endAyah: 45,
+      customTitle: 'الأحزاب و سبأ و فاطر',
+      rangeText: 'الأحزاب و سبأ و فاطر',
+    ),
+    // 22: Ya-Sin 36:1 -> Sad 38:88
+    const _RawWirdDefinition(
+      startSurah: 36,
+      startAyah: 1,
+      endSurah: 38,
+      endAyah: 88,
+      customTitle: 'يس و الصافات و ص',
+      rangeText: 'يس و الصافات و ص',
+    ),
+    // 23: Az-Zumar 39:1 -> Ghafir 40:85
+    const _RawWirdDefinition(
+      startSurah: 39,
+      startAyah: 1,
+      endSurah: 40,
+      endAyah: 85,
+      customTitle: 'الزمر و غافر',
+      rangeText: 'الزمر و غافر',
+    ),
+    // 24: Fussilat 41:1 -> Ad-Dukhan 44:59
+    const _RawWirdDefinition(
+      startSurah: 41,
+      startAyah: 1,
+      endSurah: 44,
+      endAyah: 59,
+      customTitle: 'فصلت و الشورى و الزخرف و الدخان',
+      rangeText: 'فصلت و الشورى و الزخرف و الدخان',
+    ),
+    // 25: Al-Jathiyah 45:1 -> Al-Hujurat 49:18
+    const _RawWirdDefinition(
+      startSurah: 45,
+      startAyah: 1,
+      endSurah: 49,
+      endAyah: 18,
+      customTitle: 'الجاثية و الأحقاف و محمد و الفتح و الحجرات',
+      rangeText: 'الجاثية و الأحقاف و محمد و الفتح و الحجرات',
+    ),
+    // 26: Qaf 50:1 -> Al-Hadid 57:29
+    const _RawWirdDefinition(
+      startSurah: 50,
+      startAyah: 1,
+      endSurah: 57,
+      endAyah: 29,
+      rangeText: 'من ق إلى الحديد',
+    ),
+    // 27: Al-Mujadila 58:1 -> At-Tahrim 66:12
+    const _RawWirdDefinition(
+      startSurah: 58,
+      startAyah: 1,
+      endSurah: 66,
+      endAyah: 12,
+      rangeText: 'من المجادلة إلى التحريم',
+    ),
+    // 28: Al-Mulk 67:1 -> Al-Mursalat 77:50
+    const _RawWirdDefinition(
+      startSurah: 67,
+      startAyah: 1,
+      endSurah: 77,
+      endAyah: 50,
+      rangeText: 'من الملك إلى المرسلات',
+    ),
+    // 29: An-Naba 78:1 -> An-Nas 114:6
+    const _RawWirdDefinition(
+      startSurah: 78,
+      startAyah: 1,
+      endSurah: 114,
+      endAyah: 6,
+      rangeText: 'من النبأ إلى الناس',
+    ),
+  ];
+
+  /// Traditional 7-day Manzil division.
+  static final List<_RawWirdDefinition> _meaning7Definitions = [
+    const _RawWirdDefinition(
+      startSurah: 1,
+      startAyah: 1,
+      endSurah: 4,
+      endAyah: 176,
+      rangeText: 'من الفاتحة إلى نهاية النساء',
+    ),
+    const _RawWirdDefinition(
+      startSurah: 5,
+      startAyah: 1,
+      endSurah: 9,
+      endAyah: 129,
+      rangeText: 'من المائدة إلى نهاية التوبة',
+    ),
+    const _RawWirdDefinition(
+      startSurah: 10,
+      startAyah: 1,
+      endSurah: 16,
+      endAyah: 128,
+      rangeText: 'من يونس إلى نهاية النحل',
+    ),
+    const _RawWirdDefinition(
+      startSurah: 17,
+      startAyah: 1,
+      endSurah: 25,
+      endAyah: 77,
+      rangeText: 'من الإسراء إلى نهاية الفرقان',
+    ),
+    const _RawWirdDefinition(
+      startSurah: 26,
+      startAyah: 1,
+      endSurah: 36,
+      endAyah: 83,
+      rangeText: 'من الشعراء إلى نهاية يس',
+    ),
+    const _RawWirdDefinition(
+      startSurah: 37,
+      startAyah: 1,
+      endSurah: 49,
+      endAyah: 18,
+      rangeText: 'من الصافات إلى نهاية الحجرات',
+    ),
+    const _RawWirdDefinition(
+      startSurah: 50,
+      startAyah: 1,
+      endSurah: 114,
+      endAyah: 6,
+      rangeText: 'من ق إلى نهاية الناس',
+    ),
+  ];
+
+  /// Generates Juz-based definitions for 30-day programs.
+  List<_RawWirdDefinition> _generateJuzDefinitions(int totalDays) {
+    final list = <_RawWirdDefinition>[];
+    for (int juz = 1; juz <= 30; juz++) {
+      final versesMap = _metadataService.getSurahAndVersesFromJuz(juz);
+      final firstSurah = versesMap.keys.first;
+      final firstAyah = versesMap[firstSurah]!.first;
+      final lastSurah = versesMap.keys.last;
+      final lastAyah = versesMap[lastSurah]!.last;
+
+      final juzOrdinal = _metadataService.getJuzNameArabic(juz);
+      list.add(
+        _RawWirdDefinition(
+          startSurah: firstSurah,
+          startAyah: firstAyah,
+          endSurah: lastSurah,
+          endAyah: lastAyah,
+          customTitle: 'الجزء $juzOrdinal',
+          rangeText: 'الجزء $juzOrdinal',
+        ),
+      );
+    }
+    return list;
+  }
+
+  /// Generates quarter-based definitions for programs dividing the 240 quarters.
+  List<_RawWirdDefinition> _generateQuartersBasedDefinitions(int totalDays) {
+    final quarters = _metadataService.quartersRaw;
+    final totalQuarters = quarters.length; // 240
+    final list = <_RawWirdDefinition>[];
+
+    final step = (totalQuarters / totalDays).ceil();
+
+    for (int day = 0; day < totalDays; day++) {
+      final startQuarterIdx = day * step;
+      if (startQuarterIdx >= totalQuarters) break;
+
+      final endQuarterIdx = ((day + 1) * step).clamp(0, totalQuarters);
+
+      final startEntry = quarters[startQuarterIdx];
+      final startSurah = startEntry['surah'] as int;
+      final startAyah = startEntry['ayah'] as int;
+
+      int endSurah;
+      int endAyah;
+
+      if (endQuarterIdx >= totalQuarters) {
+        endSurah = 114;
+        endAyah = 6;
+      } else {
+        // Find preceding verse of the next quarter
+        final nextQuarterEntry = quarters[endQuarterIdx];
+        final nextSurah = nextQuarterEntry['surah'] as int;
+        final nextAyah = nextQuarterEntry['ayah'] as int;
+
+        if (nextAyah > 1) {
+          endSurah = nextSurah;
+          endAyah = nextAyah - 1;
+        } else {
+          endSurah = nextSurah - 1;
+          endAyah = _metadataService.getVerseCount(endSurah);
+        }
+      }
+
+      final startSurahName = _metadataService.getSurahNameArabic(startSurah);
+      final endSurahName = _metadataService.getSurahNameArabic(endSurah);
+
+      final range = (startSurah == endSurah)
+          ? '$startSurahName: ${toArabicDigits(startAyah)} إلى ${toArabicDigits(endAyah)}'
+          : 'من $startSurahName: ${toArabicDigits(startAyah)} إلى $endSurahName: ${toArabicDigits(endAyah)}';
+
+      list.add(
+        _RawWirdDefinition(
+          startSurah: startSurah,
+          startAyah: startAyah,
+          endSurah: endSurah,
+          endAyah: endAyah,
+          rangeText: range,
+        ),
+      );
+    }
+
+    return list;
+  }
+}
+

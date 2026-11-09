@@ -61,3 +61,11 @@ class TafsirCorruptedDataException extends AppException {
   ]) : super(message, code: code);
 }
 
+/// Thrown when a Khatma operation, calculation, or storage action fails.
+class KhatmaException extends AppException {
+  const KhatmaException([
+    String message = 'Khatma operation error',
+    String? code,
+  ]) : super(message, code: code);
+}
+

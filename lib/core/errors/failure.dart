@@ -61,3 +61,11 @@ class TafsirCorruptedDataFailure extends Failure {
   ]) : super(message, code: code);
 }
 
+/// Represents failure during Khatma operations, calculation, or persistence.
+class KhatmaFailure extends Failure {
+  const KhatmaFailure([
+    String message = 'حدث خطأ في عملية الختمة',
+    String? code,
+  ]) : super(message, code: code);
+}
+
