@@ -70,6 +70,24 @@ void main() {
       expect(dragStartedPage, isNotNull);
       expect(scrubbingPage, isNotNull);
     });
+
+    testWidgets('renders active tafsir button styling when isTafsirMode is true (Ref 17)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        createTestableWidget(
+          MushafPageSlider(
+            currentPage: 1,
+            isTafsirMode: true,
+            onPageSelected: (_) {},
+            metadataService: metadataService,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.article_outlined), findsOneWidget);
+    });
   });
 }
 

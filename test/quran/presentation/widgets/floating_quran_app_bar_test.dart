@@ -144,5 +144,43 @@ void main() {
         expect(constraints.minHeight, greaterThanOrEqualTo(48.0));
       }
     });
+
+    testWidgets('renders tafsir book title in green and triggers onSelectTafsirBook (Ref 17)', (
+      tester,
+    ) async {
+      bool bookSelected = false;
+
+      await tester.pumpWidget(
+        ScreenUtilInit(
+          designSize: const Size(392, 852),
+          builder: (context, child) => MaterialApp(
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  FloatingQuranAppBar(
+                    isVisible: true,
+                    onIndex: () {},
+                    onSearch: () {},
+                    onToday: () {},
+                    onSettings: () {},
+                    backgroundColor: AppColors.scaffoldLight,
+                    iconColor: AppColors.primary,
+                    tafsirBookTitle: 'الميسر',
+                    onSelectTafsirBook: () => bookSelected = true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('الميسر'), findsOneWidget);
+      await tester.tap(find.text('الميسر'));
+      await tester.pumpAndSettle();
+
+      expect(bookSelected, isTrue);
+    });
   });
 }

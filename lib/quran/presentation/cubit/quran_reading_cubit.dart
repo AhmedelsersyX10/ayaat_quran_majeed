@@ -24,6 +24,9 @@ class QuranReadingState {
   /// Currently selected ayah in the reader (for options sheet & visual highlight).
   final SelectedAyah? selectedAyah;
 
+  /// True when the reader is in Tafsir mode (Reference 17).
+  final bool isTafsirMode;
+
   const QuranReadingState({
     required this.isLoading,
     required this.position,
@@ -32,6 +35,7 @@ class QuranReadingState {
     this.draggingPage,
     this.targetHighlightVerse,
     this.selectedAyah,
+    this.isTafsirMode = false,
   });
 
   factory QuranReadingState.initial() {
@@ -43,6 +47,7 @@ class QuranReadingState {
       draggingPage: null,
       targetHighlightVerse: null,
       selectedAyah: null,
+      isTafsirMode: false,
     );
   }
 
@@ -58,6 +63,7 @@ class QuranReadingState {
     bool clearHighlight = false,
     SelectedAyah? selectedAyah,
     bool clearSelectedAyah = false,
+    bool? isTafsirMode,
   }) {
     return QuranReadingState(
       isLoading: isLoading ?? this.isLoading,
@@ -69,6 +75,7 @@ class QuranReadingState {
           clearHighlight ? null : (targetHighlightVerse ?? this.targetHighlightVerse),
       selectedAyah:
           clearSelectedAyah ? null : (selectedAyah ?? this.selectedAyah),
+      isTafsirMode: isTafsirMode ?? this.isTafsirMode,
     );
   }
 }
@@ -300,6 +307,11 @@ class QuranReaderCubit extends Cubit<QuranReadingState> {
   /// Clears the currently selected ayah and its highlight.
   void clearSelectedAyah() {
     emit(state.copyWith(clearSelectedAyah: true));
+  }
+
+  /// Toggles Tafsir mode on/off (or forces a specific state via [enable]).
+  void toggleTafsirMode({bool? enable}) {
+    emit(state.copyWith(isTafsirMode: enable ?? !state.isTafsirMode));
   }
 
   /// Update only the view mode (e.g., page, vertical, verse-by-verse).

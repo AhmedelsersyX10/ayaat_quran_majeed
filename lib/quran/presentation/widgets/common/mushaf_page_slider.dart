@@ -19,6 +19,7 @@ class MushafPageSlider extends StatefulWidget {
   final ValueChanged<int>? onDragStarted;
   final ValueChanged<int>? onScrubbing;
   final VoidCallback? onTafseerPressed;
+  final bool isTafsirMode;
   final QuranMetadataService metadataService;
 
   const MushafPageSlider({
@@ -28,6 +29,7 @@ class MushafPageSlider extends StatefulWidget {
     this.onDragStarted,
     this.onScrubbing,
     this.onTafseerPressed,
+    this.isTafsirMode = false,
     this.metadataService = const QuranMetadataService(),
   });
 
@@ -157,7 +159,7 @@ class _MushafPageSliderState extends State<MushafPageSlider> {
 
                 SizedBox(width: 12.w),
 
-                // Tafsir Button on Left (Ref 05)
+                // Tafsir Button on Left (Ref 05 & Ref 17)
                 InkWell(
                   onTap: widget.onTafseerPressed,
                   borderRadius: BorderRadius.circular(12.r),
@@ -165,8 +167,13 @@ class _MushafPageSliderState extends State<MushafPageSlider> {
                     width: 42.w,
                     height: 36.h,
                     decoration: BoxDecoration(
-                      color: AppColors.mushafBadgeFill,
+                      color: widget.isTafsirMode
+                          ? AppColors.primary.withOpacity(0.15)
+                          : AppColors.mushafBadgeFill,
                       borderRadius: BorderRadius.circular(12.r),
+                      border: widget.isTafsirMode
+                          ? Border.all(color: AppColors.primary, width: 1.5)
+                          : null,
                     ),
                     alignment: Alignment.center,
                     child: Icon(

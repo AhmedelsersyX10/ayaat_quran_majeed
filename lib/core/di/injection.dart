@@ -23,6 +23,11 @@ import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_local
 import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_remote_data_source.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/data/repositories/tafsir_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/domain/repositories/tafsir_repository.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_available_tafsir_books_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_page_tafsir_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_selected_tafsir_book_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/set_selected_tafsir_book_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/presentation/cubit/tafsir_cubit.dart';
 import 'package:ayaat_quran_majeed/features/today/data/repositories/today_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
 import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
@@ -196,6 +201,33 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<GetPageTafsirUseCase>()) {
+    sl.registerLazySingleton<GetPageTafsirUseCase>(
+      () => GetPageTafsirUseCase(
+        repository: sl<TafsirRepository>(),
+        metadataService: sl<QuranMetadataService>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<GetSelectedTafsirBookUseCase>()) {
+    sl.registerLazySingleton<GetSelectedTafsirBookUseCase>(
+      () => GetSelectedTafsirBookUseCase(sl<TafsirRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<SetSelectedTafsirBookUseCase>()) {
+    sl.registerLazySingleton<SetSelectedTafsirBookUseCase>(
+      () => SetSelectedTafsirBookUseCase(sl<TafsirRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<GetAvailableTafsirBooksUseCase>()) {
+    sl.registerLazySingleton<GetAvailableTafsirBooksUseCase>(
+      () => GetAvailableTafsirBooksUseCase(sl<TafsirRepository>()),
+    );
+  }
+
   // ---------------------------------------------------------
   // 3. Presentation / Cubits & Blocs (Factories)
   // ---------------------------------------------------------
@@ -266,6 +298,17 @@ Future<void> initInjection() async {
     sl.registerLazySingleton<AudioPlaybackCubit>(
       () => AudioPlaybackCubit(
         playbackRepository: sl<PlaybackRepository>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<TafsirCubit>()) {
+    sl.registerFactory<TafsirCubit>(
+      () => TafsirCubit(
+        getPageTafsirUseCase: sl<GetPageTafsirUseCase>(),
+        getSelectedTafsirBookUseCase: sl<GetSelectedTafsirBookUseCase>(),
+        setSelectedTafsirBookUseCase: sl<SetSelectedTafsirBookUseCase>(),
+        getAvailableTafsirBooksUseCase: sl<GetAvailableTafsirBooksUseCase>(),
       ),
     );
   }

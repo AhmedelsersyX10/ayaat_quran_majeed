@@ -16,6 +16,11 @@ import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cub
 import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_local_data_source.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_remote_data_source.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/domain/repositories/tafsir_repository.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_available_tafsir_books_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_page_tafsir_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/get_selected_tafsir_book_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/domain/usecases/set_selected_tafsir_book_use_case.dart';
+import 'package:ayaat_quran_majeed/features/tafsir/presentation/cubit/tafsir_cubit.dart';
 import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
 import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
 import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
@@ -64,6 +69,10 @@ void main() {
       expect(sl.isRegistered<TafsirLocalDataSource>(), isTrue);
       expect(sl.isRegistered<TafsirRemoteDataSource>(), isTrue);
       expect(sl.isRegistered<TafsirRepository>(), isTrue);
+      expect(sl.isRegistered<GetPageTafsirUseCase>(), isTrue);
+      expect(sl.isRegistered<GetSelectedTafsirBookUseCase>(), isTrue);
+      expect(sl.isRegistered<SetSelectedTafsirBookUseCase>(), isTrue);
+      expect(sl.isRegistered<GetAvailableTafsirBooksUseCase>(), isTrue);
 
       expect(sl.isRegistered<QuranPagePlayerBloc>(), isTrue);
       expect(sl.isRegistered<QuranReaderCubit>(), isTrue);
@@ -75,6 +84,7 @@ void main() {
       expect(sl.isRegistered<ReciterSelectionCubit>(), isTrue);
       expect(sl.isRegistered<ReciterSurahsCubit>(), isTrue);
       expect(sl.isRegistered<AudioPlaybackCubit>(), isTrue);
+      expect(sl.isRegistered<TafsirCubit>(), isTrue);
     });
 
     test('Singletons return identical instances across multiple resolutions', () async {
