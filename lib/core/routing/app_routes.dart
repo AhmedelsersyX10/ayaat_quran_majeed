@@ -19,6 +19,8 @@ abstract class AppRoutes {
 
   static const String khatma = '/khatma';
   static const String khatmaName = 'khatma';
+  static const String khatmaAllWirds = '/khatma/all-wirds';
+  static const String khatmaAllWirdsName = 'khatmaAllWirds';
 
   static const String bookmarks = '/bookmarks';
   static const String bookmarksName = 'bookmarks';

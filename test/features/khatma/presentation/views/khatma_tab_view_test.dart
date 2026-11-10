@@ -158,7 +158,7 @@ void main() {
       );
     });
 
-    testWidgets('renders active khatma summary when loaded', (tester) async {
+    testWidgets('renders active khatma dashboard when loaded', (tester) async {
       final now = DateTime(2026, 11, 10);
       final testWird = KhatmaWird(
         dayNumber: 1,
@@ -190,7 +190,10 @@ void main() {
       await cubit.loadKhatma(currentDate: now);
       await pumpTabView(tester);
 
-      expect(find.textContaining('ختمة شهر (٢٩ يومًا)'), findsOneWidget);
+      expect(find.text('ورد اليوم ١'), findsOneWidget);
+      expect(find.text(AppStrings.tr(AppStrings.completedWird)), findsOneWidget);
+      expect(find.text(AppStrings.tr(AppStrings.allWirds)), findsOneWidget);
+      expect(find.text(AppStrings.tr(AppStrings.deleteKhatma)), findsOneWidget);
     });
   });
 }

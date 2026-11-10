@@ -75,6 +75,8 @@ abstract class AppStrings {
   static const String programPicker = 'program_picker';
   static const String allWirds = 'all_wirds';
   static const String deleteKhatma = 'delete_khatma';
+  static const String deleteKhatmaConfirm = 'delete_khatma_confirm';
+  static const String khatmaCompleted = 'khatma_completed';
   static const String reminder = 'reminder';
   static const String dailyWirdReminder = 'daily_wird_reminder';
   static const String completedWird = 'completed_wird';
@@ -278,6 +280,9 @@ abstract class AppStrings {
     programPicker: 'برنامج الختمة',
     allWirds: 'جميع الأوراد',
     deleteKhatma: 'حذف الختمة',
+    deleteKhatmaConfirm:
+        'هل أنت متأكد من حذف الختمة الحالية؟ سيتم مسح جميع بيانات التقدم.',
+    khatmaCompleted: 'أتممت الختمة بحمد الله',
     reminder: 'تذكير',
     dailyWirdReminder: 'تنبيه الورد',
     completedWird: 'أكملت هذا الورد',

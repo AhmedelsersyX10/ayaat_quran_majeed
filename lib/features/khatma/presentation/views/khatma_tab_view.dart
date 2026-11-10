@@ -5,6 +5,7 @@ import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_state.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_active_view.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_empty_view.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/new_khatma_menu_sheet.dart';
 import 'package:flutter/material.dart';
@@ -134,31 +135,7 @@ class _KhatmaTabViewContent extends StatelessWidget {
         }
 
         if (state is KhatmaLoaded) {
-          // Placeholder for Task 6.04 (Active Khatma Dashboard - References 26, 31)
-          return Scaffold(
-            backgroundColor: colors.scaffoldBackground,
-            appBar: AppBar(
-              backgroundColor: colors.scaffoldBackground,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              centerTitle: false,
-              title: Text(
-                AppStrings.tr(AppStrings.khatmaTitle),
-                style: AppTypography.displayLarge.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.textPrimary,
-                ),
-              ),
-            ),
-            body: Center(
-              child: Text(
-                '${state.khatma.programTitle} - ${state.currentWird.displayTitle}',
-                style: AppTypography.titleLarge.copyWith(
-                  color: colors.textPrimary,
-                ),
-              ),
-            ),
-          );
+          return KhatmaActiveView(loadedState: state);
         }
 
         // Default: KhatmaEmpty (Reference 10) or in-progress KhatmaCreating

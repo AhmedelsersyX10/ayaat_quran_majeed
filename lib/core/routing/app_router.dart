@@ -9,6 +9,7 @@ import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_sur
 import 'package:ayaat_quran_majeed/features/audio/presentation/views/reciter_surahs_page.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/presentation/views/bookmarks_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/views/surahs_tab_view.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/views/khatma_all_wirds_page.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/views/khatma_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/notes/presentation/views/notes_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
@@ -170,6 +171,13 @@ abstract class AppRouter {
                   path: AppRoutes.khatma,
                   name: AppRoutes.khatmaName,
                   builder: (context, state) => const KhatmaTabView(),
+                  routes: [
+                    GoRoute(
+                      path: 'all-wirds',
+                      name: AppRoutes.khatmaAllWirdsName,
+                      builder: (context, state) => const KhatmaAllWirdsPage(),
+                    ),
+                  ],
                 ),
               ],
             ),
