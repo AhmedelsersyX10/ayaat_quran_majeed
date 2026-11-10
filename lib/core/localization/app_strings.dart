@@ -64,6 +64,10 @@ abstract class AppStrings {
   static const String khatmaPartsAndQuartersDivision =
       'khatma_parts_and_quarters_division';
   static const String startFrom = 'start_from';
+  static const String mushafBeginning = 'mushaf_beginning';
+  static const String specificWird = 'specific_wird';
+  static const String specificPosition = 'specific_position';
+  static const String selectByAyah = 'select_by_ayah';
   static const String fromBeginning = 'from_beginning';
   static const String fromSurah = 'from_surah';
   static const String dailyWird = 'daily_wird';
@@ -263,6 +267,10 @@ abstract class AppStrings {
     khatmaMeaningDivision: 'ختمة مقسمة بالمعنى',
     khatmaPartsAndQuartersDivision: 'ختمة مقسمة بالأجزاء والأرباع',
     startFrom: 'بدء الختمة من',
+    mushafBeginning: 'بداية المصحف',
+    specificWird: 'ورد محدد',
+    specificPosition: 'موضع محدد',
+    selectByAyah: 'اختيار بالآية',
     fromBeginning: 'البداية',
     fromSurah: 'سورة معينة',
     dailyWird: 'الورد اليومي',

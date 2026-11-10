@@ -1,5 +1,6 @@
 import 'package:ayaat_quran_majeed/core/errors/exceptions.dart';
 import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
+import 'package:ayaat_quran_majeed/core/localization/arabic_numbers.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma_program.dart';
@@ -211,6 +212,33 @@ void main() {
 
       expect(cubit.state, equals(const KhatmaEmpty()));
       expect(repository.activeKhatma, isNull);
+    });
+
+    testWidgets('renders KhatmaStartFromSheet when step is startFrom',
+        (tester) async {
+      cubit.startCreation();
+      cubit.selectProgram(KhatmaProgram.defaultProgram);
+      await pumpMenuSheet(tester);
+
+      expect(find.text(AppStrings.tr(AppStrings.startFrom)), findsOneWidget);
+      expect(find.text(AppStrings.tr(AppStrings.mushafBeginning)), findsOneWidget);
+      expect(find.text(AppStrings.tr(AppStrings.specificWird)), findsOneWidget);
+      expect(
+          find.text(AppStrings.tr(AppStrings.specificPosition)), findsOneWidget);
+    });
+
+    testWidgets('renders KhatmaSelectWirdSheet when step is selectWird',
+        (tester) async {
+      cubit.startCreation();
+      cubit.selectProgram(KhatmaProgram.defaultProgram);
+      cubit.goToStep(KhatmaCreationStep.selectWird);
+      await pumpMenuSheet(tester);
+
+      expect(find.text(AppStrings.tr(AppStrings.startFrom)), findsOneWidget);
+      expect(find.text(AppStrings.tr(AppStrings.mushafBeginning)), findsOneWidget);
+      final wird1Title =
+          '${AppStrings.tr(AppStrings.wirdOfToday)} ${toArabicDigits(1)}';
+      expect(find.text(wird1Title), findsOneWidget);
     });
   });
 }

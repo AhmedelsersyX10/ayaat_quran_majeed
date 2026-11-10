@@ -322,4 +322,104 @@ void main() {
       expect(wirds.last.endAyahNumber, equals(6));
     });
   });
+
+  group('KhatmaWirdCalculator Start-Position Calculation Tests (TASK 6.04)', () {
+    const program29 = KhatmaProgram.defaultProgram;
+    final program30 = KhatmaProgram.findById('parts_30')!;
+
+    test('validates Quran verse positions correctly', () {
+      expect(calculator.isValidAyahPosition(1, 1), isTrue);
+      expect(calculator.isValidAyahPosition(2, 286), isTrue);
+      expect(calculator.isValidAyahPosition(114, 6), isTrue);
+
+      expect(calculator.isValidAyahPosition(0, 1), isFalse);
+      expect(calculator.isValidAyahPosition(115, 1), isFalse);
+      expect(calculator.isValidAyahPosition(1, 0), isFalse);
+      expect(calculator.isValidAyahPosition(2, 287), isFalse);
+    });
+
+    test('validates Mushaf page numbers correctly', () {
+      expect(calculator.isValidPagePosition(1), isTrue);
+      expect(calculator.isValidPagePosition(604), isTrue);
+      expect(calculator.isValidPagePosition(0), isFalse);
+      expect(calculator.isValidPagePosition(605), isFalse);
+    });
+
+    test('calculates exact wird number on Surah and Ayah boundaries in 29-day program', () {
+      // First verse of Quran -> Wird 1
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 1, ayahNumber: 1), equals(1));
+      // End of Wird 1 (2:141) -> Wird 1
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 2, ayahNumber: 141), equals(1));
+
+      // Start of Wird 2 (2:142) -> Wird 2
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 2, ayahNumber: 142), equals(2));
+      // Mid Wird 2 (2:200) -> Wird 2
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 2, ayahNumber: 200), equals(2));
+      // End of Wird 2 (2:252) -> Wird 2
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 2, ayahNumber: 252), equals(2));
+
+      // Start of Wird 3 (2:253) -> Wird 3
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 2, ayahNumber: 253), equals(3));
+      // End of Wird 3 (3:92) -> Wird 3
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 3, ayahNumber: 92), equals(3));
+
+      // Start of Wird 4 (3:93) -> Wird 4
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 3, ayahNumber: 93), equals(4));
+      // End of Wird 4 (4:35) -> Wird 4
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 4, ayahNumber: 35), equals(4));
+
+      // Start of Wird 5 (4:36) -> Wird 5
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 4, ayahNumber: 36), equals(5));
+      // End of Wird 5 (4:176) -> Wird 5
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 4, ayahNumber: 176), equals(5));
+
+      // Start of Wird 6 (5:1) -> Wird 6
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 5, ayahNumber: 1), equals(6));
+
+      // Last verse of Quran (114:6) -> Wird 29
+      expect(calculator.findWirdNumberForAyah(program: program29, surahNumber: 114, ayahNumber: 6), equals(29));
+    });
+
+    test('calculates exact wird number on Juz boundaries in 30-day program', () {
+      // Juz 1 -> Wird 1
+      expect(calculator.findWirdNumberForAyah(program: program30, surahNumber: 1, ayahNumber: 1), equals(1));
+      // Juz 2 (starts at 2:142) -> Wird 2
+      expect(calculator.findWirdNumberForAyah(program: program30, surahNumber: 2, ayahNumber: 142), equals(2));
+      // Juz 30 (starts at 78:1) -> Wird 30
+      expect(calculator.findWirdNumberForAyah(program: program30, surahNumber: 78, ayahNumber: 1), equals(30));
+      // Last verse (114:6) -> Wird 30
+      expect(calculator.findWirdNumberForAyah(program: program30, surahNumber: 114, ayahNumber: 6), equals(30));
+    });
+
+    test('calculates exact wird number from page boundaries', () {
+      expect(calculator.findWirdNumberForPage(program: program29, pageNumber: 1), equals(1));
+      // Page 22 (starts at 2:142) -> Wird 2
+      expect(calculator.findWirdNumberForPage(program: program29, pageNumber: 22), equals(2));
+      // Page 604 -> Wird 29
+      expect(calculator.findWirdNumberForPage(program: program29, pageNumber: 604), equals(29));
+    });
+
+    test('throws ArgumentError on invalid surah, ayah, or page', () {
+      expect(
+        () => calculator.findWirdNumberForAyah(program: program29, surahNumber: 0, ayahNumber: 1),
+        throwsArgumentError,
+      );
+      expect(
+        () => calculator.findWirdNumberForAyah(program: program29, surahNumber: 115, ayahNumber: 1),
+        throwsArgumentError,
+      );
+      expect(
+        () => calculator.findWirdNumberForAyah(program: program29, surahNumber: 2, ayahNumber: 999),
+        throwsArgumentError,
+      );
+      expect(
+        () => calculator.findWirdNumberForPage(program: program29, pageNumber: 0),
+        throwsArgumentError,
+      );
+      expect(
+        () => calculator.findWirdNumberForPage(program: program29, pageNumber: 605),
+        throwsArgumentError,
+      );
+    });
+  });
 }

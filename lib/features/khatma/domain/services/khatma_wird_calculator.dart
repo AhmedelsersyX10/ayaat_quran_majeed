@@ -94,6 +94,88 @@ class KhatmaWirdCalculator {
     return result;
   }
 
+  /// Returns true if [surahNumber] and [ayahNumber] denote a valid verse in the Quran.
+  bool isValidAyahPosition(int surahNumber, int ayahNumber) {
+    if (surahNumber < 1 || surahNumber > 114) return false;
+    final verseCount = _metadataService.getVerseCount(surahNumber);
+    if (ayahNumber < 1 || ayahNumber > verseCount) return false;
+    return true;
+  }
+
+  /// Returns true if [pageNumber] is a valid Madani Mushaf page (1..604).
+  bool isValidPagePosition(int pageNumber) {
+    return pageNumber >= 1 && pageNumber <= 604;
+  }
+
+  /// Finds the 1-based wird number in [program] that contains [surahNumber] and [ayahNumber].
+  ///
+  /// Throws [ArgumentError] if the verse position is invalid.
+  int findWirdNumberForAyah({
+    required KhatmaProgram program,
+    required int surahNumber,
+    required int ayahNumber,
+  }) {
+    if (!isValidAyahPosition(surahNumber, ayahNumber)) {
+      throw ArgumentError(
+        'Invalid Quran verse position: surah $surahNumber, ayah $ayahNumber',
+      );
+    }
+
+    final definitions = _getDefinitionsForProgram(program);
+    for (int i = 0; i < definitions.length; i++) {
+      final def = definitions[i];
+      final afterStart = _compareVerses(
+            surahNumber,
+            ayahNumber,
+            def.startSurah,
+            def.startAyah,
+          ) >=
+          0;
+      final beforeEnd = _compareVerses(
+            surahNumber,
+            ayahNumber,
+            def.endSurah,
+            def.endAyah,
+          ) <=
+          0;
+      if (afterStart && beforeEnd) {
+        return i + 1;
+      }
+    }
+
+    return 1;
+  }
+
+  /// Finds the 1-based wird number in [program] that contains [pageNumber] (1..604).
+  ///
+  /// Throws [ArgumentError] if [pageNumber] is not between 1 and 604.
+  int findWirdNumberForPage({
+    required KhatmaProgram program,
+    required int pageNumber,
+  }) {
+    if (!isValidPagePosition(pageNumber)) {
+      throw ArgumentError('Invalid Mushaf page: $pageNumber');
+    }
+
+    final pageSegments = _metadataService.getPageData(pageNumber);
+    if (pageSegments.isNotEmpty) {
+      final first = pageSegments.first;
+      final surah = (first['surah'] as num).toInt();
+      final startAyah = (first['start'] as num).toInt();
+      return findWirdNumberForAyah(
+        program: program,
+        surahNumber: surah,
+        ayahNumber: startAyah,
+      );
+    }
+    return 1;
+  }
+
+  static int _compareVerses(int s1, int a1, int s2, int a2) {
+    if (s1 != s2) return s1.compareTo(s2);
+    return a1.compareTo(a2);
+  }
+
   /// Selects the raw wird definitions based on the program id.
   List<_RawWirdDefinition> _getDefinitionsForProgram(KhatmaProgram program) {
     if (program.id == 'meaning_29' || program.totalDays == 29) {

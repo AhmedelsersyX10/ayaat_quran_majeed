@@ -6,6 +6,8 @@ import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma_progra
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_state.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_program_picker_sheet.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_select_wird_sheet.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_start_from_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -53,16 +55,43 @@ class NewKhatmaMenuSheet extends StatelessWidget {
     } catch (_) {}
 
     if (cubit != null) {
-      return BlocBuilder<KhatmaCubit, KhatmaState>(
+      return BlocConsumer<KhatmaCubit, KhatmaState>(
+        listener: (context, state) {
+          if (state is KhatmaLoaded) {
+            Navigator.of(context).maybePop();
+          }
+        },
         builder: (context, state) {
-          if (state is KhatmaCreating &&
-              state.step == KhatmaCreationStep.programPicker) {
-            return KhatmaProgramPickerSheet(
-              category: state.customProgramCategory ??
-                  KhatmaProgramCategory.meaning,
-              onBack: onBack ?? () => cubit?.goToStep(KhatmaCreationStep.menu),
-              onProgramSelected: onProgramSelected,
-            );
+          if (state is KhatmaCreating) {
+            if (state.step == KhatmaCreationStep.programPicker) {
+              return KhatmaProgramPickerSheet(
+                category: state.customProgramCategory ??
+                    KhatmaProgramCategory.meaning,
+                onBack: onBack ?? () => cubit?.goToStep(KhatmaCreationStep.menu),
+                onProgramSelected: onProgramSelected,
+              );
+            }
+            if (state.step == KhatmaCreationStep.startFrom &&
+                state.selectedProgram != null) {
+              return KhatmaStartFromSheet(
+                program: state.selectedProgram!,
+                onBack: onBack ??
+                    () {
+                      if (state.customProgramCategory != null) {
+                        cubit?.goToStep(KhatmaCreationStep.programPicker);
+                      } else {
+                        cubit?.goToStep(KhatmaCreationStep.menu);
+                      }
+                    },
+              );
+            }
+            if (state.step == KhatmaCreationStep.selectWird &&
+                state.selectedProgram != null) {
+              return KhatmaSelectWirdSheet(
+                program: state.selectedProgram!,
+                onBack: () => cubit?.goToStep(KhatmaCreationStep.startFrom),
+              );
+            }
           }
           return _buildMenuContent(context, cubit!);
         },
