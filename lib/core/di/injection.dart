@@ -18,7 +18,9 @@ import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repo
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
 import 'package:ayaat_quran_majeed/features/khatma/data/datasources/khatma_local_data_source.dart';
 import 'package:ayaat_quran_majeed/features/khatma/data/repositories/khatma_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/khatma/data/services/khatma_reminder_service_impl.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/repositories/khatma_repository.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_reminder_service.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_wird_calculator.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/data/repositories/search_repository_impl.dart';
@@ -139,6 +141,12 @@ Future<void> initInjection() async {
   if (!sl.isRegistered<KhatmaWirdCalculator>()) {
     sl.registerLazySingleton<KhatmaWirdCalculator>(
       () => KhatmaWirdCalculator(metadataService: sl<QuranMetadataService>()),
+    );
+  }
+
+  if (!sl.isRegistered<KhatmaReminderService>()) {
+    sl.registerLazySingleton<KhatmaReminderService>(
+      () => KhatmaReminderServiceImpl(),
     );
   }
 
@@ -408,6 +416,7 @@ Future<void> initInjection() async {
     sl.registerFactory<KhatmaCubit>(
       () => KhatmaCubit(
         repository: sl<KhatmaRepository>(),
+        reminderService: sl<KhatmaReminderService>(),
       ),
     );
   }

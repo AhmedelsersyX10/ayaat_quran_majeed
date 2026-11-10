@@ -86,6 +86,12 @@ abstract class AppStrings {
   static const String khatmaGuidanceDesc = 'khatma_guidance_desc';
   static const String startKhatmaBtn = 'start_khatma_btn';
   static const String reminderTimePickerTitle = 'reminder_time_picker_title';
+  static const String notificationPermissionRequired =
+      'notification_permission_required';
+  static const String dailyReminderNotificationTitle =
+      'daily_reminder_notification_title';
+  static const String dailyReminderNotificationBody =
+      'daily_reminder_notification_body';
   static const String amPeriod = 'am_period';
   static const String pmPeriod = 'pm_period';
   static const String monthsCategory = 'months_category';
@@ -294,6 +300,10 @@ abstract class AppStrings {
         'حدّد وردك اليومي أو المدة التي تريد ختم القرآن فيها، وتابع ختمتك في شهر رمضان وطوال العام.',
     startKhatmaBtn: 'بدء ختمة جديدة',
     reminderTimePickerTitle: 'وقت التنبيه',
+    notificationPermissionRequired:
+        'يرجى تفعيل إذن الإشعارات لتلقي تنبيه الورد اليومي',
+    dailyReminderNotificationTitle: 'تذكير الورد اليومي',
+    dailyReminderNotificationBody: 'حان وقت قراءة الورد اليومي',
     amPeriod: 'ص',
     pmPeriod: 'م',
     monthsCategory: 'الأشهر',

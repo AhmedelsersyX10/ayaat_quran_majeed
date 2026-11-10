@@ -1,7 +1,9 @@
+import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma_program.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/repositories/khatma_repository.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_clock.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_reminder_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'khatma_state.dart';
@@ -9,12 +11,15 @@ import 'khatma_state.dart';
 /// Cubit orchestrating active Khatma lifecycle, progress, and scheduling state.
 class KhatmaCubit extends Cubit<KhatmaState> {
   final KhatmaRepository _repository;
+  final KhatmaReminderService _reminderService;
   final KhatmaClock _clock;
 
   KhatmaCubit({
     required KhatmaRepository repository,
+    KhatmaReminderService? reminderService,
     KhatmaClock clock = defaultKhatmaClock,
   })  : _repository = repository,
+        _reminderService = reminderService ?? const _NoOpReminderService(),
         _clock = clock,
         super(const KhatmaInitial());
 
@@ -103,6 +108,14 @@ class KhatmaCubit extends Cubit<KhatmaState> {
         reminderHour: reminderHour,
         reminderMinute: reminderMinute,
       );
+
+      if (reminderEnabled) {
+        final granted = await _reminderService.requestPermission();
+        if (granted) {
+          await _scheduleReminderForKhatma(khatma);
+        }
+      }
+
       _emitLoaded(khatma, currentDate: startDate);
     } catch (e) {
       emit(KhatmaFailure('فشل إنشاء الختمة: $e'));
@@ -113,6 +126,11 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   Future<void> completeCurrentWird({DateTime? completionDate}) async {
     try {
       final updated = await _repository.completeCurrentWird(completionDate: completionDate);
+      if (updated.isCompleted) {
+        await _reminderService.cancelDailyReminder();
+      } else if (updated.reminderEnabled) {
+        await _scheduleReminderForKhatma(updated);
+      }
       _emitLoaded(updated, currentDate: completionDate, justCompletedWird: true);
     } catch (e) {
       emit(KhatmaFailure('فشل تسجيل إكمال الورد: $e'));
@@ -123,6 +141,11 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   Future<void> completeWird(int wirdNumber, {DateTime? completionDate}) async {
     try {
       final updated = await _repository.completeWird(wirdNumber, completionDate: completionDate);
+      if (updated.isCompleted) {
+        await _reminderService.cancelDailyReminder();
+      } else if (updated.reminderEnabled) {
+        await _scheduleReminderForKhatma(updated);
+      }
       _emitLoaded(updated, currentDate: completionDate, justCompletedWird: true);
     } catch (e) {
       emit(KhatmaFailure('فشل تسجيل إكمال الورد: $e'));
@@ -133,6 +156,9 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   Future<void> uncompleteWird(int wirdNumber) async {
     try {
       final updated = await _repository.uncompleteWird(wirdNumber);
+      if (updated.reminderEnabled) {
+        await _scheduleReminderForKhatma(updated);
+      }
       _emitLoaded(updated);
     } catch (e) {
       emit(KhatmaFailure('فشل تعديل حالة الورد: $e'));
@@ -143,6 +169,7 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   Future<void> deleteKhatma() async {
     emit(const KhatmaLoading());
     try {
+      await _reminderService.cancelDailyReminder();
       await _repository.deleteKhatma();
       emit(const KhatmaEmpty());
     } catch (e) {
@@ -153,7 +180,30 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   /// Toggles the daily wird reminder switch on or off.
   Future<void> toggleReminder(bool enabled) async {
     try {
+      if (enabled) {
+        final granted = await _reminderService.requestPermission();
+        if (!granted) {
+          final current = state is KhatmaLoaded ? (state as KhatmaLoaded) : null;
+          if (current != null) {
+            emit(
+              KhatmaLoaded(
+                khatma: current.khatma.copyWith(reminderEnabled: false),
+                currentWird: current.currentWird,
+                relativeDayLabel: current.relativeDayLabel,
+                permissionDeniedNotice: true,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
       final updated = await _repository.updateReminder(enabled: enabled);
+      if (enabled) {
+        await _scheduleReminderForKhatma(updated);
+      } else {
+        await _reminderService.cancelDailyReminder();
+      }
       _emitLoaded(updated);
     } catch (e) {
       emit(KhatmaFailure('فشل تحديث التنبيه: $e'));
@@ -170,10 +220,35 @@ class KhatmaCubit extends Cubit<KhatmaState> {
         hour: hour,
         minute: minute,
       );
+      if (updated.reminderEnabled) {
+        await _scheduleReminderForKhatma(updated);
+      }
       _emitLoaded(updated);
     } catch (e) {
       emit(KhatmaFailure('فشل تحديث وقت التنبيه: $e'));
     }
+  }
+
+  /// Helper to schedule or update the daily local notification.
+  Future<void> _scheduleReminderForKhatma(Khatma khatma) async {
+    if (!khatma.reminderEnabled || khatma.isCompleted) {
+      await _reminderService.cancelDailyReminder();
+      return;
+    }
+
+    final currentWird = khatma.currentWird;
+    const title = 'تذكير الورد اليومي';
+    final body =
+        'حان وقت قراءة ${currentWird.dayTitle}: من ${currentWird.startSurahName} إلى ${currentWird.endSurahName}';
+    final payload = '${AppRoutes.reader}?page=${currentWird.startPageNumber}';
+
+    await _reminderService.scheduleDailyReminder(
+      hour: khatma.reminderTimeHour,
+      minute: khatma.reminderTimeMinute,
+      title: title,
+      body: body,
+      payload: payload,
+    );
   }
 
   /// Helper to calculate relative day label and emit [KhatmaLoaded].
@@ -195,5 +270,31 @@ class KhatmaCubit extends Cubit<KhatmaState> {
       ),
     );
   }
+}
+
+/// Fallback reminder service that performs no operations (used when no service is injected).
+class _NoOpReminderService implements KhatmaReminderService {
+  const _NoOpReminderService();
+
+  @override
+  Future<void> init({void Function(String? payload)? onNotificationTap}) async {}
+
+  @override
+  Future<bool> requestPermission() async => true;
+
+  @override
+  Future<bool> hasPermission() async => true;
+
+  @override
+  Future<void> scheduleDailyReminder({
+    required int hour,
+    required int minute,
+    required String title,
+    required String body,
+    required String payload,
+  }) async {}
+
+  @override
+  Future<void> cancelDailyReminder() async {}
 }
 

@@ -98,12 +98,14 @@ class KhatmaLoaded extends KhatmaState {
   final KhatmaWird currentWird;
   final String relativeDayLabel;
   final bool justCompletedWird;
+  final bool permissionDeniedNotice;
 
   const KhatmaLoaded({
     required this.khatma,
     required this.currentWird,
     required this.relativeDayLabel,
     this.justCompletedWird = false,
+    this.permissionDeniedNotice = false,
   });
 
   @override
@@ -113,7 +115,8 @@ class KhatmaLoaded extends KhatmaState {
         other.khatma == khatma &&
         other.currentWird == currentWird &&
         other.relativeDayLabel == relativeDayLabel &&
-        other.justCompletedWird == justCompletedWird;
+        other.justCompletedWird == justCompletedWird &&
+        other.permissionDeniedNotice == permissionDeniedNotice;
   }
 
   @override
@@ -122,11 +125,12 @@ class KhatmaLoaded extends KhatmaState {
         currentWird,
         relativeDayLabel,
         justCompletedWird,
+        permissionDeniedNotice,
       );
 
   @override
   String toString() =>
-      'KhatmaLoaded(day: ${currentWird.dayNumber}, label: $relativeDayLabel, justCompleted: $justCompletedWird)';
+      'KhatmaLoaded(day: ${currentWird.dayNumber}, label: $relativeDayLabel, justCompleted: $justCompletedWird, permissionDenied: $permissionDeniedNotice)';
 }
 
 /// State emitted when a Khatma operation encounters an error.

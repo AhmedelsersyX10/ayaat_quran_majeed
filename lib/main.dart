@@ -4,6 +4,7 @@ import 'package:ayaat_quran_majeed/core/routing/app_router.dart';
 import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
 import 'package:ayaat_quran_majeed/core/storage/storage_initializer.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_reminder_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/json_asset_service.dart';
 import 'package:easy_localization/easy_localization.dart' as ez;
 import 'package:flutter/material.dart';
@@ -22,6 +23,17 @@ void main() async {
   await StorageInitializer.init();
   await JsonAssetService.init();
   await initInjection();
+
+  // Initialize daily Khatma reminder notification routing
+  if (sl.isRegistered<KhatmaReminderService>()) {
+    sl<KhatmaReminderService>().init(
+      onNotificationTap: (payload) {
+        if (payload != null && payload.isNotEmpty) {
+          AppRouter.router.push(payload);
+        }
+      },
+    );
+  }
 
   // Sync initial theme mode from persisted preferences
   if (sl.isRegistered<AppPreferences>()) {

@@ -13,6 +13,7 @@ import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repo
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
 import 'package:ayaat_quran_majeed/features/khatma/data/datasources/khatma_local_data_source.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/repositories/khatma_repository.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_reminder_service.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_wird_calculator.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
@@ -75,6 +76,7 @@ void main() {
       expect(sl.isRegistered<TafsirRepository>(), isTrue);
       expect(sl.isRegistered<KhatmaLocalDataSource>(), isTrue);
       expect(sl.isRegistered<KhatmaWirdCalculator>(), isTrue);
+      expect(sl.isRegistered<KhatmaReminderService>(), isTrue);
       expect(sl.isRegistered<KhatmaRepository>(), isTrue);
       expect(sl.isRegistered<GetPageTafsirUseCase>(), isTrue);
       expect(sl.isRegistered<GetSelectedTafsirBookUseCase>(), isTrue);

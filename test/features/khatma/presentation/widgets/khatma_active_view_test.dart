@@ -8,6 +8,7 @@ import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_wird_c
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_state.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_active_view.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_time_picker_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -315,6 +316,49 @@ void main() {
       await pumpActiveView(tester, loadedState: loadedState);
 
       expect(find.text(AppStrings.tr(AppStrings.khatmaCompleted)), findsOneWidget);
+    });
+
+    testWidgets('tapping reminder card opens KhatmaTimePickerDialog (Reference 23)',
+        (tester) async {
+      final loadedState = KhatmaLoaded(
+        khatma: testKhatmaDay1,
+        currentWird: testKhatmaDay1.wirds[0],
+        relativeDayLabel: 'اليوم',
+      );
+
+      await pumpActiveView(tester, loadedState: loadedState);
+
+      await tester.tap(find.text(AppStrings.tr(AppStrings.dailyWird)));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(KhatmaTimePickerDialog), findsOneWidget);
+    });
+
+    testWidgets('shows SnackBar when permissionDeniedNotice is emitted',
+        (tester) async {
+      final initialLoadedState = KhatmaLoaded(
+        khatma: testKhatmaDay1,
+        currentWird: testKhatmaDay1.wirds[0],
+        relativeDayLabel: 'اليوم',
+      );
+
+      await pumpActiveView(tester, loadedState: initialLoadedState);
+
+      cubit.emit(
+        KhatmaLoaded(
+          khatma: testKhatmaDay1,
+          currentWird: testKhatmaDay1.wirds[0],
+          relativeDayLabel: 'اليوم',
+          permissionDeniedNotice: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(
+        find.text(AppStrings.tr(AppStrings.notificationPermissionRequired)),
+        findsOneWidget,
+      );
     });
   });
 }

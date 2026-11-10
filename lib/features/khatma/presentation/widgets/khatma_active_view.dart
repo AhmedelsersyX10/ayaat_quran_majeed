@@ -13,6 +13,7 @@ import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cub
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_state.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/views/khatma_all_wirds_page.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_confetti_widget.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_time_picker_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -52,9 +53,24 @@ class _KhatmaActiveViewState extends State<KhatmaActiveView> {
 
     return BlocListener<KhatmaCubit, KhatmaState>(
       listenWhen: (previous, current) =>
-          current is KhatmaLoaded && current.justCompletedWird,
+          current is KhatmaLoaded &&
+          (current.justCompletedWird || current.permissionDeniedNotice),
       listener: (context, state) {
-        _confettiKey.currentState?.play();
+        if (state is KhatmaLoaded) {
+          if (state.justCompletedWird) {
+            _confettiKey.currentState?.play();
+          }
+          if (state.permissionDeniedNotice) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  AppStrings.tr(AppStrings.notificationPermissionRequired),
+                ),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
       },
       child: Scaffold(
         backgroundColor: colors.scaffoldBackground,
@@ -288,7 +304,7 @@ class _KhatmaActiveViewState extends State<KhatmaActiveView> {
           hour: khatma.reminderTimeHour,
           minute: khatma.reminderTimeMinute,
         );
-        final picked = await showTimePicker(
+        final picked = await showKhatmaTimePicker(
           context: context,
           initialTime: initialTime,
         );
