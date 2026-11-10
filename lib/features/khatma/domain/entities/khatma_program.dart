@@ -1,3 +1,5 @@
+import '../services/khatma_program_rules.dart';
+
 /// Program category for Quran completion schedules.
 ///
 /// Matches reference screenshots 06, 09, 14, 32.
@@ -34,6 +36,30 @@ class KhatmaProgram {
     this.subCategory,
   });
 
+  /// Creates a [KhatmaProgram] with title and subtitle deterministically derived
+  /// from [KhatmaProgramRules].
+  factory KhatmaProgram.fromRules({
+    required String id,
+    required int totalDays,
+    required KhatmaProgramCategory category,
+    String? subCategory,
+  }) {
+    return KhatmaProgram(
+      id: id,
+      title: KhatmaProgramRules.deriveTitle(
+        totalDays: totalDays,
+        category: category,
+      ),
+      subtitle: KhatmaProgramRules.deriveSubtitle(
+        totalDays: totalDays,
+        category: category,
+      ),
+      totalDays: totalDays,
+      category: category,
+      subCategory: subCategory,
+    );
+  }
+
   /// Default suggested 29-day Khatma (References 06, 09, 24, 25, 26, 31, 33, 35).
   static const KhatmaProgram defaultProgram = KhatmaProgram(
     id: 'meaning_29',
@@ -41,6 +67,16 @@ class KhatmaProgram {
     subtitle: 'الورد اليومي: ٢١ صفحة تقريبًا',
     totalDays: 29,
     category: KhatmaProgramCategory.suggested,
+  );
+
+  /// Standard monthly 30-day program featured in the "الأشهر" section of Reference 14.
+  static const KhatmaProgram monthlyProgram = KhatmaProgram(
+    id: 'parts_30',
+    title: 'ختمة ٣٠ يوما',
+    subtitle: 'الورد اليومي: جزء',
+    totalDays: 30,
+    category: KhatmaProgramCategory.partsAndQuarters,
+    subCategory: 'الأشهر',
   );
 
   /// Meaning-divided programs (Reference 09).
@@ -68,16 +104,9 @@ class KhatmaProgram {
     ),
   ];
 
-  /// Parts and Quarters divided programs (References 14, 32).
+  /// Parts and Quarters divided programs in exact visible sequence matching Reference Screenshot 32
+  /// and the "أخرى" section of Reference Screenshot 14.
   static const List<KhatmaProgram> partsAndQuartersPrograms = [
-    KhatmaProgram(
-      id: 'parts_30',
-      title: 'ختمة ٣٠ يوما',
-      subtitle: 'الورد اليومي: جزء',
-      totalDays: 30,
-      category: KhatmaProgramCategory.partsAndQuarters,
-      subCategory: 'الأشهر',
-    ),
     KhatmaProgram(
       id: 'quarters_240',
       title: 'ختمة ٢٤٠ يوما',
@@ -115,6 +144,14 @@ class KhatmaProgram {
       title: 'ختمة ٤٠ يوما',
       subtitle: 'الورد اليومي: حزب ونصف',
       totalDays: 40,
+      category: KhatmaProgramCategory.partsAndQuarters,
+      subCategory: 'أخرى',
+    ),
+    KhatmaProgram(
+      id: 'parts_30',
+      title: 'ختمة ٣٠ يوما',
+      subtitle: 'الورد اليومي: جزء',
+      totalDays: 30,
       category: KhatmaProgramCategory.partsAndQuarters,
       subCategory: 'أخرى',
     ),
@@ -163,6 +200,7 @@ class KhatmaProgram {
   /// Finds a program by its unique [id], or returns null if not found.
   static KhatmaProgram? findById(String id) {
     if (id == defaultProgram.id) return defaultProgram;
+    if (id == monthlyProgram.id) return monthlyProgram;
     for (final p in meaningPrograms) {
       if (p.id == id) return p;
     }
@@ -185,9 +223,10 @@ class KhatmaProgram {
   }
 
   @override
-  int get hashCode => Object.hash(id, title, subtitle, totalDays, category, subCategory);
+  int get hashCode =>
+      Object.hash(id, title, subtitle, totalDays, category, subCategory);
 
   @override
-  String toString() => 'KhatmaProgram(id: $id, title: $title, days: $totalDays)';
+  String toString() =>
+      'KhatmaProgram(id: $id, title: $title, days: $totalDays)';
 }
-

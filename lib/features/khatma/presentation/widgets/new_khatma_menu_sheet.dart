@@ -4,11 +4,14 @@ import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma_program.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_state.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_program_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// Modal bottom sheet launcher and container for New Khatma Menu conforming to Reference Screenshot 06.
+/// Modal bottom sheet launcher and container for New Khatma Menu conforming to Reference Screenshot 06
+/// and transitioning reactively to Program Picker (References 09, 14, 32).
 class NewKhatmaMenuSheet extends StatelessWidget {
   final VoidCallback? onBack;
   final ValueChanged<KhatmaProgram>? onProgramSelected;
@@ -44,9 +47,34 @@ class NewKhatmaMenuSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    KhatmaCubit? cubit;
+    try {
+      cubit = context.read<KhatmaCubit>();
+    } catch (_) {}
+
+    if (cubit != null) {
+      return BlocBuilder<KhatmaCubit, KhatmaState>(
+        builder: (context, state) {
+          if (state is KhatmaCreating &&
+              state.step == KhatmaCreationStep.programPicker) {
+            return KhatmaProgramPickerSheet(
+              category: state.customProgramCategory ??
+                  KhatmaProgramCategory.meaning,
+              onBack: onBack ?? () => cubit?.goToStep(KhatmaCreationStep.menu),
+              onProgramSelected: onProgramSelected,
+            );
+          }
+          return _buildMenuContent(context, cubit!);
+        },
+      );
+    }
+
+    return _buildStaticMenuContent(context);
+  }
+
+  Widget _buildMenuContent(BuildContext context, KhatmaCubit cubit) {
     final colors = context.colors;
     final screenHeight = MediaQuery.of(context).size.height;
-    final cubit = context.read<KhatmaCubit>();
 
     return Container(
       height: screenHeight * 0.92,
@@ -80,7 +108,8 @@ class NewKhatmaMenuSheet extends StatelessWidget {
                         cubit.cancelCreation();
                       }
                     },
-                    tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                    tooltip:
+                        MaterialLocalizations.of(context).backButtonTooltip,
                   ),
                   SizedBox(width: AppSpacing.xs),
                   Text(
@@ -141,9 +170,108 @@ class NewKhatmaMenuSheet extends StatelessWidget {
                     },
                     onPartsAndQuartersTap: () {
                       if (onCategorySelected != null) {
-                        onCategorySelected!(KhatmaProgramCategory.partsAndQuarters);
+                        onCategorySelected!(
+                            KhatmaProgramCategory.partsAndQuarters);
                       } else {
                         cubit.selectCategory(
+                            KhatmaProgramCategory.partsAndQuarters);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaticMenuContent(BuildContext context) {
+    final colors = context.colors;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Container(
+      height: screenHeight * 0.92,
+      decoration: BoxDecoration(
+        color: colors.scaffoldBackground,
+        borderRadius: AppRadii.bottomSheetTop,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: colors.primary,
+                      size: 26.sp,
+                    ),
+                    onPressed: () {
+                      if (onBack != null) {
+                        onBack!();
+                      } else {
+                        Navigator.of(context).maybePop();
+                      }
+                    },
+                  ),
+                  SizedBox(width: AppSpacing.xs),
+                  Text(
+                    AppStrings.tr(AppStrings.newKhatma),
+                    style: AppTypography.titleLarge.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, thickness: 1, color: colors.divider),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
+                ),
+                children: [
+                  _buildSectionHeader(
+                    title: AppStrings.tr(AppStrings.suggestedKhatmaHeader),
+                    subtitle: AppStrings.tr(AppStrings.suggestedKhatmaDesc),
+                    colors: colors,
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  _buildSuggestedCard(
+                    program: KhatmaProgram.defaultProgram,
+                    colors: colors,
+                    onTap: () {
+                      if (onProgramSelected != null) {
+                        onProgramSelected!(KhatmaProgram.defaultProgram);
+                      }
+                    },
+                  ),
+                  SizedBox(height: AppSpacing.xxl),
+                  _buildSectionHeader(
+                    title: AppStrings.tr(AppStrings.otherCategory),
+                    colors: colors,
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  _buildOtherOptionsCard(
+                    colors: colors,
+                    onMeaningTap: () {
+                      if (onCategorySelected != null) {
+                        onCategorySelected!(KhatmaProgramCategory.meaning);
+                      }
+                    },
+                    onPartsAndQuartersTap: () {
+                      if (onCategorySelected != null) {
+                        onCategorySelected!(
                             KhatmaProgramCategory.partsAndQuarters);
                       }
                     },
@@ -168,16 +296,16 @@ class NewKhatmaMenuSheet extends StatelessWidget {
         Text(
           title,
           style: AppTypography.titleMedium.copyWith(
-            fontWeight: FontWeight.w600,
-            color: colors.textSecondary,
+            fontWeight: FontWeight.w700,
+            color: colors.textPrimary,
           ),
         ),
         if (subtitle != null) ...[
-          SizedBox(height: 4.h),
+          SizedBox(height: AppSpacing.xxs),
           Text(
             subtitle,
             style: AppTypography.bodySmall.copyWith(
-              color: colors.textMuted,
+              color: colors.textSecondary,
               height: 1.4,
             ),
           ),
@@ -191,40 +319,44 @@ class NewKhatmaMenuSheet extends StatelessWidget {
     required dynamic colors,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: colors.surface,
-      shape: RoundedRectangleBorder(
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
         borderRadius: AppRadii.radiusMd,
-        side: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+        border: Border.all(color: colors.border, width: 1),
       ),
-      elevation: 0,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadii.radiusMd,
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.lg,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                program.title,
-                style: AppTypography.titleMedium.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.textPrimary,
-                ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadii.radiusMd,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.lg,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    program.title,
+                    style: AppTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.xs),
+                  Text(
+                    program.subtitle,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 6.h),
-              Text(
-                program.subtitle,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: colors.textSecondary,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -236,55 +368,64 @@ class NewKhatmaMenuSheet extends StatelessWidget {
     required VoidCallback onMeaningTap,
     required VoidCallback onPartsAndQuartersTap,
   }) {
-    return Material(
-      color: colors.surface,
-      shape: RoundedRectangleBorder(
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
         borderRadius: AppRadii.radiusMd,
-        side: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+        border: Border.all(color: colors.border, width: 1),
       ),
-      elevation: 0,
-      child: ClipRRect(
+      child: Column(
+        children: [
+          _buildOptionTile(
+            title: AppStrings.tr(AppStrings.khatmaMeaningDivision),
+            colors: colors,
+            onTap: onMeaningTap,
+          ),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: colors.divider,
+            indent: AppSpacing.lg,
+            endIndent: AppSpacing.lg,
+          ),
+          _buildOptionTile(
+            title: AppStrings.tr(AppStrings.khatmaPartsAndQuartersDivision),
+            colors: colors,
+            onTap: onPartsAndQuartersTap,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOptionTile({
+    required String title,
+    required dynamic colors,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: AppRadii.radiusMd,
-        child: Column(
-          children: [
-            // Option 1: ختمة مقسمة بالمعنى
-            InkWell(
-              onTap: onMeaningTap,
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.lg,
-                ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.lg,
+          ),
+          child: Row(
+            children: [
+              Expanded(
                 child: Text(
-                  AppStrings.tr(AppStrings.khatmaMeaningDivision),
-                  style: AppTypography.bodyLarge.copyWith(
-                    fontWeight: FontWeight.w500,
+                  title,
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: colors.textPrimary,
                   ),
                 ),
               ),
-            ),
-            Divider(height: 1, thickness: 1, color: colors.divider),
-            // Option 2: ختمة مقسمة بالأجزاء والأرباع
-            InkWell(
-              onTap: onPartsAndQuartersTap,
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.lg,
-                ),
-                child: Text(
-                  AppStrings.tr(AppStrings.khatmaPartsAndQuartersDivision),
-                  style: AppTypography.bodyLarge.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

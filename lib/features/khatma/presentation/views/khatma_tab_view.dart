@@ -44,7 +44,9 @@ class _KhatmaTabViewState extends State<KhatmaTabView>
           child: const _KhatmaTabViewContent(),
         );
       }
-      return const _KhatmaTabViewContent();
+      return KhatmaEmptyView(
+        onStartKhatma: () => _KhatmaTabViewContent._onStartKhatmaStatic(context),
+      );
     }
   }
 }
@@ -52,10 +54,14 @@ class _KhatmaTabViewState extends State<KhatmaTabView>
 class _KhatmaTabViewContent extends StatelessWidget {
   const _KhatmaTabViewContent();
 
-  void _onStartKhatma(BuildContext context) {
-    context.read<KhatmaCubit>().startCreation();
+  static void _onStartKhatmaStatic(BuildContext context) {
+    try {
+      context.read<KhatmaCubit>().startCreation();
+    } catch (_) {}
     NewKhatmaMenuSheet.show(context);
   }
+
+  void _onStartKhatma(BuildContext context) => _onStartKhatmaStatic(context);
 
   @override
   Widget build(BuildContext context) {
