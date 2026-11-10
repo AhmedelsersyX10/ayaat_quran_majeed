@@ -1,4 +1,5 @@
 import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma.dart';
+import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma_program.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/entities/khatma_wird.dart';
 
 /// Sealed base state for Khatma feature.
@@ -20,6 +21,74 @@ class KhatmaLoading extends KhatmaState {
 /// Matches reference screenshot 10 (Empty State).
 class KhatmaEmpty extends KhatmaState {
   const KhatmaEmpty();
+}
+
+/// Enum representing sequential steps in the new Khatma setup wizard.
+enum KhatmaCreationStep {
+  /// Reference 06: New Khatma Menu (suggested / other)
+  menu,
+
+  /// Reference 07: Starting point selection (beginning / custom wird)
+  startFrom,
+
+  /// Reference 08: Specific wird selection list
+  selectWird,
+
+  /// Reference 09 / 14 / 32: Program duration pickers
+  programPicker,
+}
+
+/// State emitted during the interactive Khatma creation wizard (References 06, 07, 08, 09, 14).
+///
+/// Holds in-memory choices without persisting them to storage until the user completes the flow.
+class KhatmaCreating extends KhatmaState {
+  final KhatmaCreationStep step;
+  final KhatmaProgram? selectedProgram;
+  final KhatmaProgramCategory? customProgramCategory;
+  final int startWirdNumber;
+
+  const KhatmaCreating({
+    this.step = KhatmaCreationStep.menu,
+    this.selectedProgram,
+    this.customProgramCategory,
+    this.startWirdNumber = 1,
+  });
+
+  KhatmaCreating copyWith({
+    KhatmaCreationStep? step,
+    KhatmaProgram? selectedProgram,
+    KhatmaProgramCategory? customProgramCategory,
+    int? startWirdNumber,
+  }) {
+    return KhatmaCreating(
+      step: step ?? this.step,
+      selectedProgram: selectedProgram ?? this.selectedProgram,
+      customProgramCategory: customProgramCategory ?? this.customProgramCategory,
+      startWirdNumber: startWirdNumber ?? this.startWirdNumber,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is KhatmaCreating &&
+        other.step == step &&
+        other.selectedProgram == selectedProgram &&
+        other.customProgramCategory == customProgramCategory &&
+        other.startWirdNumber == startWirdNumber;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        step,
+        selectedProgram,
+        customProgramCategory,
+        startWirdNumber,
+      );
+
+  @override
+  String toString() =>
+      'KhatmaCreating(step: $step, program: ${selectedProgram?.id}, category: $customProgramCategory, startWird: $startWirdNumber)';
 }
 
 /// State emitted when an active Khatma exists.

@@ -33,6 +33,57 @@ class KhatmaCubit extends Cubit<KhatmaState> {
     }
   }
 
+  /// Begins the new Khatma setup wizard flow (Reference 06).
+  void startCreation() {
+    emit(const KhatmaCreating(step: KhatmaCreationStep.menu));
+  }
+
+  /// Selects a specific program for the Khatma without persisting yet.
+  /// Advances wizard step to [KhatmaCreationStep.startFrom].
+  void selectProgram(KhatmaProgram program) {
+    if (state is KhatmaCreating) {
+      emit((state as KhatmaCreating).copyWith(
+        selectedProgram: program,
+        step: KhatmaCreationStep.startFrom,
+      ));
+    } else {
+      emit(KhatmaCreating(
+        selectedProgram: program,
+        step: KhatmaCreationStep.startFrom,
+      ));
+    }
+  }
+
+  /// Selects a category for custom programs (meaning or parts/quarters).
+  /// Advances wizard step to [KhatmaCreationStep.programPicker].
+  void selectCategory(KhatmaProgramCategory category) {
+    if (state is KhatmaCreating) {
+      emit((state as KhatmaCreating).copyWith(
+        customProgramCategory: category,
+        step: KhatmaCreationStep.programPicker,
+      ));
+    } else {
+      emit(KhatmaCreating(
+        customProgramCategory: category,
+        step: KhatmaCreationStep.programPicker,
+      ));
+    }
+  }
+
+  /// Navigates to a specific step in the Khatma creation wizard.
+  void goToStep(KhatmaCreationStep step) {
+    if (state is KhatmaCreating) {
+      emit((state as KhatmaCreating).copyWith(step: step));
+    } else {
+      emit(KhatmaCreating(step: step));
+    }
+  }
+
+  /// Cancels the Khatma creation wizard and resets state to [KhatmaEmpty].
+  void cancelCreation() {
+    emit(const KhatmaEmpty());
+  }
+
   /// Creates and starts a new Khatma.
   Future<void> createKhatma({
     required KhatmaProgram program,

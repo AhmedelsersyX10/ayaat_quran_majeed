@@ -57,7 +57,12 @@ abstract class AppStrings {
   static const String khatmaTitle = 'khatma_title';
   static const String newKhatma = 'new_khatma';
   static const String suggestedKhatma = 'suggested_khatma';
+  static const String suggestedKhatmaHeader = 'suggested_khatma_header';
+  static const String suggestedKhatmaDesc = 'suggested_khatma_desc';
   static const String otherKhatma = 'other_khatma';
+  static const String khatmaMeaningDivision = 'khatma_meaning_division';
+  static const String khatmaPartsAndQuartersDivision =
+      'khatma_parts_and_quarters_division';
   static const String startFrom = 'start_from';
   static const String fromBeginning = 'from_beginning';
   static const String fromSurah = 'from_surah';
@@ -252,7 +257,11 @@ abstract class AppStrings {
     khatmaTitle: 'الختمة',
     newKhatma: 'ختمة جديدة',
     suggestedKhatma: 'مقترحة',
+    suggestedKhatmaHeader: 'ختمة مقترحة',
+    suggestedKhatmaDesc: 'ختمة مقترحة روعي فيها تمام المعنى مع نهاية كل ورد.',
     otherKhatma: 'أخرى',
+    khatmaMeaningDivision: 'ختمة مقسمة بالمعنى',
+    khatmaPartsAndQuartersDivision: 'ختمة مقسمة بالأجزاء والأرباع',
     startFrom: 'بدء الختمة من',
     fromBeginning: 'البداية',
     fromSurah: 'سورة معينة',

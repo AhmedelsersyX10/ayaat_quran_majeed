@@ -1,12 +1,22 @@
+import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_spacing.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
-import 'package:ayaat_quran_majeed/core/widgets/app_button.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_state.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/khatma_empty_view.dart';
+import 'package:ayaat_quran_majeed/features/khatma/presentation/widgets/new_khatma_menu_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Tab 1: Khatma View.
-/// Conforms to reference screenshot 10_khatma_empty_state.
+///
+/// Dispatches rendering based on [KhatmaState]:
+/// - [KhatmaEmpty] -> Conforms to Reference Screenshot 10 ([KhatmaEmptyView]).
+/// - [KhatmaCreating] -> Retains base tab state while [NewKhatmaMenuSheet] (Reference 06) is active.
+/// - [KhatmaLoaded] -> Active Khatma dashboard (Reference 26 & 31 - Task 6.04).
+/// - [KhatmaLoading] / [KhatmaInitial] -> Centered progress indicator.
 class KhatmaTabView extends StatefulWidget {
   const KhatmaTabView({super.key});
 
@@ -22,65 +32,134 @@ class _KhatmaTabViewState extends State<KhatmaTabView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // If a KhatmaCubit is already provided in the ancestry (e.g. tests or custom shell), use it.
+    try {
+      context.read<KhatmaCubit>();
+      return const _KhatmaTabViewContent();
+    } catch (_) {
+      if (sl.isRegistered<KhatmaCubit>()) {
+        return BlocProvider<KhatmaCubit>(
+          create: (_) => sl<KhatmaCubit>()..loadKhatma(),
+          child: const _KhatmaTabViewContent(),
+        );
+      }
+      return const _KhatmaTabViewContent();
+    }
+  }
+}
+
+class _KhatmaTabViewContent extends StatelessWidget {
+  const _KhatmaTabViewContent();
+
+  void _onStartKhatma(BuildContext context) {
+    context.read<KhatmaCubit>().startCreation();
+    NewKhatmaMenuSheet.show(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Scaffold(
-      backgroundColor: colors.scaffoldBackground,
-      appBar: AppBar(
-        backgroundColor: colors.scaffoldBackground,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        title: Text(
-          AppStrings.tr(AppStrings.khatmaTitle),
-          style: AppTypography.displayLarge.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colors.textPrimary,
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 320),
-                  child: Text(
-                    AppStrings.tr(AppStrings.khatmaGuidanceDesc),
-                    textAlign: TextAlign.center,
-                    style: AppTypography.bodyLarge.copyWith(
-                      color: colors.textSecondary,
-                      height: 1.6,
-                    ),
-                  ),
+    return BlocBuilder<KhatmaCubit, KhatmaState>(
+      builder: (context, state) {
+        if (state is KhatmaInitial || state is KhatmaLoading) {
+          return Scaffold(
+            backgroundColor: colors.scaffoldBackground,
+            appBar: AppBar(
+              backgroundColor: colors.scaffoldBackground,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              centerTitle: false,
+              title: Text(
+                AppStrings.tr(AppStrings.khatmaTitle),
+                style: AppTypography.displayLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
                 ),
-                SizedBox(height: AppSpacing.xxl),
-                SizedBox(
-                  width: 240,
-                  child: AppButton.primary(
-                    text: AppStrings.tr(AppStrings.startKhatmaBtn),
-                    onPressed: () {
-                      // Placeholder action for future Khatma feature setup
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            AppStrings.tr(AppStrings.startKhatmaBtn),
-                            textAlign: TextAlign.center,
-                          ),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
+            body: Center(
+              child: CircularProgressIndicator(color: colors.primary),
+            ),
+          );
+        }
+
+        if (state is KhatmaFailure) {
+          return Scaffold(
+            backgroundColor: colors.scaffoldBackground,
+            appBar: AppBar(
+              backgroundColor: colors.scaffoldBackground,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              centerTitle: false,
+              title: Text(
+                AppStrings.tr(AppStrings.khatmaTitle),
+                style: AppTypography.displayLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
+            body: Center(
+              child: Padding(
+                padding: EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      state.message,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: colors.error,
+                      ),
+                    ),
+                    SizedBox(height: AppSpacing.lg),
+                    ElevatedButton(
+                      onPressed: () =>
+                          context.read<KhatmaCubit>().loadKhatma(),
+                      child: Text(AppStrings.tr(AppStrings.returnHome)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (state is KhatmaLoaded) {
+          // Placeholder for Task 6.04 (Active Khatma Dashboard - References 26, 31)
+          return Scaffold(
+            backgroundColor: colors.scaffoldBackground,
+            appBar: AppBar(
+              backgroundColor: colors.scaffoldBackground,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              centerTitle: false,
+              title: Text(
+                AppStrings.tr(AppStrings.khatmaTitle),
+                style: AppTypography.displayLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
+            body: Center(
+              child: Text(
+                '${state.khatma.programTitle} - ${state.currentWird.displayTitle}',
+                style: AppTypography.titleLarge.copyWith(
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
+          );
+        }
+
+        // Default: KhatmaEmpty (Reference 10) or in-progress KhatmaCreating
+        return KhatmaEmptyView(
+          onStartKhatma: () => _onStartKhatma(context),
+        );
+      },
     );
   }
 }

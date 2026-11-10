@@ -281,5 +281,61 @@ void main() {
       expect(states[0], equals(const KhatmaLoading()));
       expect(states[1], isA<KhatmaFailure>());
     });
+
+    group('Khatma Creation Flow Tests (References 06, 10)', () {
+      test('startCreation emits KhatmaCreating with menu step', () {
+        cubit.startCreation();
+        expect(cubit.state, isA<KhatmaCreating>());
+        final state = cubit.state as KhatmaCreating;
+        expect(state.step, equals(KhatmaCreationStep.menu));
+        expect(state.selectedProgram, isNull);
+        expect(state.customProgramCategory, isNull);
+        expect(repository.activeKhatma, isNull);
+      });
+
+      test('selectProgram updates selectedProgram and step without persisting', () {
+        cubit.startCreation();
+        cubit.selectProgram(KhatmaProgram.defaultProgram);
+
+        expect(cubit.state, isA<KhatmaCreating>());
+        final state = cubit.state as KhatmaCreating;
+        expect(state.step, equals(KhatmaCreationStep.startFrom));
+        expect(state.selectedProgram, equals(KhatmaProgram.defaultProgram));
+        expect(repository.activeKhatma, isNull, reason: 'Must not persist partial khatma');
+      });
+
+      test('selectCategory updates category and step without persisting', () {
+        cubit.startCreation();
+        cubit.selectCategory(KhatmaProgramCategory.meaning);
+
+        expect(cubit.state, isA<KhatmaCreating>());
+        var state = cubit.state as KhatmaCreating;
+        expect(state.step, equals(KhatmaCreationStep.programPicker));
+        expect(state.customProgramCategory, equals(KhatmaProgramCategory.meaning));
+        expect(repository.activeKhatma, isNull);
+
+        cubit.selectCategory(KhatmaProgramCategory.partsAndQuarters);
+        state = cubit.state as KhatmaCreating;
+        expect(state.step, equals(KhatmaCreationStep.programPicker));
+        expect(state.customProgramCategory, equals(KhatmaProgramCategory.partsAndQuarters));
+        expect(repository.activeKhatma, isNull);
+      });
+
+      test('goToStep updates step cleanly', () {
+        cubit.startCreation();
+        cubit.goToStep(KhatmaCreationStep.selectWird);
+        final state = cubit.state as KhatmaCreating;
+        expect(state.step, equals(KhatmaCreationStep.selectWird));
+      });
+
+      test('cancelCreation resets state to KhatmaEmpty without modifying storage', () {
+        cubit.startCreation();
+        cubit.selectProgram(KhatmaProgram.defaultProgram);
+        cubit.cancelCreation();
+
+        expect(cubit.state, equals(const KhatmaEmpty()));
+        expect(repository.activeKhatma, isNull);
+      });
+    });
   });
 }
