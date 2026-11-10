@@ -1,6 +1,7 @@
 import 'package:ayaat_quran_majeed/core/localization/arabic_numbers.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 
+import '../entities/khatma_29_day_table.dart';
 import '../entities/khatma_program.dart';
 import '../entities/khatma_wird.dart';
 
@@ -196,257 +197,19 @@ class KhatmaWirdCalculator {
     return _meaning29Definitions;
   }
 
-  /// Canonical 29-day table matching AGENTS.md lines 230–232 and Screenshots 24, 25, 33, 35.
-  static final List<_RawWirdDefinition> _meaning29Definitions = [
-    // 1: Al-Fatihah 1:1 -> Al-Baqarah 2:141
-    const _RawWirdDefinition(
-      startSurah: 1,
-      startAyah: 1,
-      endSurah: 2,
-      endAyah: 141,
-      rangeText: 'من الفاتحة إلى البقرة: ١٤١',
-    ),
-    // 2: Al-Baqarah 2:142 -> 2:252
-    const _RawWirdDefinition(
-      startSurah: 2,
-      startAyah: 142,
-      endSurah: 2,
-      endAyah: 252,
-      rangeText: 'من البقرة: ١٤٢ إلى البقرة: ٢٥٢',
-    ),
-    // 3: Al-Baqarah 2:253 -> Aal-Imran 3:92
-    const _RawWirdDefinition(
-      startSurah: 2,
-      startAyah: 253,
-      endSurah: 3,
-      endAyah: 92,
-      rangeText: 'من البقرة: ٢٥٣ إلى آل عمران: ٩٢',
-    ),
-    // 4: Aal-Imran 3:93 -> An-Nisa 4:35
-    const _RawWirdDefinition(
-      startSurah: 3,
-      startAyah: 93,
-      endSurah: 4,
-      endAyah: 35,
-      rangeText: 'من آل عمران: ٩٣ إلى النساء: ٣٥',
-    ),
-    // 5: An-Nisa 4:36 -> An-Nisa 4:176 (end of An-Nisa)
-    const _RawWirdDefinition(
-      startSurah: 4,
-      startAyah: 36,
-      endSurah: 4,
-      endAyah: 176,
-      rangeText: 'من النساء: ٣٦ إلى نهاية النساء',
-    ),
-    // 6: Al-Ma'idah 5:1 -> 5:120 (complete Surah)
-    const _RawWirdDefinition(
-      startSurah: 5,
-      startAyah: 1,
-      endSurah: 5,
-      endAyah: 120,
-      customTitle: 'المائدة',
-      rangeText: 'المائدة',
-    ),
-    // 7: Al-An'am 6:1 -> 6:165 (complete Surah)
-    const _RawWirdDefinition(
-      startSurah: 6,
-      startAyah: 1,
-      endSurah: 6,
-      endAyah: 165,
-      customTitle: 'الأنعام',
-      rangeText: 'الأنعام',
-    ),
-    // 8: Al-A'raf 7:1 -> 7:206 (complete Surah)
-    const _RawWirdDefinition(
-      startSurah: 7,
-      startAyah: 1,
-      endSurah: 7,
-      endAyah: 206,
-      customTitle: 'الأعراف',
-      rangeText: 'الأعراف',
-    ),
-    // 9: Al-Anfal 8:1 -> At-Tawbah 9:72
-    const _RawWirdDefinition(
-      startSurah: 8,
-      startAyah: 1,
-      endSurah: 9,
-      endAyah: 72,
-      rangeText: 'من الأنفال إلى التوبة: ٧٢',
-    ),
-    // 10: At-Tawbah 9:73 -> Yunus 10:109 (end of Yunus)
-    const _RawWirdDefinition(
-      startSurah: 9,
-      startAyah: 73,
-      endSurah: 10,
-      endAyah: 109,
-      rangeText: 'من التوبة: ٧٣ إلى نهاية يونس',
-    ),
-    // 11: Hud 11:1 -> Yusuf 12:57
-    const _RawWirdDefinition(
-      startSurah: 11,
-      startAyah: 1,
-      endSurah: 12,
-      endAyah: 57,
-      rangeText: 'من هود إلى يوسف: ٥٧',
-    ),
-    // 12: Yusuf 12:58 -> Ibrahim 14:52 (end of Ibrahim)
-    const _RawWirdDefinition(
-      startSurah: 12,
-      startAyah: 58,
-      endSurah: 14,
-      endAyah: 52,
-      rangeText: 'من يوسف: ٥٨ إلى نهاية إبراهيم',
-    ),
-    // 13: Al-Hijr 15:1 -> An-Nahl 16:128
-    const _RawWirdDefinition(
-      startSurah: 15,
-      startAyah: 1,
-      endSurah: 16,
-      endAyah: 128,
-      customTitle: 'الحجر و النحل',
-      rangeText: 'الحجر و النحل',
-    ),
-    // 14: Al-Isra 17:1 -> Al-Kahf 18:110
-    const _RawWirdDefinition(
-      startSurah: 17,
-      startAyah: 1,
-      endSurah: 18,
-      endAyah: 110,
-      customTitle: 'الإسراء و الكهف',
-      rangeText: 'الإسراء و الكهف',
-    ),
-    // 15: Maryam 19:1 -> Ta-Ha 20:135
-    const _RawWirdDefinition(
-      startSurah: 19,
-      startAyah: 1,
-      endSurah: 20,
-      endAyah: 135,
-      customTitle: 'مريم و طه',
-      rangeText: 'مريم و طه',
-    ),
-    // 16: Al-Anbiya 21:1 -> Al-Hajj 22:78
-    const _RawWirdDefinition(
-      startSurah: 21,
-      startAyah: 1,
-      endSurah: 22,
-      endAyah: 78,
-      customTitle: 'الأنبياء و الحج',
-      rangeText: 'الأنبياء و الحج',
-    ),
-    // 17: Al-Mu'minun 23:1 -> An-Nur 24:64
-    const _RawWirdDefinition(
-      startSurah: 23,
-      startAyah: 1,
-      endSurah: 24,
-      endAyah: 64,
-      customTitle: 'المؤمنون و النور',
-      rangeText: 'المؤمنون و النور',
-    ),
-    // 18: Al-Furqan 25:1 -> Ash-Shu'ara 26:227
-    const _RawWirdDefinition(
-      startSurah: 25,
-      startAyah: 1,
-      endSurah: 26,
-      endAyah: 227,
-      customTitle: 'الفرقان و الشعراء',
-      rangeText: 'الفرقان و الشعراء',
-    ),
-    // 19: An-Naml 27:1 -> Al-Qasas 28:88
-    const _RawWirdDefinition(
-      startSurah: 27,
-      startAyah: 1,
-      endSurah: 28,
-      endAyah: 88,
-      customTitle: 'النمل و القصص',
-      rangeText: 'النمل و القصص',
-    ),
-    // 20: Al-Ankabut 29:1 -> As-Sajdah 32:30
-    const _RawWirdDefinition(
-      startSurah: 29,
-      startAyah: 1,
-      endSurah: 32,
-      endAyah: 30,
-      customTitle: 'العنكبوت و الروم و لقمان و السجدة',
-      rangeText: 'العنكبوت و الروم و لقمان و السجدة',
-    ),
-    // 21: Al-Ahzab 33:1 -> Fatir 35:45
-    const _RawWirdDefinition(
-      startSurah: 33,
-      startAyah: 1,
-      endSurah: 35,
-      endAyah: 45,
-      customTitle: 'الأحزاب و سبأ و فاطر',
-      rangeText: 'الأحزاب و سبأ و فاطر',
-    ),
-    // 22: Ya-Sin 36:1 -> Sad 38:88
-    const _RawWirdDefinition(
-      startSurah: 36,
-      startAyah: 1,
-      endSurah: 38,
-      endAyah: 88,
-      customTitle: 'يس و الصافات و ص',
-      rangeText: 'يس و الصافات و ص',
-    ),
-    // 23: Az-Zumar 39:1 -> Ghafir 40:85
-    const _RawWirdDefinition(
-      startSurah: 39,
-      startAyah: 1,
-      endSurah: 40,
-      endAyah: 85,
-      customTitle: 'الزمر و غافر',
-      rangeText: 'الزمر و غافر',
-    ),
-    // 24: Fussilat 41:1 -> Ad-Dukhan 44:59
-    const _RawWirdDefinition(
-      startSurah: 41,
-      startAyah: 1,
-      endSurah: 44,
-      endAyah: 59,
-      customTitle: 'فصلت و الشورى و الزخرف و الدخان',
-      rangeText: 'فصلت و الشورى و الزخرف و الدخان',
-    ),
-    // 25: Al-Jathiyah 45:1 -> Al-Hujurat 49:18
-    const _RawWirdDefinition(
-      startSurah: 45,
-      startAyah: 1,
-      endSurah: 49,
-      endAyah: 18,
-      customTitle: 'الجاثية و الأحقاف و محمد و الفتح و الحجرات',
-      rangeText: 'الجاثية و الأحقاف و محمد و الفتح و الحجرات',
-    ),
-    // 26: Qaf 50:1 -> Al-Hadid 57:29
-    const _RawWirdDefinition(
-      startSurah: 50,
-      startAyah: 1,
-      endSurah: 57,
-      endAyah: 29,
-      rangeText: 'من ق إلى الحديد',
-    ),
-    // 27: Al-Mujadila 58:1 -> At-Tahrim 66:12
-    const _RawWirdDefinition(
-      startSurah: 58,
-      startAyah: 1,
-      endSurah: 66,
-      endAyah: 12,
-      rangeText: 'من المجادلة إلى التحريم',
-    ),
-    // 28: Al-Mulk 67:1 -> Al-Mursalat 77:50
-    const _RawWirdDefinition(
-      startSurah: 67,
-      startAyah: 1,
-      endSurah: 77,
-      endAyah: 50,
-      rangeText: 'من الملك إلى المرسلات',
-    ),
-    // 29: An-Naba 78:1 -> An-Nas 114:6
-    const _RawWirdDefinition(
-      startSurah: 78,
-      startAyah: 1,
-      endSurah: 114,
-      endAyah: 6,
-      rangeText: 'من النبأ إلى الناس',
-    ),
-  ];
+  /// Canonical 29-day table sourced from [Khatma29DayTable].
+  static List<_RawWirdDefinition> get _meaning29Definitions => Khatma29DayTable.days
+      .map(
+        (e) => _RawWirdDefinition(
+          startSurah: e.startSurah,
+          startAyah: e.startAyah,
+          endSurah: e.endSurah,
+          endAyah: e.endAyah,
+          customTitle: e.customTitle,
+          rangeText: e.rangeText,
+        ),
+      )
+      .toList(growable: false);
 
   /// Traditional 7-day Manzil division.
   static final List<_RawWirdDefinition> _meaning7Definitions = [
