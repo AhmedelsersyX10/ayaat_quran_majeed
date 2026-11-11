@@ -18,10 +18,10 @@ class KhatmaCubit extends Cubit<KhatmaState> {
     required KhatmaRepository repository,
     KhatmaReminderService? reminderService,
     KhatmaClock clock = defaultKhatmaClock,
-  })  : _repository = repository,
-        _reminderService = reminderService ?? const _NoOpReminderService(),
-        _clock = clock,
-        super(const KhatmaInitial());
+  }) : _repository = repository,
+       _reminderService = reminderService ?? const _NoOpReminderService(),
+       _clock = clock,
+       super(const KhatmaInitial());
 
   /// Loads the active Khatma. Emits [KhatmaEmpty] if none exists, or [KhatmaLoaded].
   Future<void> loadKhatma({DateTime? currentDate}) async {
@@ -47,15 +47,19 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   /// Advances wizard step to [KhatmaCreationStep.startFrom].
   void selectProgram(KhatmaProgram program) {
     if (state is KhatmaCreating) {
-      emit((state as KhatmaCreating).copyWith(
-        selectedProgram: program,
-        step: KhatmaCreationStep.startFrom,
-      ));
+      emit(
+        (state as KhatmaCreating).copyWith(
+          selectedProgram: program,
+          step: KhatmaCreationStep.startFrom,
+        ),
+      );
     } else {
-      emit(KhatmaCreating(
-        selectedProgram: program,
-        step: KhatmaCreationStep.startFrom,
-      ));
+      emit(
+        KhatmaCreating(
+          selectedProgram: program,
+          step: KhatmaCreationStep.startFrom,
+        ),
+      );
     }
   }
 
@@ -63,15 +67,19 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   /// Advances wizard step to [KhatmaCreationStep.programPicker].
   void selectCategory(KhatmaProgramCategory category) {
     if (state is KhatmaCreating) {
-      emit((state as KhatmaCreating).copyWith(
-        customProgramCategory: category,
-        step: KhatmaCreationStep.programPicker,
-      ));
+      emit(
+        (state as KhatmaCreating).copyWith(
+          customProgramCategory: category,
+          step: KhatmaCreationStep.programPicker,
+        ),
+      );
     } else {
-      emit(KhatmaCreating(
-        customProgramCategory: category,
-        step: KhatmaCreationStep.programPicker,
-      ));
+      emit(
+        KhatmaCreating(
+          customProgramCategory: category,
+          step: KhatmaCreationStep.programPicker,
+        ),
+      );
     }
   }
 
@@ -125,13 +133,19 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   /// Marks the current active uncompleted wird as completed.
   Future<void> completeCurrentWird({DateTime? completionDate}) async {
     try {
-      final updated = await _repository.completeCurrentWird(completionDate: completionDate);
+      final updated = await _repository.completeCurrentWird(
+        completionDate: completionDate,
+      );
       if (updated.isCompleted) {
         await _reminderService.cancelDailyReminder();
       } else if (updated.reminderEnabled) {
         await _scheduleReminderForKhatma(updated);
       }
-      _emitLoaded(updated, currentDate: completionDate, justCompletedWird: true);
+      _emitLoaded(
+        updated,
+        currentDate: completionDate,
+        justCompletedWird: true,
+      );
     } catch (e) {
       emit(KhatmaFailure('فشل تسجيل إكمال الورد: $e'));
     }
@@ -140,13 +154,20 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   /// Marks a specific wird by [wirdNumber] as completed.
   Future<void> completeWird(int wirdNumber, {DateTime? completionDate}) async {
     try {
-      final updated = await _repository.completeWird(wirdNumber, completionDate: completionDate);
+      final updated = await _repository.completeWird(
+        wirdNumber,
+        completionDate: completionDate,
+      );
       if (updated.isCompleted) {
         await _reminderService.cancelDailyReminder();
       } else if (updated.reminderEnabled) {
         await _scheduleReminderForKhatma(updated);
       }
-      _emitLoaded(updated, currentDate: completionDate, justCompletedWird: true);
+      _emitLoaded(
+        updated,
+        currentDate: completionDate,
+        justCompletedWird: true,
+      );
     } catch (e) {
       emit(KhatmaFailure('فشل تسجيل إكمال الورد: $e'));
     }
@@ -183,7 +204,9 @@ class KhatmaCubit extends Cubit<KhatmaState> {
       if (enabled) {
         final granted = await _reminderService.requestPermission();
         if (!granted) {
-          final current = state is KhatmaLoaded ? (state as KhatmaLoaded) : null;
+          final current = state is KhatmaLoaded
+              ? (state as KhatmaLoaded)
+              : null;
           if (current != null) {
             emit(
               KhatmaLoaded(
@@ -213,7 +236,9 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   /// Updates the daily reminder scheduled time.
   Future<void> updateReminderTime(int hour, int minute) async {
     try {
-      final current = state is KhatmaLoaded ? (state as KhatmaLoaded).khatma : null;
+      final current = state is KhatmaLoaded
+          ? (state as KhatmaLoaded).khatma
+          : null;
       final isEnabled = current?.reminderEnabled ?? true;
       final updated = await _repository.updateReminder(
         enabled: isEnabled,
@@ -251,6 +276,25 @@ class KhatmaCubit extends Cubit<KhatmaState> {
     );
   }
 
+  /// Clears one-shot feedback flags ([justCompletedWird] and [permissionDeniedNotice])
+  /// to prevent re-triggering animations or snackbars on rebuilds.
+  void resetCompletionFeedback() {
+    if (state is KhatmaLoaded) {
+      final current = state as KhatmaLoaded;
+      if (current.justCompletedWird || current.permissionDeniedNotice) {
+        emit(
+          KhatmaLoaded(
+            khatma: current.khatma,
+            currentWird: current.currentWird,
+            relativeDayLabel: current.relativeDayLabel,
+            justCompletedWird: false,
+            permissionDeniedNotice: false,
+          ),
+        );
+      }
+    }
+  }
+
   /// Helper to calculate relative day label and emit [KhatmaLoaded].
   void _emitLoaded(
     Khatma khatma, {
@@ -259,13 +303,15 @@ class KhatmaCubit extends Cubit<KhatmaState> {
   }) {
     final now = currentDate ?? _clock();
     final currentWird = khatma.currentWird;
-    final label = currentWird.relativeDayLabel(now);
+    final relativeLabel = khatma.isCompleted
+        ? 'مكتملة'
+        : currentWird.relativeDayLabel(now);
 
     emit(
       KhatmaLoaded(
         khatma: khatma,
         currentWird: currentWird,
-        relativeDayLabel: label,
+        relativeDayLabel: relativeLabel,
         justCompletedWird: justCompletedWird,
       ),
     );
@@ -277,7 +323,9 @@ class _NoOpReminderService implements KhatmaReminderService {
   const _NoOpReminderService();
 
   @override
-  Future<void> init({void Function(String? payload)? onNotificationTap}) async {}
+  Future<void> init({
+    void Function(String? payload)? onNotificationTap,
+  }) async {}
 
   @override
   Future<bool> requestPermission() async => true;
@@ -297,4 +345,3 @@ class _NoOpReminderService implements KhatmaReminderService {
   @override
   Future<void> cancelDailyReminder() async {}
 }
-

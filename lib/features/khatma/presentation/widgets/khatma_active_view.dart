@@ -32,10 +32,7 @@ import 'package:go_router/go_router.dart';
 class KhatmaActiveView extends StatefulWidget {
   final KhatmaLoaded loadedState;
 
-  const KhatmaActiveView({
-    super.key,
-    required this.loadedState,
-  });
+  const KhatmaActiveView({super.key, required this.loadedState});
 
   @override
   State<KhatmaActiveView> createState() => _KhatmaActiveViewState();
@@ -43,6 +40,7 @@ class KhatmaActiveView extends StatefulWidget {
 
 class _KhatmaActiveViewState extends State<KhatmaActiveView> {
   final GlobalKey<KhatmaConfettiWidgetState> _confettiKey = GlobalKey();
+  bool _isCompleting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -54,11 +52,16 @@ class _KhatmaActiveViewState extends State<KhatmaActiveView> {
     return BlocListener<KhatmaCubit, KhatmaState>(
       listenWhen: (previous, current) =>
           current is KhatmaLoaded &&
-          (current.justCompletedWird || current.permissionDeniedNotice),
+          ((current.justCompletedWird &&
+                  (previous is! KhatmaLoaded || !previous.justCompletedWird)) ||
+              (current.permissionDeniedNotice &&
+                  (previous is! KhatmaLoaded ||
+                      !previous.permissionDeniedNotice))),
       listener: (context, state) {
         if (state is KhatmaLoaded) {
           if (state.justCompletedWird) {
             _confettiKey.currentState?.play();
+            context.read<KhatmaCubit>().resetCompletionFeedback();
           }
           if (state.permissionDeniedNotice) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -69,6 +72,7 @@ class _KhatmaActiveViewState extends State<KhatmaActiveView> {
                 behavior: SnackBarBehavior.floating,
               ),
             );
+            context.read<KhatmaCubit>().resetCompletionFeedback();
           }
         }
       },
@@ -134,9 +138,7 @@ class _KhatmaActiveViewState extends State<KhatmaActiveView> {
             ),
 
             // Non-blocking Confetti Overlay
-            Positioned.fill(
-              child: KhatmaConfettiWidget(key: _confettiKey),
-            ),
+            Positioned.fill(child: KhatmaConfettiWidget(key: _confettiKey)),
           ],
         ),
       ),
@@ -163,9 +165,7 @@ class _KhatmaActiveViewState extends State<KhatmaActiveView> {
         ),
         Text(
           relativeLabel,
-          style: AppTypography.bodyMedium.copyWith(
-            color: colors.textSecondary,
-          ),
+          style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
         ),
       ],
     );
@@ -258,11 +258,16 @@ class _KhatmaActiveViewState extends State<KhatmaActiveView> {
     final isDone = khatma.isCompleted;
 
     return InkWell(
-      onTap: () {
-        if (!isDone) {
-          context.read<KhatmaCubit>().completeCurrentWird();
-        }
-      },
+      onTap: (_isCompleting || isDone)
+          ? null
+          : () async {
+              setState(() => _isCompleting = true);
+              try {
+                await context.read<KhatmaCubit>().completeCurrentWird();
+              } finally {
+                if (mounted) setState(() => _isCompleting = false);
+              }
+            },
       borderRadius: BorderRadius.circular(24.r),
       child: Container(
         height: 48.h,
@@ -283,11 +288,7 @@ class _KhatmaActiveViewState extends State<KhatmaActiveView> {
               ),
             ),
             SizedBox(width: 8.w),
-            Icon(
-              Icons.check_circle,
-              color: Colors.white,
-              size: 20.sp,
-            ),
+            Icon(Icons.check_circle, color: Colors.white, size: 20.sp),
           ],
         ),
       ),
@@ -310,9 +311,9 @@ class _KhatmaActiveViewState extends State<KhatmaActiveView> {
         );
         if (picked != null && context.mounted) {
           context.read<KhatmaCubit>().updateReminderTime(
-                picked.hour,
-                picked.minute,
-              );
+            picked.hour,
+            picked.minute,
+          );
         }
       },
       child: Row(
@@ -429,9 +430,7 @@ class _KhatmaActiveViewState extends State<KhatmaActiveView> {
         padding: EdgeInsets.symmetric(vertical: 8.h),
         child: Text(
           AppStrings.tr(AppStrings.deleteKhatmaConfirm),
-          style: AppTypography.bodyMedium.copyWith(
-            color: colors.textPrimary,
-          ),
+          style: AppTypography.bodyMedium.copyWith(color: colors.textPrimary),
         ),
       ),
     );

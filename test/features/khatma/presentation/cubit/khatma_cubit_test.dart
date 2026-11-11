@@ -14,8 +14,9 @@ class MockKhatmaRepository implements KhatmaRepository {
   Khatma? activeKhatma;
   bool shouldThrow = false;
 
-  final KhatmaWirdCalculator calculator =
-      const KhatmaWirdCalculator(metadataService: QuranMetadataService());
+  final KhatmaWirdCalculator calculator = const KhatmaWirdCalculator(
+    metadataService: QuranMetadataService(),
+  );
 
   @override
   Future<Khatma?> getActiveKhatma() async {
@@ -57,12 +58,20 @@ class MockKhatmaRepository implements KhatmaRepository {
   }
 
   @override
-  Future<Khatma> completeWird(int wirdNumber, {DateTime? completionDate}) async {
-    if (shouldThrow || activeKhatma == null) throw const KhatmaException('Error completing wird');
+  Future<Khatma> completeWird(
+    int wirdNumber, {
+    DateTime? completionDate,
+  }) async {
+    if (shouldThrow || activeKhatma == null) {
+      throw const KhatmaException('Error completing wird');
+    }
 
     final updatedWirds = activeKhatma!.wirds.map((w) {
       if (w.dayNumber == wirdNumber) {
-        return w.copyWith(isCompleted: true, completedAt: completionDate ?? DateTime.now());
+        return w.copyWith(
+          isCompleted: true,
+          completedAt: completionDate ?? DateTime.now(),
+        );
       }
       return w;
     }).toList();
@@ -81,12 +90,17 @@ class MockKhatmaRepository implements KhatmaRepository {
   @override
   Future<Khatma> completeCurrentWird({DateTime? completionDate}) async {
     if (activeKhatma == null) throw const KhatmaException('No active khatma');
-    return completeWird(activeKhatma!.currentWird.dayNumber, completionDate: completionDate);
+    return completeWird(
+      activeKhatma!.currentWird.dayNumber,
+      completionDate: completionDate,
+    );
   }
 
   @override
   Future<Khatma> uncompleteWird(int wirdNumber) async {
-    if (shouldThrow || activeKhatma == null) throw const KhatmaException('Error uncompleting wird');
+    if (shouldThrow || activeKhatma == null) {
+      throw const KhatmaException('Error uncompleting wird');
+    }
 
     final updatedWirds = activeKhatma!.wirds.map((w) {
       if (w.dayNumber == wirdNumber) {
@@ -118,7 +132,9 @@ class MockKhatmaRepository implements KhatmaRepository {
     int? hour,
     int? minute,
   }) async {
-    if (shouldThrow || activeKhatma == null) throw const KhatmaException('Reminder update error');
+    if (shouldThrow || activeKhatma == null) {
+      throw const KhatmaException('Reminder update error');
+    }
 
     activeKhatma = activeKhatma!.copyWith(
       reminderEnabled: enabled,
@@ -138,10 +154,7 @@ void main() {
     repository = MockKhatmaRepository();
     fixedToday = DateTime(2026, 11, 10, 10, 0);
 
-    cubit = KhatmaCubit(
-      repository: repository,
-      clock: () => fixedToday,
-    );
+    cubit = KhatmaCubit(repository: repository, clock: () => fixedToday);
   });
 
   tearDown(() {
@@ -160,33 +173,33 @@ void main() {
       await cubit.loadKhatma();
       await pumpEventQueue();
 
-      expect(states, [
-        const KhatmaLoading(),
-        const KhatmaEmpty(),
-      ]);
+      expect(states, [const KhatmaLoading(), const KhatmaEmpty()]);
     });
 
-    test('loadKhatma emits [loading, loaded] when active khatma exists with correct relative label', () async {
-      await repository.createKhatma(
-        program: KhatmaProgram.defaultProgram,
-        startDate: fixedToday,
-      );
+    test(
+      'loadKhatma emits [loading, loaded] when active khatma exists with correct relative label',
+      () async {
+        await repository.createKhatma(
+          program: KhatmaProgram.defaultProgram,
+          startDate: fixedToday,
+        );
 
-      final states = <KhatmaState>[];
-      cubit.stream.listen(states.add);
+        final states = <KhatmaState>[];
+        cubit.stream.listen(states.add);
 
-      await cubit.loadKhatma();
-      await pumpEventQueue();
+        await cubit.loadKhatma();
+        await pumpEventQueue();
 
-      expect(states.length, equals(2));
-      expect(states[0], equals(const KhatmaLoading()));
-      expect(states[1], isA<KhatmaLoaded>());
+        expect(states.length, equals(2));
+        expect(states[0], equals(const KhatmaLoading()));
+        expect(states[1], isA<KhatmaLoaded>());
 
-      final loaded = states[1] as KhatmaLoaded;
-      expect(loaded.khatma.programId, equals('meaning_29'));
-      expect(loaded.currentWird.dayNumber, equals(1));
-      expect(loaded.relativeDayLabel, equals('اليوم'));
-    });
+        final loaded = states[1] as KhatmaLoaded;
+        expect(loaded.khatma.programId, equals('meaning_29'));
+        expect(loaded.currentWird.dayNumber, equals(1));
+        expect(loaded.relativeDayLabel, equals('اليوم'));
+      },
+    );
 
     test('createKhatma emits [loading, loaded]', () async {
       final states = <KhatmaState>[];
@@ -205,78 +218,87 @@ void main() {
       expect(loaded.currentWird.dayNumber, equals(1));
     });
 
-    test('completeCurrentWird updates progress and emits loaded with justCompletedWird true', () async {
-      await cubit.createKhatma(
-        program: KhatmaProgram.defaultProgram,
-        startDate: fixedToday,
-      );
+    test(
+      'completeCurrentWird updates progress and emits loaded with justCompletedWird true',
+      () async {
+        await cubit.createKhatma(
+          program: KhatmaProgram.defaultProgram,
+          startDate: fixedToday,
+        );
 
-      final states = <KhatmaState>[];
-      cubit.stream.listen(states.add);
+        final states = <KhatmaState>[];
+        cubit.stream.listen(states.add);
 
-      await cubit.completeCurrentWird();
-      await pumpEventQueue();
+        await cubit.completeCurrentWird();
+        await pumpEventQueue();
 
-      expect(states.length, equals(1));
-      expect(states[0], isA<KhatmaLoaded>());
-      final loaded = states[0] as KhatmaLoaded;
-      expect(loaded.justCompletedWird, isTrue);
-      expect(loaded.khatma.completedWirdsCount, equals(1));
-      expect(loaded.currentWird.dayNumber, equals(2));
-      // Day 2 scheduled for tomorrow -> label is غداً
-      expect(loaded.relativeDayLabel, equals('غداً'));
-    });
+        expect(states.length, equals(1));
+        expect(states[0], isA<KhatmaLoaded>());
+        final loaded = states[0] as KhatmaLoaded;
+        expect(loaded.justCompletedWird, isTrue);
+        expect(loaded.khatma.completedWirdsCount, equals(1));
+        expect(loaded.currentWird.dayNumber, equals(2));
+        // Day 2 scheduled for tomorrow -> label is غداً
+        expect(loaded.relativeDayLabel, equals('غداً'));
+      },
+    );
 
-    test('reading ahead to day 3 computes relative label بعد يومين matching Ref 26', () async {
-      await cubit.createKhatma(
-        program: KhatmaProgram.defaultProgram,
-        startDate: fixedToday,
-      );
+    test(
+      'reading ahead to day 3 computes relative label بعد يومين matching Ref 26',
+      () async {
+        await cubit.createKhatma(
+          program: KhatmaProgram.defaultProgram,
+          startDate: fixedToday,
+        );
 
-      await cubit.completeCurrentWird(); // Completed day 1
-      await cubit.completeCurrentWird(); // Completed day 2
+        await cubit.completeCurrentWird(); // Completed day 1
+        await cubit.completeCurrentWird(); // Completed day 2
 
-      final loaded = cubit.state as KhatmaLoaded;
-      expect(loaded.currentWird.dayNumber, equals(3));
-      expect(loaded.relativeDayLabel, equals('بعد يومين'));
-    });
+        final loaded = cubit.state as KhatmaLoaded;
+        expect(loaded.currentWird.dayNumber, equals(3));
+        expect(loaded.relativeDayLabel, equals('بعد يومين'));
+      },
+    );
 
-    test('deleteKhatma clears active khatma and emits [loading, empty]', () async {
-      await cubit.createKhatma(
-        program: KhatmaProgram.defaultProgram,
-        startDate: fixedToday,
-      );
+    test(
+      'deleteKhatma clears active khatma and emits [loading, empty]',
+      () async {
+        await cubit.createKhatma(
+          program: KhatmaProgram.defaultProgram,
+          startDate: fixedToday,
+        );
 
-      final states = <KhatmaState>[];
-      cubit.stream.listen(states.add);
+        final states = <KhatmaState>[];
+        cubit.stream.listen(states.add);
 
-      await cubit.deleteKhatma();
-      await pumpEventQueue();
+        await cubit.deleteKhatma();
+        await pumpEventQueue();
 
-      expect(states, [
-        const KhatmaLoading(),
-        const KhatmaEmpty(),
-      ]);
-    });
+        expect(states, [const KhatmaLoading(), const KhatmaEmpty()]);
+      },
+    );
 
-    test('toggleReminder and updateReminderTime update settings smoothly', () async {
-      await cubit.createKhatma(
-        program: KhatmaProgram.defaultProgram,
-        startDate: fixedToday,
-        reminderEnabled: false,
-      );
+    test(
+      'toggleReminder and updateReminderTime update settings smoothly',
+      () async {
+        await cubit.createKhatma(
+          program: KhatmaProgram.defaultProgram,
+          startDate: fixedToday,
+          reminderEnabled: false,
+        );
 
-      await cubit.toggleReminder(true);
-      await pumpEventQueue();
-      var loaded = cubit.state as KhatmaLoaded;
-      expect(loaded.khatma.reminderEnabled, isTrue);
+        await cubit.toggleReminder(true);
+        await pumpEventQueue();
+        var loaded = cubit.state as KhatmaLoaded;
+        expect(loaded.khatma.reminderEnabled, isTrue);
 
-      await cubit.updateReminderTime(21, 45);
-      await pumpEventQueue();
-      loaded = cubit.state as KhatmaLoaded;
-      expect(loaded.khatma.reminderTimeHour, equals(21));
-      expect(loaded.khatma.reminderTimeMinute, equals(45));
-    });
+        await cubit.updateReminderTime(21, 45);
+        await pumpEventQueue();
+        loaded = cubit.state as KhatmaLoaded;
+        expect(loaded.khatma.reminderTimeHour, equals(21));
+        expect(loaded.khatma.reminderTimeMinute, equals(45));
+      },
+    );
 
     test('emits KhatmaFailure on exception', () async {
       repository.shouldThrow = true;
@@ -303,16 +325,23 @@ void main() {
         expect(repository.activeKhatma, isNull);
       });
 
-      test('selectProgram updates selectedProgram and step without persisting', () {
-        cubit.startCreation();
-        cubit.selectProgram(KhatmaProgram.defaultProgram);
+      test(
+        'selectProgram updates selectedProgram and step without persisting',
+        () {
+          cubit.startCreation();
+          cubit.selectProgram(KhatmaProgram.defaultProgram);
 
-        expect(cubit.state, isA<KhatmaCreating>());
-        final state = cubit.state as KhatmaCreating;
-        expect(state.step, equals(KhatmaCreationStep.startFrom));
-        expect(state.selectedProgram, equals(KhatmaProgram.defaultProgram));
-        expect(repository.activeKhatma, isNull, reason: 'Must not persist partial khatma');
-      });
+          expect(cubit.state, isA<KhatmaCreating>());
+          final state = cubit.state as KhatmaCreating;
+          expect(state.step, equals(KhatmaCreationStep.startFrom));
+          expect(state.selectedProgram, equals(KhatmaProgram.defaultProgram));
+          expect(
+            repository.activeKhatma,
+            isNull,
+            reason: 'Must not persist partial khatma',
+          );
+        },
+      );
 
       test('selectCategory updates category and step without persisting', () {
         cubit.startCreation();
@@ -321,13 +350,19 @@ void main() {
         expect(cubit.state, isA<KhatmaCreating>());
         var state = cubit.state as KhatmaCreating;
         expect(state.step, equals(KhatmaCreationStep.programPicker));
-        expect(state.customProgramCategory, equals(KhatmaProgramCategory.meaning));
+        expect(
+          state.customProgramCategory,
+          equals(KhatmaProgramCategory.meaning),
+        );
         expect(repository.activeKhatma, isNull);
 
         cubit.selectCategory(KhatmaProgramCategory.partsAndQuarters);
         state = cubit.state as KhatmaCreating;
         expect(state.step, equals(KhatmaCreationStep.programPicker));
-        expect(state.customProgramCategory, equals(KhatmaProgramCategory.partsAndQuarters));
+        expect(
+          state.customProgramCategory,
+          equals(KhatmaProgramCategory.partsAndQuarters),
+        );
         expect(repository.activeKhatma, isNull);
       });
 
@@ -338,14 +373,17 @@ void main() {
         expect(state.step, equals(KhatmaCreationStep.selectWird));
       });
 
-      test('cancelCreation resets state to KhatmaEmpty without modifying storage', () {
-        cubit.startCreation();
-        cubit.selectProgram(KhatmaProgram.defaultProgram);
-        cubit.cancelCreation();
+      test(
+        'cancelCreation resets state to KhatmaEmpty without modifying storage',
+        () {
+          cubit.startCreation();
+          cubit.selectProgram(KhatmaProgram.defaultProgram);
+          cubit.cancelCreation();
 
-        expect(cubit.state, equals(const KhatmaEmpty()));
-        expect(repository.activeKhatma, isNull);
-      });
+          expect(cubit.state, equals(const KhatmaEmpty()));
+          expect(repository.activeKhatma, isNull);
+        },
+      );
     });
 
     group('Daily Reminder Lifecycle & Scheduling Tests (Task 6.07)', () {
@@ -365,54 +403,58 @@ void main() {
         reminderCubit.close();
       });
 
-      test('toggleReminder(true) schedules reminder when permission is granted',
-          () async {
-        await repository.createKhatma(
-          program: KhatmaProgram.defaultProgram,
-          startDate: fixedToday,
-          reminderEnabled: false,
-          reminderHour: 19,
-          reminderMinute: 0,
-        );
-        await reminderCubit.loadKhatma();
+      test(
+        'toggleReminder(true) schedules reminder when permission is granted',
+        () async {
+          await repository.createKhatma(
+            program: KhatmaProgram.defaultProgram,
+            startDate: fixedToday,
+            reminderEnabled: false,
+            reminderHour: 19,
+            reminderMinute: 0,
+          );
+          await reminderCubit.loadKhatma();
 
-        fakeReminder.permissionToReturn = true;
-        await reminderCubit.toggleReminder(true);
+          fakeReminder.permissionToReturn = true;
+          await reminderCubit.toggleReminder(true);
 
-        expect(fakeReminder.requestPermissionCallCount, equals(1));
-        expect(fakeReminder.scheduleCallCount, equals(1));
-        expect(fakeReminder.lastScheduledHour, equals(19));
-        expect(fakeReminder.lastScheduledMinute, equals(0));
-        expect(fakeReminder.lastScheduledPayload, contains('/reader?page='));
+          expect(fakeReminder.requestPermissionCallCount, equals(1));
+          expect(fakeReminder.scheduleCallCount, equals(1));
+          expect(fakeReminder.lastScheduledHour, equals(19));
+          expect(fakeReminder.lastScheduledMinute, equals(0));
+          expect(fakeReminder.lastScheduledPayload, contains('/reader?page='));
 
-        expect(reminderCubit.state, isA<KhatmaLoaded>());
-        final loaded = reminderCubit.state as KhatmaLoaded;
-        expect(loaded.khatma.reminderEnabled, isTrue);
-        expect(loaded.permissionDeniedNotice, isFalse);
-      });
+          expect(reminderCubit.state, isA<KhatmaLoaded>());
+          final loaded = reminderCubit.state as KhatmaLoaded;
+          expect(loaded.khatma.reminderEnabled, isTrue);
+          expect(loaded.permissionDeniedNotice, isFalse);
+        },
+      );
 
-      test('toggleReminder(true) denies permission and emits notice without scheduling',
-          () async {
-        await repository.createKhatma(
-          program: KhatmaProgram.defaultProgram,
-          startDate: fixedToday,
-          reminderEnabled: false,
-          reminderHour: 19,
-          reminderMinute: 0,
-        );
-        await reminderCubit.loadKhatma();
+      test(
+        'toggleReminder(true) denies permission and emits notice without scheduling',
+        () async {
+          await repository.createKhatma(
+            program: KhatmaProgram.defaultProgram,
+            startDate: fixedToday,
+            reminderEnabled: false,
+            reminderHour: 19,
+            reminderMinute: 0,
+          );
+          await reminderCubit.loadKhatma();
 
-        fakeReminder.permissionToReturn = false; // Denial simulated
-        await reminderCubit.toggleReminder(true);
+          fakeReminder.permissionToReturn = false; // Denial simulated
+          await reminderCubit.toggleReminder(true);
 
-        expect(fakeReminder.requestPermissionCallCount, equals(1));
-        expect(fakeReminder.scheduleCallCount, equals(0));
+          expect(fakeReminder.requestPermissionCallCount, equals(1));
+          expect(fakeReminder.scheduleCallCount, equals(0));
 
-        expect(reminderCubit.state, isA<KhatmaLoaded>());
-        final loaded = reminderCubit.state as KhatmaLoaded;
-        expect(loaded.khatma.reminderEnabled, isFalse);
-        expect(loaded.permissionDeniedNotice, isTrue);
-      });
+          expect(reminderCubit.state, isA<KhatmaLoaded>());
+          final loaded = reminderCubit.state as KhatmaLoaded;
+          expect(loaded.khatma.reminderEnabled, isFalse);
+          expect(loaded.permissionDeniedNotice, isTrue);
+        },
+      );
 
       test('toggleReminder(false) cancels scheduled reminder', () async {
         await repository.createKhatma(
@@ -431,27 +473,29 @@ void main() {
         expect(loaded.khatma.reminderEnabled, isFalse);
       });
 
-      test('updateReminderTime reschedules notification when reminder is enabled',
-          () async {
-        await repository.createKhatma(
-          program: KhatmaProgram.defaultProgram,
-          startDate: fixedToday,
-          reminderEnabled: true,
-          reminderHour: 19,
-          reminderMinute: 0,
-        );
-        await reminderCubit.loadKhatma();
+      test(
+        'updateReminderTime reschedules notification when reminder is enabled',
+        () async {
+          await repository.createKhatma(
+            program: KhatmaProgram.defaultProgram,
+            startDate: fixedToday,
+            reminderEnabled: true,
+            reminderHour: 19,
+            reminderMinute: 0,
+          );
+          await reminderCubit.loadKhatma();
 
-        await reminderCubit.updateReminderTime(20, 30);
+          await reminderCubit.updateReminderTime(20, 30);
 
-        expect(fakeReminder.scheduleCallCount, equals(1));
-        expect(fakeReminder.lastScheduledHour, equals(20));
-        expect(fakeReminder.lastScheduledMinute, equals(30));
+          expect(fakeReminder.scheduleCallCount, equals(1));
+          expect(fakeReminder.lastScheduledHour, equals(20));
+          expect(fakeReminder.lastScheduledMinute, equals(30));
 
-        final loaded = reminderCubit.state as KhatmaLoaded;
-        expect(loaded.khatma.reminderTimeHour, equals(20));
-        expect(loaded.khatma.reminderTimeMinute, equals(30));
-      });
+          final loaded = reminderCubit.state as KhatmaLoaded;
+          expect(loaded.khatma.reminderTimeHour, equals(20));
+          expect(loaded.khatma.reminderTimeMinute, equals(30));
+        },
+      );
 
       test('deleteKhatma cancels daily reminder', () async {
         await repository.createKhatma(
@@ -467,29 +511,106 @@ void main() {
         expect(reminderCubit.state, equals(const KhatmaEmpty()));
       });
 
-      test('completeCurrentWird cancels daily reminder if khatma is completed',
-          () async {
-        const singleDayProgram = KhatmaProgram(
-          id: 'one_day',
-          title: 'يوم واحد',
-          subtitle: 'ورد واحد',
-          totalDays: 1,
-          category: KhatmaProgramCategory.meaning,
-        );
+      test(
+        'completeCurrentWird cancels daily reminder if khatma is completed',
+        () async {
+          const singleDayProgram = KhatmaProgram(
+            id: 'one_day',
+            title: 'يوم واحد',
+            subtitle: 'ورد واحد',
+            totalDays: 1,
+            category: KhatmaProgramCategory.meaning,
+          );
 
-        await repository.createKhatma(
-          program: singleDayProgram,
-          startDate: fixedToday,
-          reminderEnabled: true,
-        );
-        await reminderCubit.loadKhatma();
+          await repository.createKhatma(
+            program: singleDayProgram,
+            startDate: fixedToday,
+            reminderEnabled: true,
+          );
+          await reminderCubit.loadKhatma();
 
-        await reminderCubit.completeCurrentWird();
+          await reminderCubit.completeCurrentWird();
 
-        expect(fakeReminder.cancelCallCount, equals(1));
-        final loaded = reminderCubit.state as KhatmaLoaded;
-        expect(loaded.khatma.isCompleted, isTrue);
-      });
+          expect(fakeReminder.cancelCallCount, equals(1));
+          final loaded = reminderCubit.state as KhatmaLoaded;
+          expect(loaded.khatma.isCompleted, isTrue);
+        },
+      );
+
+      test(
+        'loadKhatma on a completed khatma emits relativeDayLabel "مكتملة"',
+        () async {
+          const singleDayProgram = KhatmaProgram(
+            id: 'one_day',
+            title: 'يوم واحد',
+            subtitle: 'ورد واحد',
+            totalDays: 1,
+            category: KhatmaProgramCategory.meaning,
+          );
+
+          await repository.createKhatma(
+            program: singleDayProgram,
+            startDate: fixedToday,
+          );
+          await repository.completeWird(1);
+
+          await cubit.loadKhatma();
+
+          expect(cubit.state, isA<KhatmaLoaded>());
+          final loaded = cubit.state as KhatmaLoaded;
+          expect(loaded.khatma.isCompleted, isTrue);
+          expect(loaded.relativeDayLabel, equals('مكتملة'));
+        },
+      );
+
+      test(
+        'resetCompletionFeedback resets justCompletedWird and permissionDeniedNotice to false',
+        () async {
+          await cubit.createKhatma(
+            program: KhatmaProgram.defaultProgram,
+            startDate: fixedToday,
+          );
+
+          await cubit.completeCurrentWird();
+          expect((cubit.state as KhatmaLoaded).justCompletedWird, isTrue);
+
+          cubit.resetCompletionFeedback();
+          final loadedAfterReset = cubit.state as KhatmaLoaded;
+          expect(loadedAfterReset.justCompletedWird, isFalse);
+          expect(loadedAfterReset.permissionDeniedNotice, isFalse);
+        },
+      );
+
+      test(
+        'resetCompletionFeedback resets permissionDeniedNotice to false',
+        () async {
+          final fakeReminder = FakeKhatmaReminderService();
+          final reminderCubit = KhatmaCubit(
+            repository: repository,
+            reminderService: fakeReminder,
+            clock: () => fixedToday,
+          );
+          await repository.createKhatma(
+            program: KhatmaProgram.defaultProgram,
+            startDate: fixedToday,
+          );
+          await reminderCubit.loadKhatma();
+
+          fakeReminder.permissionToReturn = false;
+          await reminderCubit.toggleReminder(true);
+          expect(
+            (reminderCubit.state as KhatmaLoaded).permissionDeniedNotice,
+            isTrue,
+          );
+
+          reminderCubit.resetCompletionFeedback();
+          final loaded = reminderCubit.state as KhatmaLoaded;
+          expect(loaded.permissionDeniedNotice, isFalse);
+          expect(loaded.justCompletedWird, isFalse);
+
+          reminderCubit.close();
+        },
+      );
     });
   });
 }

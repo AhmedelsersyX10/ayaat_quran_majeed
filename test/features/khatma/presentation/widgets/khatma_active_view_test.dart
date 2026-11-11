@@ -30,8 +30,7 @@ class _MockKhatmaRepo implements KhatmaRepository {
     bool reminderEnabled = false,
     int reminderHour = 19,
     int reminderMinute = 0,
-  }) async =>
-      throw UnimplementedError();
+  }) async => throw UnimplementedError();
 
   @override
   Future<Khatma> completeCurrentWird({DateTime? completionDate}) async {
@@ -40,7 +39,10 @@ class _MockKhatmaRepo implements KhatmaRepository {
   }
 
   @override
-  Future<Khatma> completeWird(int wirdNumber, {DateTime? completionDate}) async {
+  Future<Khatma> completeWird(
+    int wirdNumber, {
+    DateTime? completionDate,
+  }) async {
     return _buildMockKhatma();
   }
 
@@ -50,7 +52,8 @@ class _MockKhatmaRepo implements KhatmaRepository {
   }
 
   @override
-  Future<Khatma> uncompleteWird(int wirdNumber) async => throw UnimplementedError();
+  Future<Khatma> uncompleteWird(int wirdNumber) async =>
+      throw UnimplementedError();
 
   @override
   Future<Khatma> updateReminder({bool? enabled, int? hour, int? minute}) async {
@@ -167,8 +170,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('renders Day 1 elements faithfully to Screenshot 31',
-        (tester) async {
+    testWidgets('renders Day 1 elements faithfully to Screenshot 31', (
+      tester,
+    ) async {
       final now = DateTime(2026, 11, 10);
       final loadedState = KhatmaLoaded(
         khatma: testKhatmaDay1,
@@ -192,7 +196,10 @@ void main() {
       expect(find.text('٢١'), findsOneWidget); // page 21
 
       // CTA button
-      expect(find.text(AppStrings.tr(AppStrings.completedWird)), findsOneWidget);
+      expect(
+        find.text(AppStrings.tr(AppStrings.completedWird)),
+        findsOneWidget,
+      );
       expect(find.byIcon(Icons.check_circle), findsOneWidget);
 
       // Reminder section
@@ -208,8 +215,9 @@ void main() {
       expect(find.text(AppStrings.tr(AppStrings.deleteKhatma)), findsOneWidget);
     });
 
-    testWidgets('renders Day 3 elements faithfully to Screenshot 26',
-        (tester) async {
+    testWidgets('renders Day 3 elements faithfully to Screenshot 26', (
+      tester,
+    ) async {
       final now = DateTime(2026, 11, 10);
       final loadedState = KhatmaLoaded(
         khatma: testKhatmaDay3,
@@ -234,26 +242,29 @@ void main() {
       expect(switchWidget.value, isTrue);
     });
 
-    testWidgets('tapping "أكملت هذا الورد" triggers cubit.completeCurrentWird',
-        (tester) async {
-      final now = DateTime(2026, 11, 10);
-      final loadedState = KhatmaLoaded(
-        khatma: testKhatmaDay1,
-        currentWird: testKhatmaDay1.wirds[0],
-        relativeDayLabel: 'اليوم',
-      );
+    testWidgets(
+      'tapping "أكملت هذا الورد" triggers cubit.completeCurrentWird',
+      (tester) async {
+        final now = DateTime(2026, 11, 10);
+        final loadedState = KhatmaLoaded(
+          khatma: testKhatmaDay1,
+          currentWird: testKhatmaDay1.wirds[0],
+          relativeDayLabel: 'اليوم',
+        );
 
-      await pumpActiveView(tester, loadedState: loadedState);
+        await pumpActiveView(tester, loadedState: loadedState);
 
-      final ctaFinder = find.text(AppStrings.tr(AppStrings.completedWird));
-      await tester.tap(ctaFinder);
-      await tester.pumpAndSettle();
+        final ctaFinder = find.text(AppStrings.tr(AppStrings.completedWird));
+        await tester.tap(ctaFinder);
+        await tester.pumpAndSettle();
 
-      expect(mockRepo.completeCurrentCalled, isTrue);
-    });
+        expect(mockRepo.completeCurrentCalled, isTrue);
+      },
+    );
 
-    testWidgets('toggling reminder switch triggers cubit.toggleReminder',
-        (tester) async {
+    testWidgets('toggling reminder switch triggers cubit.toggleReminder', (
+      tester,
+    ) async {
       final loadedState = KhatmaLoaded(
         khatma: testKhatmaDay1,
         currentWird: testKhatmaDay1.wirds[0],
@@ -268,36 +279,42 @@ void main() {
       expect(mockRepo.toggleReminderValue, isTrue);
     });
 
-    testWidgets('tapping "حذف الختمة" presents confirmation dialog and executes delete',
-        (tester) async {
-      final loadedState = KhatmaLoaded(
-        khatma: testKhatmaDay1,
-        currentWird: testKhatmaDay1.wirds[0],
-        relativeDayLabel: 'اليوم',
-      );
+    testWidgets(
+      'tapping "حذف الختمة" presents confirmation dialog and executes delete',
+      (tester) async {
+        final loadedState = KhatmaLoaded(
+          khatma: testKhatmaDay1,
+          currentWird: testKhatmaDay1.wirds[0],
+          relativeDayLabel: 'اليوم',
+        );
 
-      await pumpActiveView(tester, loadedState: loadedState);
+        await pumpActiveView(tester, loadedState: loadedState);
 
-      // Tap delete card
-      await tester.tap(find.text(AppStrings.tr(AppStrings.deleteKhatma)));
-      await tester.pumpAndSettle();
+        // Tap delete card
+        await tester.tap(find.text(AppStrings.tr(AppStrings.deleteKhatma)));
+        await tester.pumpAndSettle();
 
-      // Dialog is visible with confirmation message
-      expect(find.text(AppStrings.tr(AppStrings.deleteKhatmaConfirm)), findsOneWidget);
+        // Dialog is visible with confirmation message
+        expect(
+          find.text(AppStrings.tr(AppStrings.deleteKhatmaConfirm)),
+          findsOneWidget,
+        );
 
-      // Tap Confirm Delete
-      final deleteConfirmBtn = find.descendant(
-        of: find.byType(TextButton),
-        matching: find.text(AppStrings.tr(AppStrings.delete)),
-      );
-      await tester.tap(deleteConfirmBtn);
-      await tester.pumpAndSettle();
+        // Tap Confirm Delete
+        final deleteConfirmBtn = find.descendant(
+          of: find.byType(TextButton),
+          matching: find.text(AppStrings.tr(AppStrings.delete)),
+        );
+        await tester.tap(deleteConfirmBtn);
+        await tester.pumpAndSettle();
 
-      expect(mockRepo.deleteKhatmaCalled, isTrue);
-    });
+        expect(mockRepo.deleteKhatmaCalled, isTrue);
+      },
+    );
 
-    testWidgets('displays completion message when all wirds are completed',
-        (tester) async {
+    testWidgets('displays completion message when all wirds are completed', (
+      tester,
+    ) async {
       final completedWirds = testKhatmaDay1.wirds
           .map((w) => w.copyWith(isCompleted: true))
           .toList();
@@ -315,27 +332,92 @@ void main() {
 
       await pumpActiveView(tester, loadedState: loadedState);
 
-      expect(find.text(AppStrings.tr(AppStrings.khatmaCompleted)), findsOneWidget);
+      expect(
+        find.text(AppStrings.tr(AppStrings.khatmaCompleted)),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('tapping reminder card opens KhatmaTimePickerDialog (Reference 23)',
-        (tester) async {
+    testWidgets('completion button is disabled when isCompleted is true', (
+      tester,
+    ) async {
+      final completedWirds = testKhatmaDay1.wirds
+          .map((w) => w.copyWith(isCompleted: true))
+          .toList();
+      final allCompletedKhatma = testKhatmaDay1.copyWith(
+        wirds: completedWirds,
+        completedWirdsCount: 29,
+        isCompleted: true,
+      );
+
       final loadedState = KhatmaLoaded(
-        khatma: testKhatmaDay1,
-        currentWird: testKhatmaDay1.wirds[0],
-        relativeDayLabel: 'اليوم',
+        khatma: allCompletedKhatma,
+        currentWird: completedWirds.last,
+        relativeDayLabel: 'مكتملة',
       );
 
       await pumpActiveView(tester, loadedState: loadedState);
 
-      await tester.tap(find.text(AppStrings.tr(AppStrings.dailyWird)));
-      await tester.pumpAndSettle();
+      final inkWellFinder = find.ancestor(
+        of: find.text(AppStrings.tr(AppStrings.khatmaCompleted)),
+        matching: find.byType(InkWell),
+      );
+      expect(inkWellFinder, findsOneWidget);
+      final inkWell = tester.widget<InkWell>(inkWellFinder);
+      expect(inkWell.onTap, isNull);
 
-      expect(find.byType(KhatmaTimePickerDialog), findsOneWidget);
+      await tester.tap(inkWellFinder);
+      await tester.pumpAndSettle();
+      expect(mockRepo.completeCurrentCalled, isFalse);
     });
 
-    testWidgets('shows SnackBar when permissionDeniedNotice is emitted',
-        (tester) async {
+    testWidgets(
+      'confetti triggers on wird completion and resetCompletionFeedback is invoked',
+      (tester) async {
+        final initialLoadedState = KhatmaLoaded(
+          khatma: testKhatmaDay1,
+          currentWird: testKhatmaDay1.wirds[0],
+          relativeDayLabel: 'اليوم',
+        );
+
+        await pumpActiveView(tester, loadedState: initialLoadedState);
+
+        cubit.emit(
+          KhatmaLoaded(
+            khatma: testKhatmaDay1,
+            currentWird: testKhatmaDay1.wirds[0],
+            relativeDayLabel: 'اليوم',
+            justCompletedWird: true,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final currentState = cubit.state as KhatmaLoaded;
+        expect(currentState.justCompletedWird, isFalse);
+      },
+    );
+
+    testWidgets(
+      'tapping reminder card opens KhatmaTimePickerDialog (Reference 23)',
+      (tester) async {
+        final loadedState = KhatmaLoaded(
+          khatma: testKhatmaDay1,
+          currentWird: testKhatmaDay1.wirds[0],
+          relativeDayLabel: 'اليوم',
+        );
+
+        await pumpActiveView(tester, loadedState: loadedState);
+
+        await tester.tap(find.text(AppStrings.tr(AppStrings.dailyWird)));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(KhatmaTimePickerDialog), findsOneWidget);
+      },
+    );
+
+    testWidgets('shows SnackBar when permissionDeniedNotice is emitted', (
+      tester,
+    ) async {
       final initialLoadedState = KhatmaLoaded(
         khatma: testKhatmaDay1,
         currentWird: testKhatmaDay1.wirds[0],

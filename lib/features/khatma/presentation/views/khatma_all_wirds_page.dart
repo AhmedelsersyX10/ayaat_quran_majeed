@@ -18,10 +18,7 @@ import 'package:go_router/go_router.dart';
 class KhatmaAllWirdsPage extends StatelessWidget {
   final Khatma? khatma;
 
-  const KhatmaAllWirdsPage({
-    super.key,
-    this.khatma,
-  });
+  const KhatmaAllWirdsPage({super.key, this.khatma});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +39,9 @@ class KhatmaAllWirdsPage extends StatelessWidget {
             .map(
               (entry) => KhatmaWird(
                 dayNumber: entry.dayNumber,
-                scheduledDate: DateTime.now().add(Duration(days: entry.dayNumber - 1)),
+                scheduledDate: DateTime.now().add(
+                  Duration(days: entry.dayNumber - 1),
+                ),
                 startSurahNumber: entry.startSurah,
                 startAyahNumber: entry.startAyah,
                 endSurahNumber: entry.endSurah,
@@ -75,10 +74,7 @@ class KhatmaAllWirdsPage extends StatelessWidget {
         scrolledUnderElevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: colors.primary,
-          ),
+          icon: Icon(Icons.arrow_forward_rounded, color: colors.primary),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
@@ -102,7 +98,9 @@ class KhatmaAllWirdsPage extends StatelessWidget {
             wird: wird,
             onTap: () {
               try {
-                context.push('${AppRoutes.reader}?page=${wird.startPageNumber}');
+                context.push(
+                  '${AppRoutes.reader}?page=${wird.startPageNumber}',
+                );
               } catch (_) {}
             },
           );
@@ -116,10 +114,7 @@ class _WirdListItem extends StatelessWidget {
   final KhatmaWird wird;
   final VoidCallback onTap;
 
-  const _WirdListItem({
-    required this.wird,
-    required this.onTap,
-  });
+  const _WirdListItem({required this.wird, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -129,10 +124,7 @@ class _WirdListItem extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.radiusMd.topLeft.x),
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          vertical: 8.h,
-          horizontal: 4.w,
-        ),
+        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -159,11 +151,7 @@ class _WirdListItem extends StatelessWidget {
             ),
             if (wird.isCompleted) ...[
               SizedBox(width: 8.w),
-              Icon(
-                Icons.check_circle,
-                size: 20.sp,
-                color: colors.primary,
-              ),
+              Icon(Icons.check_circle, size: 20.sp, color: colors.primary),
             ],
           ],
         ),

@@ -33,10 +33,7 @@ void main() {
       );
     });
 
-    Future<void> pumpAllWirdsPage(
-      WidgetTester tester, {
-      Khatma? khatma,
-    }) async {
+    Future<void> pumpAllWirdsPage(WidgetTester tester, {Khatma? khatma}) async {
       tester.view.physicalSize = const Size(1176, 2556);
       tester.view.devicePixelRatio = 3.0;
       addTearDown(() {
@@ -60,15 +57,18 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('renders app bar with title and green back arrow', (tester) async {
+    testWidgets('renders app bar with title and green back arrow', (
+      tester,
+    ) async {
       await pumpAllWirdsPage(tester);
 
       expect(find.text(AppStrings.tr(AppStrings.allWirds)), findsOneWidget);
-      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_forward_rounded), findsOneWidget);
     });
 
-    testWidgets('renders initial rows matching Screenshot 24 (Days 1 to 8)',
-        (tester) async {
+    testWidgets('renders initial rows matching Screenshot 24 (Days 1 to 8)', (
+      tester,
+    ) async {
       await pumpAllWirdsPage(tester);
 
       // Day 1
@@ -96,31 +96,33 @@ void main() {
       expect(find.text('الأعراف'), findsOneWidget);
     });
 
-    testWidgets('scrolls and displays final rows matching Screenshot 25 (Days 22 to 29)',
-        (tester) async {
-      await pumpAllWirdsPage(tester);
+    testWidgets(
+      'scrolls and displays final rows matching Screenshot 25 (Days 22 to 29)',
+      (tester) async {
+        await pumpAllWirdsPage(tester);
 
-      // Scroll to end of list
-      final listFinder = find.byType(Scrollable);
-      await tester.scrollUntilVisible(
-        find.text('ورد اليوم ٢٩'),
-        500,
-        scrollable: listFinder,
-      );
-      await tester.pumpAndSettle();
+        // Scroll to end of list
+        final listFinder = find.byType(Scrollable);
+        await tester.scrollUntilVisible(
+          find.text('ورد اليوم ٢٩'),
+          500,
+          scrollable: listFinder,
+        );
+        await tester.pumpAndSettle();
 
-      // Day 22
-      expect(find.text('ورد اليوم ٢٢'), findsOneWidget);
-      expect(find.text('يس و الصافات و ص'), findsOneWidget);
+        // Day 22
+        expect(find.text('ورد اليوم ٢٢'), findsOneWidget);
+        expect(find.text('يس و الصافات و ص'), findsOneWidget);
 
-      // Day 26
-      expect(find.text('ورد اليوم ٢٦'), findsOneWidget);
-      expect(find.text('من ق إلى الحديد'), findsOneWidget);
+        // Day 26
+        expect(find.text('ورد اليوم ٢٦'), findsOneWidget);
+        expect(find.text('من ق إلى الحديد'), findsOneWidget);
 
-      // Day 29
-      expect(find.text('ورد اليوم ٢٩'), findsOneWidget);
-      expect(find.text('من النبأ إلى الناس'), findsOneWidget);
-    });
+        // Day 29
+        expect(find.text('ورد اليوم ٢٩'), findsOneWidget);
+        expect(find.text('من النبأ إلى الناس'), findsOneWidget);
+      },
+    );
 
     testWidgets('renders checkmark on completed wird', (tester) async {
       // Modify Day 1 to be completed
@@ -136,4 +138,3 @@ void main() {
     });
   });
 }
-
