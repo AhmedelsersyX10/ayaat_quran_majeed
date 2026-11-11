@@ -16,15 +16,21 @@ void main() {
       expect(normalizeArabic('فاطمة'), equals('فاطمه'));
     });
 
-    test('convertToArabicNumber converts western digits to eastern Arabic-Indic numerals', () {
-      expect(convertToArabicNumber('0123456789'), equals('٠١٢٣٤٥٦٧٨٩'));
-      expect(convertToArabicNumber('114'), equals('١١٤'));
-      expect(convertToArabicNumber('604'), equals('٦٠٤'));
-    });
+    test(
+      'convertToArabicNumber converts western digits to eastern Arabic-Indic numerals',
+      () {
+        expect(convertToArabicNumber('0123456789'), equals('٠١٢٣٤٥٦٧٨٩'));
+        expect(convertToArabicNumber('114'), equals('١١٤'));
+        expect(convertToArabicNumber('604'), equals('٦٠٤'));
+      },
+    );
 
     test('removeHtmlTags strips HTML formatting tags and keeps inner text', () {
       expect(removeHtmlTags('<p>تفسير الآية</p>'), equals('تفسير الآية'));
-      expect(removeHtmlTags('<b>نص عريض</b><br/>سطر جديد'), equals('نص عريضسطر جديد'));
+      expect(
+        removeHtmlTags('<b>نص عريض</b><br/>سطر جديد'),
+        equals('نص عريضسطر جديد'),
+      );
       expect(removeHtmlTags('نص عادي بدون وسوم'), equals('نص عادي بدون وسوم'));
     });
   });
@@ -44,7 +50,7 @@ void main() {
       expect(restored.suraNumber, equals(2));
       expect(restored.verseNumber, equals(255));
       expect(restored.name, equals('آية الكرسي'));
-      expect(restored.color, equals('00FF00'));
+      expect(restored.color, equals('FF00FF00'));
       expect(restored, equals(bookmark));
     });
 

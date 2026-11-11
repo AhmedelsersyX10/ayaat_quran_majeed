@@ -29,8 +29,11 @@ class SurahListPage extends StatefulWidget {
   final dynamic jsonData;
   final dynamic quarterjsonData;
 
-  const SurahListPage({Key? key, required this.jsonData, required this.quarterjsonData})
-      : super(key: key);
+  const SurahListPage({
+    Key? key,
+    required this.jsonData,
+    required this.quarterjsonData,
+  }) : super(key: key);
 
   @override
   State<SurahListPage> createState() => _SurahListPageState();
@@ -83,8 +86,9 @@ class _SurahListPageState extends State<SurahListPage> {
   Future<void> getJuzNumber() async {
     if (getValue("lastRead") != "non") {
       juzNumberLastRead = _metadataService.getJuzNumber(
-          _metadataService.getPageData(getValue("lastRead"))[0]["surah"],
-          _metadataService.getPageData(getValue("lastRead"))[0]["start"]);
+        _metadataService.getPageData(getValue("lastRead"))[0]["surah"],
+        _metadataService.getPageData(getValue("lastRead"))[0]["start"],
+      );
       setState(() {});
     }
   }
@@ -118,7 +122,9 @@ class _SurahListPageState extends State<SurahListPage> {
   Widget build(BuildContext context) {
     // Keep local snapshot in sync with the global BookmarkCubit
     final bookmarkState = context.watch<BookmarkCubit>().state;
-    bookmarks = bookmarkState.bookmarks;
+    bookmarks = bookmarkState.legacyBookmarks
+        .where((b) => b.surahNumber != null && b.verseNumber != null)
+        .toList();
 
     final theme = Theme.of(context);
 
@@ -129,9 +135,7 @@ class _SurahListPageState extends State<SurahListPage> {
         child: Container(
           decoration: BoxDecoration(
             color: theme.scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(30),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           ),
           clipBehavior: Clip.antiAlias,
           child: Scaffold(
@@ -169,7 +173,10 @@ class _SurahListPageState extends State<SurahListPage> {
               padding: EdgeInsets.only(top: 8.h),
               child: Text(
                 "alQuran".tr(),
-                style: TextStyle(color: theme.appBarTheme.foregroundColor, fontSize: 20.sp),
+                style: TextStyle(
+                  color: theme.appBarTheme.foregroundColor,
+                  fontSize: 20.sp,
+                ),
               ),
             ),
     );
@@ -205,7 +212,10 @@ class _SurahListPageState extends State<SurahListPage> {
           textDirection: m.TextDirection.rtl,
           controller: textEditingController,
           onChanged: _onSearchTextChanged,
-          style: _searchTextStyle().copyWith(color: Colors.white, fontSize: 16.sp),
+          style: _searchTextStyle().copyWith(
+            color: Colors.white,
+            fontSize: 16.sp,
+          ),
           cursorColor: Colors.white,
           autofocus: true,
           decoration: InputDecoration(
@@ -213,7 +223,10 @@ class _SurahListPageState extends State<SurahListPage> {
             hintStyle: TextStyle(color: Colors.white70, fontSize: 14.sp),
             suffixIcon: _buildSearchSuffixIcon(iconColor: Colors.white70),
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 8.h,
+            ),
           ),
         ),
       ),
@@ -223,12 +236,14 @@ class _SurahListPageState extends State<SurahListPage> {
   Widget _buildBookmarkButton(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(left: 16.w, right: 0, top: 8.h),
-      child: Builder(builder: (context) {
-        return IconButton(
-          onPressed: () => Scaffold.of(context).openEndDrawer(),
-          icon: const Icon(Iconsax.bookmark, color: softOffWhite),
-        );
-      }),
+      child: Builder(
+        builder: (context) {
+          return IconButton(
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+            icon: const Icon(Iconsax.bookmark, color: softOffWhite),
+          );
+        },
+      ),
     );
   }
 
@@ -276,7 +291,10 @@ class _SurahListPageState extends State<SurahListPage> {
           juzNumberLastRead: juzNumberLastRead,
           onNavigateToJuz: (juzNumber, firstSurah, firstVerse) {
             Navigator.pop(context, {
-              'pageNumber': _metadataService.getPageNumber(firstSurah, firstVerse),
+              'pageNumber': _metadataService.getPageNumber(
+                firstSurah,
+                firstVerse,
+              ),
               'surah': firstSurah,
               'ayah': firstVerse,
             });
@@ -364,7 +382,9 @@ class _SurahListPageState extends State<SurahListPage> {
     setState(() {
       filteredData = widget.jsonData.where((sura) {
         final suraName = sura['englishName'].toLowerCase();
-        final suraNameArabic = _metadataService.getSurahNameArabic(sura["number"]);
+        final suraNameArabic = _metadataService.getSurahNameArabic(
+          sura["number"],
+        );
 
         return suraName.contains(searchQuery.toLowerCase()) ||
             suraNameArabic.contains(searchQuery.toLowerCase());
@@ -406,10 +426,7 @@ class _SurahListPageState extends State<SurahListPage> {
   Widget _buildPageNumbersList() {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text("page".tr()),
-        ),
+        Padding(padding: const EdgeInsets.all(8.0), child: Text("page".tr())),
         ListView.separated(
           reverse: true,
           shrinkWrap: true,
@@ -440,7 +457,11 @@ class _SurahListPageState extends State<SurahListPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(pageNumber.toString()),
-                Text(_metadataService.getSurahName(_metadataService.getPageData(pageNumber)[0]["surah"])),
+                Text(
+                  _metadataService.getSurahName(
+                    _metadataService.getPageData(pageNumber)[0]["surah"],
+                  ),
+                ),
               ],
             ),
           ),
@@ -466,8 +487,12 @@ class _SurahListPageState extends State<SurahListPage> {
   Widget _buildSurahListItem(int index) {
     final suraData = filteredData[index];
     final suraNumberInQuran = suraData["number"];
-    final surahBookmarks = bookmarks.where((b) => b.suraNumber == suraNumberInQuran).toList();
-    final BookmarkModel? firstBookmark = surahBookmarks.isNotEmpty ? surahBookmarks.first : null;
+    final surahBookmarks = bookmarks
+        .where((b) => b.suraNumber == suraNumberInQuran)
+        .toList();
+    final BookmarkModel? firstBookmark = surahBookmarks.isNotEmpty
+        ? surahBookmarks.first
+        : null;
 
     return Padding(
       padding: const EdgeInsets.all(0.0),
@@ -493,13 +518,19 @@ class _SurahListPageState extends State<SurahListPage> {
       child: Center(
         child: Text(
           suraNumber.toString(),
-          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 12.sp),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+            fontSize: 12.sp,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSurahTitle(Map<String, dynamic> suraData, BookmarkModel? bookmark) {
+  Widget _buildSurahTitle(
+    Map<String, dynamic> suraData,
+    BookmarkModel? bookmark,
+  ) {
     return SizedBox(
       width: 90.w,
       child: Row(
@@ -533,18 +564,18 @@ class _SurahListPageState extends State<SurahListPage> {
       color = colorsOfBookmarks2.first;
     }
 
-    return Icon(
-      Icons.bookmark,
-      size: 16.sp,
-      color: color.withOpacity(.7),
-    );
+    return Icon(Icons.bookmark, size: 16.sp, color: color.withOpacity(.7));
   }
 
   Widget _buildSurahSubtitle(Map<String, dynamic> suraData) {
     final ayahCount = _metadataService.getVerseCount(suraData["number"]);
     return Text(
       "${suraData["englishName"]} ($ayahCount)",
-      style: TextStyle(fontFamily: "uthmanic", fontSize: 14.sp, color: Colors.grey.withOpacity(.8)),
+      style: TextStyle(
+        fontFamily: "uthmanic",
+        fontSize: 14.sp,
+        color: Colors.grey.withOpacity(.8),
+      ),
     );
   }
 
@@ -619,7 +650,9 @@ class _SurahListPageState extends State<SurahListPage> {
               style: TextStyle(
                 fontFamily: "cairo",
                 fontSize: 15.sp,
-                color: isDarkModeNotifier.value ? Colors.white.withOpacity(.85) : Colors.black87,
+                color: isDarkModeNotifier.value
+                    ? Colors.white.withOpacity(.85)
+                    : Colors.black87,
               ),
             ),
           ],
@@ -638,7 +671,7 @@ class _SurahListPageState extends State<SurahListPage> {
 
   Widget _buildBookmarkItem(BookmarkModel bookmark) {
     final suraNumber = bookmark.suraNumber;
-    final verseNumber = bookmark.verseNumber;
+    final verseNumber = bookmark.verseNumber ?? 1;
     Color bookmarkColor;
     try {
       bookmarkColor = Color(int.parse("0x${bookmark.color}"));
@@ -679,7 +712,9 @@ class _SurahListPageState extends State<SurahListPage> {
           style: TextStyle(
             fontFamily: "cairo",
             fontSize: 14.sp,
-            color: getValue("darkMode") ? Colors.white.withOpacity(.87) : darkWarmBrowns[0],
+            color: getValue("darkMode")
+                ? Colors.white.withOpacity(.87)
+                : darkWarmBrowns[0],
           ),
         ),
       ],
@@ -694,7 +729,9 @@ class _SurahListPageState extends State<SurahListPage> {
         style: TextStyle(
           fontFamily: fontFamilies[0],
           fontSize: 18.sp,
-          color: isDarkModeNotifier.value ? Colors.white.withOpacity(.87) : darkWarmBrowns[0],
+          color: isDarkModeNotifier.value
+              ? Colors.white.withOpacity(.87)
+              : darkWarmBrowns[0],
         ),
       ),
     );
@@ -708,14 +745,18 @@ class _SurahListPageState extends State<SurahListPage> {
               ? _metadataService.getSurahNameArabic(suraNumber)
               : _metadataService.getSurahNameEnglish(suraNumber),
           style: TextStyle(
-            color: isDarkModeNotifier.value ? Colors.white.withOpacity(.87) : Colors.black87,
+            color: isDarkModeNotifier.value
+                ? Colors.white.withOpacity(.87)
+                : Colors.black87,
           ),
         ),
         Text(
           convertToArabicNumber(verseNumber.toString()),
           style: TextStyle(
             fontSize: 24.sp,
-            color: isDarkModeNotifier.value ? Colors.white.withOpacity(.87) : Colors.black87,
+            color: isDarkModeNotifier.value
+                ? Colors.white.withOpacity(.87)
+                : Colors.black87,
             fontFamily: "KFGQPC Uthmanic Script HAFS Regular",
           ),
         ),
@@ -727,7 +768,10 @@ class _SurahListPageState extends State<SurahListPage> {
     if (scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
       Navigator.pop(context); // Close drawer
     }
-    Navigator.pop(context, _metadataService.getPageNumber(suraNumber, verseNumber));
+    Navigator.pop(
+      context,
+      _metadataService.getPageNumber(suraNumber, verseNumber),
+    );
     // await Navigator.push(
     //   context,
     //   MaterialPageRoute(

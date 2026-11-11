@@ -45,8 +45,6 @@ String _getArabicOrdinalJuzName(int juzNumber) {
   return juzNumber.toString();
 }
 
-
-
 /// متغير لتتبع الجزء الحالي
 // int _currentJuzNotificationIndex = -1;
 
@@ -84,19 +82,17 @@ extension PageViewExtension on QuranDetailsPageState {
     // Bookmarks highlights
     final bookmarkCubit = context.watch<BookmarkCubit>();
     for (final bookmark in bookmarkCubit.state.bookmarks) {
-      Color bookmarkColor;
-      try {
-        final hex = bookmark.color.replaceFirst('#', '');
-        bookmarkColor = Color(int.parse(hex.length == 6 ? '0xFF$hex' : '0x$hex'));
-      } catch (_) {
-        bookmarkColor = secondaryColors[getValue("quranPageolorsIndex")];
-      }
+      if (!bookmark.isAssigned) continue;
+      final vNum = bookmark.verseNumber!;
+      final sNum = bookmark.surahNumber!;
+      final pNum =
+          bookmark.pageNumber ?? _metadataService.getPageNumber(sNum, vNum);
       activeHighlights.add(
         qp.HighlightVerse(
-          verseNumber: bookmark.verseNumber,
-          surah: bookmark.suraNumber,
-          page: _metadataService.getPageNumber(bookmark.suraNumber, bookmark.verseNumber),
-          color: bookmarkColor.withOpacity(0.2),
+          verseNumber: vNum,
+          surah: sNum,
+          page: pNum,
+          color: bookmark.color.withOpacity(0.2),
         ),
       );
     }
@@ -125,7 +121,9 @@ extension PageViewExtension on QuranDetailsPageState {
           color: AppColors.playbackHighlight,
         ),
       );
-    } else if (shouldHighlightText && highlightVerse is String && highlightVerse.contains(':')) {
+    } else if (shouldHighlightText &&
+        highlightVerse is String &&
+        highlightVerse.contains(':')) {
       final parts = highlightVerse.split(':');
       final s = int.tryParse(parts[0]) ?? 1;
       final a = int.tryParse(parts[1]) ?? 1;
@@ -146,7 +144,10 @@ extension PageViewExtension on QuranDetailsPageState {
       if (audioState.hasTiming && audioState.currentAyah != null) {
         final currentSurah = audioState.surahNumber;
         final currentAyah = audioState.currentAyah!;
-        final ayahPage = _metadataService.getPageNumber(currentSurah, currentAyah);
+        final ayahPage = _metadataService.getPageNumber(
+          currentSurah,
+          currentAyah,
+        );
         activeHighlights.add(
           qp.HighlightVerse(
             surah: currentSurah,
@@ -194,7 +195,15 @@ extension PageViewExtension on QuranDetailsPageState {
             showAyahOptionsSheet(page, surah, verse);
           },
           pageHeaderBuilder: (context, pageNum) {
-            return MushafPageHeader(pageNumber: pageNum);
+            final pageBookmarks = bookmarkCubit.getBookmarksForPage(pageNum);
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                MushafPageHeader(pageNumber: pageNum),
+                if (pageBookmarks.isNotEmpty)
+                  MushafBookmarkMarker(bookmarks: pageBookmarks),
+              ],
+            );
           },
           bottomBar: MushafPageFooter(pageNumber: index),
           pageBackgroundColor: Colors.transparent,
@@ -214,7 +223,8 @@ class KeepAlivePage extends StatefulWidget {
   State<KeepAlivePage> createState() => _KeepAlivePageState();
 }
 
-class _KeepAlivePageState extends State<KeepAlivePage> with AutomaticKeepAliveClientMixin {
+class _KeepAlivePageState extends State<KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);

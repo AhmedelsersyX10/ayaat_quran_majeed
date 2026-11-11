@@ -13,6 +13,10 @@ import 'package:ayaat_quran_majeed/features/audio/domain/repositories/playback_r
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/audio_playback_cubit.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_selection_cubit.dart';
 import 'package:ayaat_quran_majeed/features/audio/presentation/cubit/reciter_surahs_cubit.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/data/datasources/bookmarks_local_data_source.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/data/repositories/bookmark_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/domain/repositories/bookmark_repository.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/presentation/cubit/bookmark_cubit.dart';
 import 'package:ayaat_quran_majeed/features/index/data/repositories/index_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/index/domain/repositories/index_repository.dart';
 import 'package:ayaat_quran_majeed/features/index/presentation/cubit/index_cubit.dart';
@@ -48,10 +52,8 @@ import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date
 import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
 import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
-import 'package:ayaat_quran_majeed/quran/data/repositories/bookmark_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_search_repository.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_search_cubit.dart';
@@ -78,10 +80,13 @@ Future<void> initInjection() async {
   // 2. Storage Layer Singletons (if not already registered by StorageInitializer)
   // ---------------------------------------------------------
   if (!sl.isRegistered<HiveStorageService>()) {
-    sl.registerLazySingleton<HiveStorageService>(() => HiveStorageServiceImpl());
+    sl.registerLazySingleton<HiveStorageService>(
+      () => HiveStorageServiceImpl(),
+    );
   }
 
-  if (sl.isRegistered<PreferencesStorage>() && !sl.isRegistered<AppPreferences>()) {
+  if (sl.isRegistered<PreferencesStorage>() &&
+      !sl.isRegistered<AppPreferences>()) {
     sl.registerLazySingleton<AppPreferences>(
       () => AppPreferences(sl<PreferencesStorage>()),
     );
@@ -155,31 +160,30 @@ Future<void> initInjection() async {
   // ---------------------------------------------------------
   if (!sl.isRegistered<QuranReadingRepository>()) {
     sl.registerLazySingleton<QuranReadingRepository>(
-      () => QuranReadingRepository(
-        metadataService: sl<QuranMetadataService>(),
-      ),
+      () => QuranReadingRepository(metadataService: sl<QuranMetadataService>()),
     );
   }
 
   if (!sl.isRegistered<BookmarkRepository>()) {
     sl.registerLazySingleton<BookmarkRepository>(
-      () => const BookmarkRepository(),
+      () => BookmarkRepositoryImpl(
+        BookmarksLocalDataSourceImpl(
+          hiveStorageService: sl<HiveStorageService>(),
+          metadataService: sl<QuranMetadataService>(),
+        ),
+      ),
     );
   }
 
   if (!sl.isRegistered<QuranSearchRepository>()) {
     sl.registerLazySingleton<QuranSearchRepository>(
-      () => QuranSearchRepository(
-        metadataService: sl<QuranMetadataService>(),
-      ),
+      () => QuranSearchRepository(metadataService: sl<QuranMetadataService>()),
     );
   }
 
   if (!sl.isRegistered<SearchRepository>()) {
     sl.registerLazySingleton<SearchRepository>(
-      () => SearchRepositoryImpl(
-        metadataService: sl<QuranMetadataService>(),
-      ),
+      () => SearchRepositoryImpl(metadataService: sl<QuranMetadataService>()),
     );
   }
 
@@ -209,7 +213,9 @@ Future<void> initInjection() async {
         remoteDataSource: sl<AudioRemoteDataSource>(),
         cacheDataSource: sl<AudioCacheDataSource>(),
         metadataService: sl<QuranMetadataService>(),
-        preferences: sl.isRegistered<AppPreferences>() ? sl<AppPreferences>() : null,
+        preferences: sl.isRegistered<AppPreferences>()
+            ? sl<AppPreferences>()
+            : null,
       ),
     );
   }
@@ -229,7 +235,9 @@ Future<void> initInjection() async {
       () => TafsirRepositoryImpl(
         localDataSource: sl<TafsirLocalDataSource>(),
         remoteDataSource: sl<TafsirRemoteDataSource>(),
-        preferences: sl.isRegistered<AppPreferences>() ? sl<AppPreferences>() : null,
+        preferences: sl.isRegistered<AppPreferences>()
+            ? sl<AppPreferences>()
+            : null,
       ),
     );
   }
@@ -318,9 +326,7 @@ Future<void> initInjection() async {
   // ---------------------------------------------------------
   if (!sl.isRegistered<QuranPagePlayerBloc>()) {
     sl.registerFactory<QuranPagePlayerBloc>(
-      () => QuranPagePlayerBloc(
-        metadataService: sl<QuranMetadataService>(),
-      ),
+      () => QuranPagePlayerBloc(metadataService: sl<QuranMetadataService>()),
     );
   }
 
@@ -334,7 +340,7 @@ Future<void> initInjection() async {
   }
 
   if (!sl.isRegistered<BookmarkCubit>()) {
-    sl.registerFactory<BookmarkCubit>(
+    sl.registerLazySingleton<BookmarkCubit>(
       () => BookmarkCubit(sl<BookmarkRepository>()),
     );
   }
@@ -346,44 +352,32 @@ Future<void> initInjection() async {
   }
 
   if (!sl.isRegistered<SearchCubit>()) {
-    sl.registerFactory<SearchCubit>(
-      () => SearchCubit(sl<SearchRepository>()),
-    );
+    sl.registerFactory<SearchCubit>(() => SearchCubit(sl<SearchRepository>()));
   }
 
   if (!sl.isRegistered<TodayCubit>()) {
-    sl.registerFactory<TodayCubit>(
-      () => TodayCubit(sl<TodayRepository>()),
-    );
+    sl.registerFactory<TodayCubit>(() => TodayCubit(sl<TodayRepository>()));
   }
 
   if (!sl.isRegistered<IndexCubit>()) {
-    sl.registerFactory<IndexCubit>(
-      () => IndexCubit(sl<IndexRepository>()),
-    );
+    sl.registerFactory<IndexCubit>(() => IndexCubit(sl<IndexRepository>()));
   }
 
   if (!sl.isRegistered<ReciterSelectionCubit>()) {
     sl.registerFactory<ReciterSelectionCubit>(
-      () => ReciterSelectionCubit(
-        audioRepository: sl<AudioRepository>(),
-      ),
+      () => ReciterSelectionCubit(audioRepository: sl<AudioRepository>()),
     );
   }
 
   if (!sl.isRegistered<ReciterSurahsCubit>()) {
     sl.registerFactory<ReciterSurahsCubit>(
-      () => ReciterSurahsCubit(
-        audioRepository: sl<AudioRepository>(),
-      ),
+      () => ReciterSurahsCubit(audioRepository: sl<AudioRepository>()),
     );
   }
 
   if (!sl.isRegistered<AudioPlaybackCubit>()) {
     sl.registerLazySingleton<AudioPlaybackCubit>(
-      () => AudioPlaybackCubit(
-        playbackRepository: sl<PlaybackRepository>(),
-      ),
+      () => AudioPlaybackCubit(playbackRepository: sl<PlaybackRepository>()),
     );
   }
 
@@ -424,6 +418,11 @@ Future<void> initInjection() async {
 
 /// Resets all registrations in the service locator (useful for test isolation).
 Future<void> resetInjection() async {
+  if (sl.isRegistered<BookmarkCubit>()) {
+    try {
+      await sl<BookmarkCubit>().close();
+    } catch (_) {}
+  }
   if (sl.isRegistered<PlaybackRepository>()) {
     try {
       await sl<PlaybackRepository>().dispose();

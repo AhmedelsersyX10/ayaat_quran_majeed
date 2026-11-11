@@ -89,8 +89,8 @@ abstract class AppRouter {
                     return cubit;
                   },
                 ),
-                BlocProvider<BookmarkCubit>(
-                  create: (_) => sl<BookmarkCubit>()..loadBookmarks(),
+                BlocProvider<BookmarkCubit>.value(
+                  value: sl<BookmarkCubit>()..loadBookmarks(),
                 ),
                 BlocProvider<TodayCubit>(create: (_) => sl<TodayCubit>()),
               ],
@@ -105,9 +105,10 @@ abstract class AppRouter {
           pageBuilder: (context, state) => CustomTransitionPage(
             key: state.pageKey,
             opaque: false,
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
             child: BlocProvider<SearchCubit>(
               create: (_) => sl<SearchCubit>(),
               child: const SearchPage(),
@@ -130,8 +131,9 @@ abstract class AppRouter {
                   value: sl<AudioPlaybackCubit>(),
                 ),
                 BlocProvider<ReciterSurahsCubit>(
-                  create: (_) => sl<ReciterSurahsCubit>()
-                    ..loadSurahs(reciterId: reciterId, moshafId: moshafId),
+                  create: (_) =>
+                      sl<ReciterSurahsCubit>()
+                        ..loadSurahs(reciterId: reciterId, moshafId: moshafId),
                 ),
               ],
               child: ReciterSurahsPage(

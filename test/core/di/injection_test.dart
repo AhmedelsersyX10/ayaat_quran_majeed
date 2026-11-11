@@ -52,68 +52,78 @@ void main() {
   });
 
   group('Central Dependency Injection Tests', () {
-    test('initInjection registers all core singletons and repositories', () async {
-      await initInjection();
+    test(
+      'initInjection registers all core singletons and repositories',
+      () async {
+        await initInjection();
 
-      expect(sl.isRegistered<AudioPlayer>(), isTrue);
-      expect(sl.isRegistered<ApiClient>(), isTrue);
-      expect(sl.isRegistered<HiveStorageService>(), isTrue);
-      expect(sl.isRegistered<QuranMetadataService>(), isTrue);
-      expect(sl.isRegistered<UmmAlQuraDateService>(), isTrue);
-      expect(sl.isRegistered<QuranReadingRepository>(), isTrue);
-      expect(sl.isRegistered<BookmarkRepository>(), isTrue);
-      expect(sl.isRegistered<QuranSearchRepository>(), isTrue);
-      expect(sl.isRegistered<SearchRepository>(), isTrue);
-      expect(sl.isRegistered<TodayRepository>(), isTrue);
-      expect(sl.isRegistered<IndexRepository>(), isTrue);
-      expect(sl.isRegistered<AudioRemoteDataSource>(), isTrue);
-      expect(sl.isRegistered<AudioCacheDataSource>(), isTrue);
-      expect(sl.isRegistered<AudioPlayerService>(), isTrue);
-      expect(sl.isRegistered<AudioRepository>(), isTrue);
-      expect(sl.isRegistered<PlaybackRepository>(), isTrue);
-      expect(sl.isRegistered<TafsirLocalDataSource>(), isTrue);
-      expect(sl.isRegistered<TafsirRemoteDataSource>(), isTrue);
-      expect(sl.isRegistered<TafsirRepository>(), isTrue);
-      expect(sl.isRegistered<KhatmaLocalDataSource>(), isTrue);
-      expect(sl.isRegistered<KhatmaWirdCalculator>(), isTrue);
-      expect(sl.isRegistered<KhatmaReminderService>(), isTrue);
-      expect(sl.isRegistered<KhatmaRepository>(), isTrue);
-      expect(sl.isRegistered<GetPageTafsirUseCase>(), isTrue);
-      expect(sl.isRegistered<GetSelectedTafsirBookUseCase>(), isTrue);
-      expect(sl.isRegistered<SetSelectedTafsirBookUseCase>(), isTrue);
-      expect(sl.isRegistered<GetAvailableTafsirBooksUseCase>(), isTrue);
+        expect(sl.isRegistered<AudioPlayer>(), isTrue);
+        expect(sl.isRegistered<ApiClient>(), isTrue);
+        expect(sl.isRegistered<HiveStorageService>(), isTrue);
+        expect(sl.isRegistered<QuranMetadataService>(), isTrue);
+        expect(sl.isRegistered<UmmAlQuraDateService>(), isTrue);
+        expect(sl.isRegistered<QuranReadingRepository>(), isTrue);
+        expect(sl.isRegistered<BookmarkRepository>(), isTrue);
+        expect(sl.isRegistered<QuranSearchRepository>(), isTrue);
+        expect(sl.isRegistered<SearchRepository>(), isTrue);
+        expect(sl.isRegistered<TodayRepository>(), isTrue);
+        expect(sl.isRegistered<IndexRepository>(), isTrue);
+        expect(sl.isRegistered<AudioRemoteDataSource>(), isTrue);
+        expect(sl.isRegistered<AudioCacheDataSource>(), isTrue);
+        expect(sl.isRegistered<AudioPlayerService>(), isTrue);
+        expect(sl.isRegistered<AudioRepository>(), isTrue);
+        expect(sl.isRegistered<PlaybackRepository>(), isTrue);
+        expect(sl.isRegistered<TafsirLocalDataSource>(), isTrue);
+        expect(sl.isRegistered<TafsirRemoteDataSource>(), isTrue);
+        expect(sl.isRegistered<TafsirRepository>(), isTrue);
+        expect(sl.isRegistered<KhatmaLocalDataSource>(), isTrue);
+        expect(sl.isRegistered<KhatmaWirdCalculator>(), isTrue);
+        expect(sl.isRegistered<KhatmaReminderService>(), isTrue);
+        expect(sl.isRegistered<KhatmaRepository>(), isTrue);
+        expect(sl.isRegistered<GetPageTafsirUseCase>(), isTrue);
+        expect(sl.isRegistered<GetSelectedTafsirBookUseCase>(), isTrue);
+        expect(sl.isRegistered<SetSelectedTafsirBookUseCase>(), isTrue);
+        expect(sl.isRegistered<GetAvailableTafsirBooksUseCase>(), isTrue);
 
-      expect(sl.isRegistered<QuranPagePlayerBloc>(), isTrue);
-      expect(sl.isRegistered<QuranReaderCubit>(), isTrue);
-      expect(sl.isRegistered<BookmarkCubit>(), isTrue);
-      expect(sl.isRegistered<QuranSearchCubit>(), isTrue);
-      expect(sl.isRegistered<SearchCubit>(), isTrue);
-      expect(sl.isRegistered<TodayCubit>(), isTrue);
-      expect(sl.isRegistered<IndexCubit>(), isTrue);
-      expect(sl.isRegistered<ReciterSelectionCubit>(), isTrue);
-      expect(sl.isRegistered<ReciterSurahsCubit>(), isTrue);
-      expect(sl.isRegistered<AudioPlaybackCubit>(), isTrue);
-      expect(sl.isRegistered<TafsirCubit>(), isTrue);
-      expect(sl.isRegistered<KhatmaCubit>(), isTrue);
-    });
+        expect(sl.isRegistered<QuranPagePlayerBloc>(), isTrue);
+        expect(sl.isRegistered<QuranReaderCubit>(), isTrue);
+        expect(sl.isRegistered<BookmarkCubit>(), isTrue);
+        expect(sl.isRegistered<QuranSearchCubit>(), isTrue);
+        expect(sl.isRegistered<SearchCubit>(), isTrue);
+        expect(sl.isRegistered<TodayCubit>(), isTrue);
+        expect(sl.isRegistered<IndexCubit>(), isTrue);
+        expect(sl.isRegistered<ReciterSelectionCubit>(), isTrue);
+        expect(sl.isRegistered<ReciterSurahsCubit>(), isTrue);
+        expect(sl.isRegistered<AudioPlaybackCubit>(), isTrue);
+        expect(sl.isRegistered<TafsirCubit>(), isTrue);
+        expect(sl.isRegistered<KhatmaCubit>(), isTrue);
+      },
+    );
 
-    test('Singletons return identical instances across multiple resolutions', () async {
-      await initInjection();
+    test(
+      'Singletons return identical instances across multiple resolutions',
+      () async {
+        await initInjection();
 
-      final player1 = sl<AudioPlayer>();
-      final player2 = sl<AudioPlayer>();
-      expect(identical(player1, player2), isTrue);
+        final player1 = sl<AudioPlayer>();
+        final player2 = sl<AudioPlayer>();
+        expect(identical(player1, player2), isTrue);
 
-      final client1 = sl<ApiClient>();
-      final client2 = sl<ApiClient>();
-      expect(identical(client1, client2), isTrue);
-    });
+        final client1 = sl<ApiClient>();
+        final client2 = sl<ApiClient>();
+        expect(identical(client1, client2), isTrue);
+
+        final bookmarkCubit1 = sl<BookmarkCubit>();
+        final bookmarkCubit2 = sl<BookmarkCubit>();
+        expect(identical(bookmarkCubit1, bookmarkCubit2), isTrue);
+      },
+    );
 
     test('Factories produce fresh, distinct instances for Cubits', () async {
       await initInjection();
 
-      final cubit1 = sl<BookmarkCubit>();
-      final cubit2 = sl<BookmarkCubit>();
+      final cubit1 = sl<SearchCubit>();
+      final cubit2 = sl<SearchCubit>();
       expect(identical(cubit1, cubit2), isFalse);
 
       await cubit1.close();

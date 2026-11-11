@@ -1,16 +1,23 @@
+import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
+import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
+import 'package:ayaat_quran_majeed/core/theme/app_colors.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_spacing.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
 import 'package:ayaat_quran_majeed/core/widgets/app_card.dart';
-import 'package:ayaat_quran_majeed/core/di/injection.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/domain/entities/bookmark_item.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/presentation/cubit/bookmark_cubit.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/presentation/cubit/bookmark_state.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/presentation/widgets/bookmark_edit_dialog.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/presentation/widgets/bookmark_row_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:iconsax/iconsax.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
-/// Tab 2: Bookmarks View.
-/// Conforms to reference screenshot 11_bookmarks_tab.
+/// Tab 2: Bookmarks View ("الفواصل").
+/// Pixel-faithful implementation matching reference screenshots 11 & 27.
 class BookmarksTabView extends StatefulWidget {
   const BookmarksTabView({super.key});
 
@@ -23,44 +30,35 @@ class _BookmarksTabViewState extends State<BookmarksTabView>
   @override
   bool get wantKeepAlive => true;
 
-  static const List<Map<String, dynamic>> _defaultColors = [
-    {'key': 'red', 'labelKey': AppStrings.colorRed, 'color': Color(0xFFD32F2F)},
-    {
-      'key': 'yellow',
-      'labelKey': AppStrings.colorYellow,
-      'color': Color(0xFFFBC02D),
-    },
-    {
-      'key': 'green',
-      'labelKey': AppStrings.colorGreen,
-      'color': Color(0xFF2E7D32),
-    },
-    {
-      'key': 'blue',
-      'labelKey': AppStrings.colorBlue,
-      'color': Color(0xFF1976D2),
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final colors = context.colors;
 
-    Widget content = _buildBookmarksContent(colors);
-
-    // Provide BookmarkCubit if registered
-    if (sl.isRegistered<BookmarkCubit>()) {
-      return BlocProvider.value(
-        value: sl<BookmarkCubit>()..loadBookmarks(),
-        child: content,
+    try {
+      context.read<BookmarkCubit>();
+      return BlocBuilder<BookmarkCubit, BookmarkState>(
+        builder: (context, state) => _buildView(context, state),
+      );
+    } catch (_) {
+      if (sl.isRegistered<BookmarkCubit>()) {
+        return BlocProvider.value(
+          value: sl<BookmarkCubit>()..loadBookmarks(),
+          child: BlocBuilder<BookmarkCubit, BookmarkState>(
+            builder: (context, state) => _buildView(context, state),
+          ),
+        );
+      }
+      return _buildView(
+        context,
+        BookmarkState(isLoading: false, bookmarks: BookmarkItem.defaultSlots()),
       );
     }
-
-    return content;
   }
 
-  Widget _buildBookmarksContent(dynamic colors) {
+  Widget _buildView(BuildContext context, BookmarkState state) {
+    final colors = context.colors;
+    final isEditMode = state.isEditMode;
+
     return Scaffold(
       backgroundColor: colors.scaffoldBackground,
       appBar: AppBar(
@@ -78,20 +76,20 @@ class _BookmarksTabViewState extends State<BookmarksTabView>
         actions: [
           TextButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    AppStrings.tr(AppStrings.editBookmarks),
-                    textAlign: TextAlign.center,
-                  ),
-                  duration: const Duration(seconds: 1),
-                ),
-              );
+              try {
+                context.read<BookmarkCubit>().toggleEditMode();
+              } catch (_) {
+                if (sl.isRegistered<BookmarkCubit>()) {
+                  sl<BookmarkCubit>().toggleEditMode();
+                }
+              }
             },
             child: Text(
-              AppStrings.tr(AppStrings.editBookmarks),
+              isEditMode
+                  ? AppStrings.tr(AppStrings.done)
+                  : AppStrings.tr(AppStrings.editBookmarks),
               style: AppTypography.titleMedium.copyWith(
-                color: colors.primary,
+                color: AppColors.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -100,64 +98,119 @@ class _BookmarksTabViewState extends State<BookmarksTabView>
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.all(AppSpacing.md),
-          children: [
-            AppCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: List.generate(_defaultColors.length, (index) {
-                  final item = _defaultColors[index];
-                  final color = item['color'] as Color;
-                  final label = AppStrings.tr(item['labelKey'] as String);
+        child: state.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                children: [
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(state.bookmarks.length, (index) {
+                        final item = state.bookmarks[index];
+                        final isLast = index == state.bookmarks.length - 1;
 
-                  return Column(
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          // In future tasks: open bookmarked page if saved
-                        },
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                            vertical: AppSpacing.md,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Iconsax.bookmark,
-                                color: color,
-                                size: AppSizes.iconMd,
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            BookmarkRowItem(
+                              item: item,
+                              isEditMode: isEditMode,
+                              onTap: () {
+                                if (item.isAssigned &&
+                                    item.pageNumber != null) {
+                                  context.pushNamed(
+                                    AppRoutes.readerName,
+                                    queryParameters: {
+                                      'page': item.pageNumber.toString(),
+                                      if (item.surahNumber != null)
+                                        'surah': item.surahNumber.toString(),
+                                      if (item.verseNumber != null)
+                                        'ayah': item.verseNumber.toString(),
+                                    },
+                                  );
+                                }
+                              },
+                              onUnassign: () {
+                                context.read<BookmarkCubit>().unassignBookmark(
+                                  item.id,
+                                );
+                              },
+                              onEdit: () {
+                                BookmarkEditDialog.show(
+                                  context: context,
+                                  item: item,
+                                  onSave: (newName, newColorHex) {
+                                    context
+                                        .read<BookmarkCubit>()
+                                        .updateBookmarkMetadata(
+                                          item.id,
+                                          name: newName,
+                                          colorHex: newColorHex,
+                                        );
+                                  },
+                                );
+                              },
+                            ),
+                            if (!isLast)
+                              Divider(
+                                height: 1,
+                                thickness: 0.5,
+                                indent: AppSpacing.md,
+                                endIndent: AppSpacing.md,
+                                color: colors.divider.withOpacity(0.3),
                               ),
-                              SizedBox(width: AppSpacing.md),
-                              Expanded(
-                                child: Text(
-                                  label,
-                                  style: AppTypography.titleMedium.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: colors.textPrimary,
-                                  ),
+                          ],
+                        );
+                      }),
+                    ),
+                  ),
+                  if (isEditMode) ...[
+                    SizedBox(height: AppSpacing.md),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () {
+                          BookmarkEditDialog.show(
+                            context: context,
+                            item: BookmarkItem(
+                              id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
+                              name: 'فاصل جديد',
+                              colorHex: '#8E44AD',
+                              isDefault: false,
+                            ),
+                            onSave: (newName, newColorHex) {
+                              context.read<BookmarkCubit>().addCustomBookmark(
+                                BookmarkItem(
+                                  id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
+                                  name: newName,
+                                  colorHex: newColorHex,
+                                  isDefault: false,
                                 ),
-                              ),
-                            ],
+                              );
+                            },
+                          );
+                        },
+                        icon: Icon(
+                          Icons.add_circle_outline,
+                          color: AppColors.primary,
+                          size: 20.sp,
+                        ),
+                        label: Text(
+                          AppStrings.tr(AppStrings.newBookmark),
+                          style: AppTypography.titleMedium.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                      if (index < _defaultColors.length - 1)
-                        Divider(
-                          height: 1,
-                          thickness: 0.5,
-                          indent: AppSpacing.md,
-                          endIndent: AppSpacing.md,
-                          color: colors.divider.withValues(alpha: 0.3),
-                        ),
-                    ],
-                  );
-                }),
+                    ),
+                  ],
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
