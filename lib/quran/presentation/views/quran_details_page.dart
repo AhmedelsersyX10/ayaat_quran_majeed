@@ -945,6 +945,18 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                                                 enable: true,
                                               );
                                             },
+                                            onAyahTap: (ayah) {
+                                              Navigator.of(context).pop();
+                                              final readerCubit = context
+                                                  .read<QuranReaderCubit>();
+                                              readerCubit.goToPage(
+                                                ayah.pageNumber,
+                                              );
+                                              triggerHighlight(
+                                                ayah.surahNumber,
+                                                ayah.ayahNumber,
+                                              );
+                                            },
                                           ),
                                         ),
                                       );
@@ -1281,7 +1293,10 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
           isStarred: isVerseStarred(surahNumber, verseNumber),
           onStarTap: () {
             try {
-              context.read<StarredCubit>().toggleStarred(surahNumber, verseNumber);
+              context.read<StarredCubit>().toggleStarred(
+                surahNumber,
+                verseNumber,
+              );
             } catch (_) {
               if (sl.isRegistered<StarredCubit>()) {
                 sl<StarredCubit>().toggleStarred(surahNumber, verseNumber);
@@ -1339,7 +1354,10 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
 
   Future<void> removeStarredVerse(int surahNumber, int verseNumber) async {
     try {
-      await context.read<StarredCubit>().removeStarred(surahNumber, verseNumber);
+      await context.read<StarredCubit>().removeStarred(
+        surahNumber,
+        verseNumber,
+      );
     } catch (_) {
       if (sl.isRegistered<StarredCubit>()) {
         await sl<StarredCubit>().removeStarred(surahNumber, verseNumber);

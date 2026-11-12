@@ -174,16 +174,43 @@ void main() {
       fakeStorage.data[AppStorageKeys.hijriOffset] = 0;
       final result0 = await repository.getTodayAyah(forDate: fixedDate);
       expect(result0.hijriDay, '١٥');
+      expect(result0.hijriOffset, 0);
 
       // Offset +1 (16 Rabi' al-Thani)
       fakeStorage.data[AppStorageKeys.hijriOffset] = 1;
       final resultPlus1 = await repository.getTodayAyah(forDate: fixedDate);
       expect(resultPlus1.hijriDay, '١٦');
+      expect(resultPlus1.hijriOffset, 1);
 
       // Offset -1 (14 Rabi' al-Thani)
       fakeStorage.data[AppStorageKeys.hijriOffset] = -1;
       final resultMinus1 = await repository.getTodayAyah(forDate: fixedDate);
       expect(resultMinus1.hijriDay, '١٤');
+      expect(resultMinus1.hijriOffset, -1);
     });
+
+    test(
+      'getHijriOffset and setHijriOffset manage clamped offset correctly',
+      () async {
+        expect(repository.getHijriOffset(), 0);
+
+        await repository.setHijriOffset(1);
+        expect(repository.getHijriOffset(), 1);
+        expect(fakeStorage.getInt(AppStorageKeys.hijriOffset), 1);
+
+        await repository.setHijriOffset(-1);
+        expect(repository.getHijriOffset(), -1);
+        expect(fakeStorage.getInt(AppStorageKeys.hijriOffset), -1);
+
+        // Clamping out-of-range offsets
+        await repository.setHijriOffset(5);
+        expect(repository.getHijriOffset(), 1);
+        expect(fakeStorage.getInt(AppStorageKeys.hijriOffset), 1);
+
+        await repository.setHijriOffset(-10);
+        expect(repository.getHijriOffset(), -1);
+        expect(fakeStorage.getInt(AppStorageKeys.hijriOffset), -1);
+      },
+    );
   });
 }

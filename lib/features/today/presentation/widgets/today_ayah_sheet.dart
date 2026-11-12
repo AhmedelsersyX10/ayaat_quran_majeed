@@ -5,6 +5,7 @@ import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
 import 'package:ayaat_quran_majeed/core/widgets/app_icon_button.dart';
 import 'package:ayaat_quran_majeed/features/today/domain/entities/today_ayah.dart';
 import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
+import 'package:ayaat_quran_majeed/features/today/presentation/widgets/hijri_adjustment_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -22,11 +23,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class TodayAyahSheet extends StatelessWidget {
   final ValueChanged<TodayAyah> onShare;
   final ValueChanged<TodayAyah> onTafsir;
+  final ValueChanged<TodayAyah> onAyahTap;
 
   const TodayAyahSheet({
     super.key,
     required this.onShare,
     required this.onTafsir,
+    required this.onAyahTap,
   });
 
   @override
@@ -168,12 +171,23 @@ class TodayAyahSheet extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Right Card: Hijri Date
+                // Right Card: Hijri Date (tappable to adjust Hijri offset)
                 Expanded(
                   child: _buildDateCard(
                     context,
                     monthName: ayah.hijriMonthName,
                     dayNumber: ayah.hijriDay,
+                    tooltip: AppStrings.tr(AppStrings.hijriAdjustmentTitle),
+                    onTap: () {
+                      final cubit = context.read<TodayCubit>();
+                      HijriAdjustmentDialog.show(
+                        context: context,
+                        initialOffset: cubit.currentHijriOffset,
+                        onOffsetSelected: (newOffset) {
+                          cubit.updateHijriOffset(newOffset);
+                        },
+                      );
+                    },
                   ),
                 ),
                 SizedBox(width: AppSizes.dateCardsCenterGap),
@@ -235,20 +249,26 @@ class TodayAyahSheet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Ayah Text
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                    vertical: AppSpacing.xxl,
+                // Ayah Text (clickable to navigate and highlight in mushaf)
+                InkWell(
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(AppRadii.lg),
                   ),
-                  child: Text(
-                    '${ayah.ayahText} ${ayah.ayahEndSymbol}',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.quranText.copyWith(
-                      fontFamily: AppTypography.amiriFontFamily,
-                      fontSize: 22.sp,
-                      height: 2.1,
-                      color: colors.textPrimary,
+                  onTap: () => onAyahTap(ayah),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                      vertical: AppSpacing.xxl,
+                    ),
+                    child: Text(
+                      '${ayah.ayahText} ${ayah.ayahEndSymbol}',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.quranText.copyWith(
+                        fontFamily: AppTypography.amiriFontFamily,
+                        fontSize: 22.sp,
+                        height: 2.1,
+                        color: colors.textPrimary,
+                      ),
                     ),
                   ),
                 ),
@@ -297,46 +317,60 @@ class TodayAyahSheet extends StatelessWidget {
     BuildContext context, {
     required String monthName,
     required String dayNumber,
+    VoidCallback? onTap,
+    String? tooltip,
   }) {
     final colors = context.colors;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
+    final content = Material(
+      color: colors.surface,
+      borderRadius: BorderRadius.circular(AppRadii.lg),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadii.lg),
-        border: Border.all(color: colors.border.withOpacity(0.7), width: 1),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          // Header Banner (month name)
-          Container(
-            width: double.infinity,
-            color: colors.ayahHeaderSurface,
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
-            child: Text(
-              monthName,
-              textAlign: TextAlign.center,
-              style: AppTypography.titleSmall.copyWith(
-                color: colors.textSecondary,
-              ),
-            ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.lg),
+            border: Border.all(color: colors.border.withOpacity(0.7), width: 1),
           ),
-          // Day number in Arabic-Indic numerals
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-            child: Text(
-              dayNumber,
-              textAlign: TextAlign.center,
-              style: AppTypography.displayLarge.copyWith(
-                fontSize: 34.sp,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              // Header Banner (month name)
+              Container(
+                width: double.infinity,
+                color: colors.ayahHeaderSurface,
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: Text(
+                  monthName,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.titleSmall.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
               ),
-            ),
+              // Day number in Arabic-Indic numerals
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Text(
+                  dayNumber,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.displayLarge.copyWith(
+                    fontSize: 34.sp,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
+
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: content);
+    }
+    return content;
   }
 }

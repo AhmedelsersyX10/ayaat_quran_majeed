@@ -204,6 +204,10 @@ abstract class AppStrings {
   static const String hijriCalendar = 'hijri_calendar';
   static const String gregorianCalendar = 'gregorian_calendar';
   static const String todayLoadFailed = 'today_load_failed';
+  static const String hijriAdjustmentTitle = 'hijri_adjustment_title';
+  static const String hijriAdvanceOneDay = 'hijri_advance_one_day';
+  static const String hijriDefaultUmmAlQura = 'hijri_default_umm_al_qura';
+  static const String hijriDelayOneDay = 'hijri_delay_one_day';
 
   // Search (Screens 15, 21)
   static const String searchHint = 'search_hint';
@@ -402,6 +406,10 @@ abstract class AppStrings {
     hijriCalendar: 'التقويم الهجري',
     gregorianCalendar: 'التقويم الميلادي',
     todayLoadFailed: 'تعذر تحميل آية اليوم',
+    hijriAdjustmentTitle: 'تعديل التاريخ الهجري',
+    hijriAdvanceOneDay: 'تقديم يوم واحد (+١)',
+    hijriDefaultUmmAlQura: 'تقويم أم القرى (بدون تعديل)',
+    hijriDelayOneDay: 'تأخير يوم واحد (-١)',
     searchHint: 'ابحث أو أدخل رقم صفحة',
     searchVersesHeader: 'الآيات',
     goToPage: 'الانتقال إلى صفحة',

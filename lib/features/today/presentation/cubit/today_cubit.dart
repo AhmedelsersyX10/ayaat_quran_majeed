@@ -58,6 +58,9 @@ class TodayCubit extends Cubit<TodayState> {
 
   TodayCubit(this._repository) : super(const TodayInitial());
 
+  /// Returns the currently active manual Hijri adjustment in days (-1, 0, +1).
+  int get currentHijriOffset => _repository.getHijriOffset();
+
   /// Loads the Ayah of the day.
   ///
   /// Optionally accepts [forDate] to facilitate testing deterministic selections.
@@ -74,5 +77,15 @@ class TodayCubit extends Cubit<TodayState> {
     } catch (_) {
       emit(TodayFailure(AppStrings.tr(AppStrings.todayLoadFailed)));
     }
+  }
+
+  /// Updates the manual Hijri calendar adjustment (-1, 0, +1) and reloads
+  /// the Ayah of the day with the updated calendar conversion.
+  Future<void> updateHijriOffset(int offset) async {
+    await _repository.setHijriOffset(offset);
+    final currentDate = state is TodaySuccess
+        ? (state as TodaySuccess).ayah.localDate
+        : null;
+    await loadTodayAyah(forDate: currentDate);
   }
 }

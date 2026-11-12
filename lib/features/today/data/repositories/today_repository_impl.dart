@@ -82,6 +82,16 @@ class TodayRepositoryImpl implements TodayRepository {
       gregorianDay: gregorian.dayArabic,
       gregorianMonthName: gregorian.monthArabic,
       localDate: DateTime(civilDate.year, civilDate.month, civilDate.day),
+      hijriOffset: offset,
     );
+  }
+
+  @override
+  int getHijriOffset() => _preferences.hijriOffset;
+
+  @override
+  Future<void> setHijriOffset(int offset) async {
+    final clamped = offset.clamp(-1, 1);
+    await _preferences.setHijriOffset(clamped);
   }
 }

@@ -10,4 +10,10 @@ abstract class TodayRepository {
   /// If [forDate] is provided, computes the deterministic selection for that
   /// specific local civil date; otherwise, uses the current local date.
   Future<TodayAyah> getTodayAyah({DateTime? forDate});
+
+  /// Returns the current manual Hijri calendar adjustment in days (-1, 0, +1).
+  int getHijriOffset();
+
+  /// Persists a new manual Hijri calendar adjustment in days (clamped between -1 and +1).
+  Future<void> setHijriOffset(int offset);
 }

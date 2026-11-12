@@ -25,6 +25,9 @@ class TodayAyah {
   /// The local civil date corresponding to this Ayah.
   final DateTime localDate;
 
+  /// The manual Hijri calendar offset in days (-1, 0, +1) applied to this calculation.
+  final int hijriOffset;
+
   const TodayAyah({
     required this.surahNumber,
     required this.ayahNumber,
@@ -37,6 +40,7 @@ class TodayAyah {
     required this.gregorianDay,
     required this.gregorianMonthName,
     required this.localDate,
+    this.hijriOffset = 0,
   });
 
   @override
@@ -53,7 +57,8 @@ class TodayAyah {
         other.hijriMonthName == hijriMonthName &&
         other.gregorianDay == gregorianDay &&
         other.gregorianMonthName == gregorianMonthName &&
-        other.localDate == localDate;
+        other.localDate == localDate &&
+        other.hijriOffset == hijriOffset;
   }
 
   @override
@@ -69,10 +74,11 @@ class TodayAyah {
     gregorianDay,
     gregorianMonthName,
     localDate,
+    hijriOffset,
   );
 
   @override
   String toString() {
-    return 'TodayAyah(surah: $surahNumber, ayah: $ayahNumber, page: $pageNumber, date: $localDate)';
+    return 'TodayAyah(surah: $surahNumber, ayah: $ayahNumber, page: $pageNumber, date: $localDate, hijriOffset: $hijriOffset)';
   }
 }

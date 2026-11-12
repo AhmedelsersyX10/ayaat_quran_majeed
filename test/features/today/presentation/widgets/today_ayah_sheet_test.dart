@@ -11,6 +11,15 @@ import 'package:flutter_test/flutter_test.dart';
 class StubTodayRepository implements TodayRepository {
   TodayAyah? ayah;
   bool shouldFail = false;
+  int stubbedOffset = 0;
+
+  @override
+  int getHijriOffset() => stubbedOffset;
+
+  @override
+  Future<void> setHijriOffset(int offset) async {
+    stubbedOffset = offset;
+  }
 
   @override
   Future<TodayAyah> getTodayAyah({DateTime? forDate}) async {
@@ -31,6 +40,7 @@ class StubTodayRepository implements TodayRepository {
           gregorianDay: '٣٠',
           gregorianMonthName: 'أكتوبر',
           localDate: DateTime(2023, 10, 30),
+          hijriOffset: stubbedOffset,
         );
   }
 }
@@ -40,18 +50,29 @@ void main() {
   late TodayCubit todayCubit;
 
   setUp(() {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.views.first.physicalSize = const Size(
+      1176,
+      2556,
+    );
+    binding.platformDispatcher.views.first.devicePixelRatio = 3.0;
+
     stubRepository = StubTodayRepository();
     todayCubit = TodayCubit(stubRepository);
   });
 
   tearDown(() {
     todayCubit.close();
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.views.first.resetPhysicalSize();
+    binding.platformDispatcher.views.first.resetDevicePixelRatio();
   });
 
   Widget buildTestWidget({
     required TodayCubit cubit,
     ValueChanged<TodayAyah>? onShare,
     ValueChanged<TodayAyah>? onTafsir,
+    ValueChanged<TodayAyah>? onAyahTap,
   }) {
     return ScreenUtilInit(
       designSize: const Size(392, 852),
@@ -63,6 +84,7 @@ void main() {
             child: TodayAyahSheet(
               onShare: onShare ?? (_) {},
               onTafsir: onTafsir ?? (_) {},
+              onAyahTap: onAyahTap ?? (_) {},
             ),
           ),
         ),
@@ -187,6 +209,7 @@ void main() {
                         child: TodayAyahSheet(
                           onShare: (_) {},
                           onTafsir: (_) {},
+                          onAyahTap: (_) {},
                         ),
                       ),
                     );
@@ -208,5 +231,68 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(TodayAyahSheet), findsNothing);
     });
+
+    testWidgets('tapping ayah text triggers onAyahTap with TodayAyah', (
+      tester,
+    ) async {
+      TodayAyah? tappedAyah;
+
+      await todayCubit.loadTodayAyah();
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          cubit: todayCubit,
+          onAyahTap: (ayah) => tappedAyah = ayah,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final ayahTextFinder = find.textContaining(
+        'يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوا۟',
+      );
+      expect(ayahTextFinder, findsOneWidget);
+
+      await tester.ensureVisible(ayahTextFinder);
+      await tester.pumpAndSettle();
+      await tester.tap(ayahTextFinder);
+      await tester.pumpAndSettle();
+
+      expect(tappedAyah, isNotNull);
+      expect(tappedAyah!.surahNumber, 2);
+      expect(tappedAyah!.ayahNumber, 172);
+      expect(tappedAyah!.pageNumber, 26);
+    });
+
+    testWidgets(
+      'tapping Hijri date card opens HijriAdjustmentDialog and adjusts offset',
+      (tester) async {
+        await todayCubit.loadTodayAyah();
+
+        await tester.pumpWidget(buildTestWidget(cubit: todayCubit));
+        await tester.pumpAndSettle();
+
+        // Tap the Hijri date card ("جمادى الأولى")
+        await tester.tap(find.text('جمادى الأولى'));
+        await tester.pumpAndSettle();
+
+        // Verify HijriAdjustmentDialog opened with options
+        expect(find.text('تعديل التاريخ الهجري'), findsOneWidget);
+        expect(find.text('تقديم يوم واحد (+١)'), findsOneWidget);
+        expect(find.text('تقويم أم القرى (بدون تعديل)'), findsOneWidget);
+        expect(find.text('تأخير يوم واحد (-١)'), findsOneWidget);
+
+        // Select +1 option
+        await tester.tap(find.text('تقديم يوم واحد (+١)'));
+        await tester.pumpAndSettle();
+
+        // Tap confirm button
+        await tester.tap(find.text('تأكيد'));
+        await tester.pumpAndSettle();
+
+        // Dialog should be dismissed and offset persisted in repository
+        expect(find.text('تعديل التاريخ الهجري'), findsNothing);
+        expect(stubRepository.stubbedOffset, 1);
+      },
+    );
   });
 }
