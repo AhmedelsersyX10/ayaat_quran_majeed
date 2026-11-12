@@ -93,6 +93,7 @@ class AyahOptionsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final String surahName = metadataService.getSurahNameArabic(surahNumber);
     final String ayahNumeral = toArabicDigits(verseNumber);
+    bool localIsStarred = isStarred;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -160,14 +161,27 @@ class AyahOptionsSheet extends StatelessWidget {
                             tooltip: AppStrings.tr(AppStrings.share),
                             onPressed: onShareTap,
                           ),
-                          IconButton(
-                            icon: Icon(
-                              isStarred ? Icons.star_rounded : Icons.star_border_rounded,
-                              color: isStarred ? AppColors.bookmarkYellow : AppColors.primary,
-                              size: 26.sp,
-                            ),
-                            tooltip: AppStrings.tr(AppStrings.starAyah),
-                            onPressed: onStarTap,
+                          StatefulBuilder(
+                            builder: (context, setIconState) {
+                              return IconButton(
+                                icon: Icon(
+                                  localIsStarred
+                                      ? Icons.star_rounded
+                                      : Icons.star_border_rounded,
+                                  color: localIsStarred
+                                      ? AppColors.bookmarkYellow
+                                      : AppColors.primary,
+                                  size: 26.sp,
+                                ),
+                                tooltip: AppStrings.tr(AppStrings.starAyah),
+                                onPressed: () {
+                                  setIconState(() {
+                                    localIsStarred = !localIsStarred;
+                                  });
+                                  onStarTap?.call();
+                                },
+                              );
+                            },
                           ),
                         ],
                       ),

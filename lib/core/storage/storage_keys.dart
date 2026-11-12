@@ -21,6 +21,9 @@ abstract class AppStorageKeys {
   // Khatma Settings & Keys (Screens 06-10, 24-26, 31)
   static const String activeKhatmaKey = 'active_khatma';
 
+  // Starred Verses Key (Screens 12, 28)
+  static const String starredVerses = 'starred_verses';
+
   // Legacy Storage Keys (migrated from legacy Hive box)
   static const String legacyDarkMode = 'darkMode';
   static const String legacyLastRead = 'lastRead';

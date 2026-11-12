@@ -5,6 +5,7 @@ import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_colors.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/entities/search_navigation_target.dart';
+import 'package:ayaat_quran_majeed/features/starred/presentation/cubit/starred_cubit.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/presentation/cubit/tafsir_cubit.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/presentation/cubit/tafsir_state.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/presentation/views/tafsir_page_view.dart';
@@ -61,7 +62,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'dart:io';
 import 'package:flutter/gestures.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter/services.dart';
@@ -1192,7 +1192,15 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
   }
 
   bool isVerseStarred(int surah, int ayah) {
-    return starredVerses.contains("$surah:$ayah");
+    try {
+      return context.read<StarredCubit>().isStarred(surah, ayah);
+    } catch (_) {
+      if (sl.isRegistered<StarredCubit>()) {
+        return sl<StarredCubit>().isStarred(surah, ayah);
+      }
+      return starredVerses.contains("$surah:$ayah") ||
+          starredVerses.contains("$surah-$ayah");
+    }
   }
 
   void showAyahOptionsSheet(int index, int surahNumber, int verseNumber) {
@@ -1207,10 +1215,12 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
       verseNumber: verseNumber,
       isStarred: isVerseStarred(surahNumber, verseNumber),
       onStarTap: () {
-        if (isVerseStarred(surahNumber, verseNumber)) {
-          removeStarredVerse(surahNumber, verseNumber);
-        } else {
-          addStarredVerse(surahNumber, verseNumber);
+        try {
+          context.read<StarredCubit>().toggleStarred(surahNumber, verseNumber);
+        } catch (_) {
+          if (sl.isRegistered<StarredCubit>()) {
+            sl<StarredCubit>().toggleStarred(surahNumber, verseNumber);
+          }
         }
         setState(() {});
       },
@@ -1268,10 +1278,12 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
           verseNumber: verseNumber,
           isStarred: isVerseStarred(surahNumber, verseNumber),
           onStarTap: () {
-            if (isVerseStarred(surahNumber, verseNumber)) {
-              removeStarredVerse(surahNumber, verseNumber);
-            } else {
-              addStarredVerse(surahNumber, verseNumber);
+            try {
+              context.read<StarredCubit>().toggleStarred(surahNumber, verseNumber);
+            } catch (_) {
+              if (sl.isRegistered<StarredCubit>()) {
+                sl<StarredCubit>().toggleStarred(surahNumber, verseNumber);
+              }
             }
             setState(() {});
           },
@@ -1307,59 +1319,25 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
   }
 
   Future<void> addStarredVerse(int surahNumber, int verseNumber) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // Retrieve the data as a string, not as a map
-    final String? savedData = prefs.getString("starredVerses");
-
-    if (savedData != null) {
-      // Decode the JSON string to a List<String>
-      starredVerses = Set<String>.from(json.decode(savedData));
+    try {
+      await context.read<StarredCubit>().addStarred(surahNumber, verseNumber);
+    } catch (_) {
+      if (sl.isRegistered<StarredCubit>()) {
+        await sl<StarredCubit>().addStarred(surahNumber, verseNumber);
+      }
     }
-
-    final verseKey = "$surahNumber-$verseNumber"; // Create a unique key
-    starredVerses.add(verseKey);
-
-    final jsonData = json.encode(
-      starredVerses.toList(),
-    ); // Convert Set to List for serialization
-    prefs.setString("starredVerses", jsonData);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Added to Starred verses"),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    }
+    setState(() {});
   }
 
   Future<void> removeStarredVerse(int surahNumber, int verseNumber) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // Retrieve the data as a string, not as a map
-    final String? savedData = prefs.getString("starredVerses");
-
-    if (savedData != null) {
-      // Decode the JSON string to a List<String>
-      starredVerses = Set<String>.from(json.decode(savedData));
+    try {
+      await context.read<StarredCubit>().removeStarred(surahNumber, verseNumber);
+    } catch (_) {
+      if (sl.isRegistered<StarredCubit>()) {
+        await sl<StarredCubit>().removeStarred(surahNumber, verseNumber);
+      }
     }
-
-    final verseKey = "$surahNumber-$verseNumber"; // Create the same unique key
-    starredVerses.remove(verseKey);
-
-    final jsonData = json.encode(
-      starredVerses.toList(),
-    ); // Convert Set to List for serialization
-    prefs.setString("starredVerses", jsonData);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Removed from Starred verses"),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    }
+    setState(() {});
   }
 
   void updateState(VoidCallback fn) {

@@ -30,6 +30,10 @@ import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cub
 import 'package:ayaat_quran_majeed/features/search/data/repositories/search_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
+import 'package:ayaat_quran_majeed/features/starred/data/datasources/starred_local_data_source.dart';
+import 'package:ayaat_quran_majeed/features/starred/data/repositories/starred_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/starred/domain/repositories/starred_repository.dart';
+import 'package:ayaat_quran_majeed/features/starred/presentation/cubit/starred_cubit.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_local_data_source.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_remote_data_source.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/data/repositories/tafsir_repository_impl.dart';
@@ -171,6 +175,22 @@ Future<void> initInjection() async {
           hiveStorageService: sl<HiveStorageService>(),
           metadataService: sl<QuranMetadataService>(),
         ),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<StarredRepository>()) {
+    sl.registerLazySingleton<StarredRepository>(
+      () => StarredRepositoryImpl(
+        localDataSource: StarredLocalDataSourceImpl(
+          hiveStorageService: sl.isRegistered<HiveStorageService>()
+              ? sl<HiveStorageService>()
+              : null,
+          preferencesStorage: sl.isRegistered<PreferencesStorage>()
+              ? sl<PreferencesStorage>()
+              : null,
+        ),
+        metadataService: sl<QuranMetadataService>(),
       ),
     );
   }
@@ -345,6 +365,12 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<StarredCubit>()) {
+    sl.registerLazySingleton<StarredCubit>(
+      () => StarredCubit(sl<StarredRepository>()),
+    );
+  }
+
   if (!sl.isRegistered<QuranSearchCubit>()) {
     sl.registerFactory<QuranSearchCubit>(
       () => QuranSearchCubit(sl<QuranSearchRepository>()),
@@ -421,6 +447,11 @@ Future<void> resetInjection() async {
   if (sl.isRegistered<BookmarkCubit>()) {
     try {
       await sl<BookmarkCubit>().close();
+    } catch (_) {}
+  }
+  if (sl.isRegistered<StarredCubit>()) {
+    try {
+      await sl<StarredCubit>().close();
     } catch (_) {}
   }
   if (sl.isRegistered<PlaybackRepository>()) {

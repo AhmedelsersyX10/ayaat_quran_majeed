@@ -14,6 +14,7 @@ import 'package:ayaat_quran_majeed/features/khatma/presentation/views/khatma_tab
 import 'package:ayaat_quran_majeed/features/notes/presentation/views/notes_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/views/search_page.dart';
+import 'package:ayaat_quran_majeed/features/starred/presentation/cubit/starred_cubit.dart';
 import 'package:ayaat_quran_majeed/features/starred/presentation/views/starred_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
@@ -91,6 +92,9 @@ abstract class AppRouter {
                 ),
                 BlocProvider<BookmarkCubit>.value(
                   value: sl<BookmarkCubit>()..loadBookmarks(),
+                ),
+                BlocProvider<StarredCubit>.value(
+                  value: sl<StarredCubit>()..loadStarredVerses(),
                 ),
                 BlocProvider<TodayCubit>(create: (_) => sl<TodayCubit>()),
               ],
