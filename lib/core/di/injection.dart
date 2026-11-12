@@ -67,6 +67,10 @@ import 'package:ayaat_quran_majeed/features/today/data/repositories/today_reposi
 import 'package:ayaat_quran_majeed/features/today/data/services/umm_al_qura_date_service.dart';
 import 'package:ayaat_quran_majeed/features/today/domain/repositories/today_repository.dart';
 import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
+import 'package:ayaat_quran_majeed/features/settings/data/datasources/settings_local_data_source.dart';
+import 'package:ayaat_quran_majeed/features/settings/data/repositories/settings_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/settings/domain/repositories/settings_repository.dart';
+import 'package:ayaat_quran_majeed/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_search_repository.dart';
@@ -174,6 +178,16 @@ Future<void> initInjection() async {
   if (!sl.isRegistered<ShareLocalDataSource>()) {
     sl.registerLazySingleton<ShareLocalDataSource>(
       () => const ShareLocalDataSourceImpl(),
+    );
+  }
+
+  if (!sl.isRegistered<SettingsLocalDataSource>()) {
+    sl.registerLazySingleton<SettingsLocalDataSource>(
+      () => SettingsLocalDataSourceImpl(
+        preferences: sl.isRegistered<AppPreferences>()
+            ? sl<AppPreferences>()
+            : null,
+      ),
     );
   }
 
@@ -311,6 +325,14 @@ Future<void> initInjection() async {
       () => ShareRepositoryImpl(
         localDataSource: sl<ShareLocalDataSource>(),
         metadataService: sl<QuranMetadataService>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<SettingsRepository>()) {
+    sl.registerLazySingleton<SettingsRepository>(
+      () => SettingsRepositoryImpl(
+        localDataSource: sl<SettingsLocalDataSource>(),
       ),
     );
   }
@@ -531,6 +553,12 @@ Future<void> initInjection() async {
       ),
     );
   }
+
+  if (!sl.isRegistered<SettingsCubit>()) {
+    sl.registerFactory<SettingsCubit>(
+      () => SettingsCubit(repository: sl<SettingsRepository>()),
+    );
+  }
 }
 
 /// Resets all registrations in the service locator (useful for test isolation).
@@ -548,6 +576,11 @@ Future<void> resetInjection() async {
   if (sl.isRegistered<NotesCubit>()) {
     try {
       await sl<NotesCubit>().close();
+    } catch (_) {}
+  }
+  if (sl.isRegistered<SettingsCubit>()) {
+    try {
+      await sl<SettingsCubit>().close();
     } catch (_) {}
   }
   if (sl.isRegistered<PlaybackRepository>()) {

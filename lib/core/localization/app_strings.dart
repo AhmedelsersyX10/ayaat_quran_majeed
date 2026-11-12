@@ -237,6 +237,18 @@ abstract class AppStrings {
   // Settings & Routing
   static const String settings = 'settings';
   static const String theme = 'theme';
+  static const String keepScreenAwake = 'keep_screen_awake';
+  static const String keepScreenAwakeDesc = 'keep_screen_awake_desc';
+  static const String hijriAdjustment = 'hijri_adjustment';
+  static const String mushafFontSizeTitle = 'mushaf_font_size_title';
+  static const String mushafFixedLayoutDesc = 'mushaf_fixed_layout_desc';
+  static const String sourcesAndAttributionsTitle =
+      'sources_and_attributions_title';
+  static const String sourcesAndAttributionsDesc =
+      'sources_and_attributions_desc';
+  static const String sourcesIntro = 'sources_intro';
+  static const String openSourceLicenses = 'open_source_licenses';
+  static const String openSourceLicensesDesc = 'open_source_licenses_desc';
   static const String pageNotFound = 'page_not_found';
   static const String returnHome = 'return_home';
   static const String networkError = 'network_error';
@@ -451,6 +463,20 @@ abstract class AppStrings {
     noSearchResults: 'لا توجد نتائج مطابقة لبحثك',
     settings: 'الإعدادات',
     theme: 'وضع السمة',
+    keepScreenAwake: 'إبقاء الشاشة مستيقظة',
+    keepScreenAwakeDesc: 'منع قفل الشاشة تلقائياً أثناء قراءة القرآن الكريم',
+    hijriAdjustment: 'ضبط التاريخ الهجري',
+    mushafFontSizeTitle: 'حجم خط المصحف',
+    mushafFixedLayoutDesc:
+        'يعتمد التطبيق المصحف الشريف القياسي (١٥ سطراً في الصفحة) بالرسم العثماني المعتمد وفقاً لطباعة مجمع الملك فهد، وحجم الصفحة ثابت لضمان مطابقة أوائل ونهايات الآيات للصفحات.',
+    sourcesAndAttributionsTitle: 'المصادر والتراخيص',
+    sourcesAndAttributionsDesc:
+        'مصادر القرآن الكريم، التفاسير، الصوتيات، والتراخيص المفتوحة',
+    sourcesIntro:
+        'توثيق وتنسيب مصادر القرآن الكريم والبيانات المعتمدة وحزم البرمجيات المفتوحة المستخدمة في التطبيق:',
+    openSourceLicenses: 'تراخيص البرمجيات مفتوحة المصدر',
+    openSourceLicensesDesc:
+        'عرض الرخص الخاصة بالحزم والمكتبات البرمجية المستخدمة في التطبيق',
     pageNotFound: 'الصفحة غير موجودة',
     returnHome: 'العودة للرئيسية',
     networkError: 'فشل الاتصال بالشبكة',

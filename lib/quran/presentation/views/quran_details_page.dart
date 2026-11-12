@@ -43,7 +43,7 @@ import 'package:ayaat_quran_majeed/features/today/presentation/widgets/today_aya
 import 'package:ayaat_quran_majeed/quran/presentation/controllers/reader_chrome_controller.dart';
 import 'package:ayaat_quran_majeed/features/share/presentation/widgets/share_ayah_dialog.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
-import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/settings_bottom_sheet.dart';
+import 'package:ayaat_quran_majeed/features/settings/presentation/widgets/settings_bottom_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/bismallah.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/floating_quran_app_bar.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/header_widget.dart';
@@ -962,14 +962,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
                                       );
                                     },
                                     onSettings: () {
-                                      SettingsBottomSheet.show(
-                                        context,
-                                        onSettingsChanged: () {
-                                          _pageSpansCache.clear();
-                                          getTranslationData();
-                                          updateState(() {});
-                                        },
-                                      );
+                                      SettingsBottomSheet.show(context);
                                     },
                                   );
                                 },

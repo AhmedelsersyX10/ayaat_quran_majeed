@@ -20,6 +20,8 @@ import 'package:ayaat_quran_majeed/features/notes/domain/repositories/notes_repo
 import 'package:ayaat_quran_majeed/features/notes/presentation/cubit/notes_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
+import 'package:ayaat_quran_majeed/features/settings/domain/repositories/settings_repository.dart';
+import 'package:ayaat_quran_majeed/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:ayaat_quran_majeed/features/starred/domain/repositories/starred_repository.dart';
 import 'package:ayaat_quran_majeed/features/starred/presentation/cubit/starred_cubit.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/data/datasources/tafsir_local_data_source.dart';
@@ -86,6 +88,7 @@ void main() {
         expect(sl.isRegistered<KhatmaWirdCalculator>(), isTrue);
         expect(sl.isRegistered<KhatmaReminderService>(), isTrue);
         expect(sl.isRegistered<KhatmaRepository>(), isTrue);
+        expect(sl.isRegistered<SettingsRepository>(), isTrue);
         expect(sl.isRegistered<GetPageTafsirUseCase>(), isTrue);
         expect(sl.isRegistered<GetSelectedTafsirBookUseCase>(), isTrue);
         expect(sl.isRegistered<SetSelectedTafsirBookUseCase>(), isTrue);
@@ -105,6 +108,7 @@ void main() {
         expect(sl.isRegistered<AudioPlaybackCubit>(), isTrue);
         expect(sl.isRegistered<TafsirCubit>(), isTrue);
         expect(sl.isRegistered<KhatmaCubit>(), isTrue);
+        expect(sl.isRegistered<SettingsCubit>(), isTrue);
       },
     );
 
