@@ -24,6 +24,9 @@ abstract class AppStorageKeys {
   // Starred Verses Key (Screens 12, 28)
   static const String starredVerses = 'starred_verses';
 
+  // Notes Key (Screens 13, 29, 30)
+  static const String notes = 'user_notes';
+
   // Legacy Storage Keys (migrated from legacy Hive box)
   static const String legacyDarkMode = 'darkMode';
   static const String legacyLastRead = 'lastRead';

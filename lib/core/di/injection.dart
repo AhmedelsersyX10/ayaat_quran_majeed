@@ -27,6 +27,10 @@ import 'package:ayaat_quran_majeed/features/khatma/domain/repositories/khatma_re
 import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_reminder_service.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_wird_calculator.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
+import 'package:ayaat_quran_majeed/features/notes/data/datasources/notes_local_data_source.dart';
+import 'package:ayaat_quran_majeed/features/notes/data/repositories/notes_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/notes/domain/repositories/notes_repository.dart';
+import 'package:ayaat_quran_majeed/features/notes/presentation/cubit/notes_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/data/repositories/search_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
@@ -183,6 +187,22 @@ Future<void> initInjection() async {
     sl.registerLazySingleton<StarredRepository>(
       () => StarredRepositoryImpl(
         localDataSource: StarredLocalDataSourceImpl(
+          hiveStorageService: sl.isRegistered<HiveStorageService>()
+              ? sl<HiveStorageService>()
+              : null,
+          preferencesStorage: sl.isRegistered<PreferencesStorage>()
+              ? sl<PreferencesStorage>()
+              : null,
+        ),
+        metadataService: sl<QuranMetadataService>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<NotesRepository>()) {
+    sl.registerLazySingleton<NotesRepository>(
+      () => NotesRepositoryImpl(
+        localDataSource: NotesLocalDataSourceImpl(
           hiveStorageService: sl.isRegistered<HiveStorageService>()
               ? sl<HiveStorageService>()
               : null,
@@ -371,6 +391,15 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<NotesCubit>()) {
+    sl.registerLazySingleton<NotesCubit>(
+      () => NotesCubit(
+        repository: sl<NotesRepository>(),
+        metadataService: sl<QuranMetadataService>(),
+      ),
+    );
+  }
+
   if (!sl.isRegistered<QuranSearchCubit>()) {
     sl.registerFactory<QuranSearchCubit>(
       () => QuranSearchCubit(sl<QuranSearchRepository>()),
@@ -452,6 +481,11 @@ Future<void> resetInjection() async {
   if (sl.isRegistered<StarredCubit>()) {
     try {
       await sl<StarredCubit>().close();
+    } catch (_) {}
+  }
+  if (sl.isRegistered<NotesCubit>()) {
+    try {
+      await sl<NotesCubit>().close();
     } catch (_) {}
   }
   if (sl.isRegistered<PlaybackRepository>()) {

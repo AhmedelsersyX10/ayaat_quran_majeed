@@ -16,6 +16,8 @@ import 'package:ayaat_quran_majeed/features/khatma/domain/repositories/khatma_re
 import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_reminder_service.dart';
 import 'package:ayaat_quran_majeed/features/khatma/domain/services/khatma_wird_calculator.dart';
 import 'package:ayaat_quran_majeed/features/khatma/presentation/cubit/khatma_cubit.dart';
+import 'package:ayaat_quran_majeed/features/notes/domain/repositories/notes_repository.dart';
+import 'package:ayaat_quran_majeed/features/notes/presentation/cubit/notes_cubit.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
 import 'package:ayaat_quran_majeed/features/starred/domain/repositories/starred_repository.dart';
@@ -67,6 +69,7 @@ void main() {
         expect(sl.isRegistered<QuranReadingRepository>(), isTrue);
         expect(sl.isRegistered<BookmarkRepository>(), isTrue);
         expect(sl.isRegistered<StarredRepository>(), isTrue);
+        expect(sl.isRegistered<NotesRepository>(), isTrue);
         expect(sl.isRegistered<QuranSearchRepository>(), isTrue);
         expect(sl.isRegistered<SearchRepository>(), isTrue);
         expect(sl.isRegistered<TodayRepository>(), isTrue);
@@ -92,6 +95,7 @@ void main() {
         expect(sl.isRegistered<QuranReaderCubit>(), isTrue);
         expect(sl.isRegistered<BookmarkCubit>(), isTrue);
         expect(sl.isRegistered<StarredCubit>(), isTrue);
+        expect(sl.isRegistered<NotesCubit>(), isTrue);
         expect(sl.isRegistered<QuranSearchCubit>(), isTrue);
         expect(sl.isRegistered<SearchCubit>(), isTrue);
         expect(sl.isRegistered<TodayCubit>(), isTrue);

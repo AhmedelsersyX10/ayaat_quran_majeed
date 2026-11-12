@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:ayaat_quran_majeed/core/di/injection.dart';
 import 'package:ayaat_quran_majeed/core/routing/app_routes.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_colors.dart';
+import 'package:ayaat_quran_majeed/features/notes/presentation/cubit/notes_cubit.dart';
+import 'package:ayaat_quran_majeed/features/notes/presentation/widgets/note_editor_dialog.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/entities/search_navigation_target.dart';
 import 'package:ayaat_quran_majeed/features/starred/presentation/cubit/starred_cubit.dart';
 import 'package:ayaat_quran_majeed/features/tafsir/presentation/cubit/tafsir_cubit.dart';
@@ -1306,7 +1308,13 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
         context.read<QuranReaderCubit>().toggleTafsirMode(enable: true);
       },
       onNotesTap: () {
-        // Feature action contract: notes task
+        Navigator.of(context).pop();
+        NoteEditorDialog.show(
+          context: context,
+          surahNumber: surahNumber,
+          verseNumber: verseNumber,
+          pageNumber: index,
+        );
       },
     ).then((_) {
       if (mounted) {

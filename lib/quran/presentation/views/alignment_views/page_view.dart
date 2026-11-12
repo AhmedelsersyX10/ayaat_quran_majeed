@@ -97,6 +97,24 @@ extension PageViewExtension on QuranDetailsPageState {
       );
     }
 
+    // Notes highlights (Screens 29, 30)
+    try {
+      final notesCubit = context.watch<NotesCubit>();
+      final highlightedAyat = <String>{};
+      for (final note in notesCubit.state.notes) {
+        if (highlightedAyat.add(note.ayahKey)) {
+          activeHighlights.add(
+            qp.HighlightVerse(
+              surah: note.surahNumber,
+              verseNumber: note.verseNumber,
+              page: note.pageNumber,
+              color: AppColors.noteHighlight,
+            ),
+          );
+        }
+      }
+    } catch (_) {}
+
     // Reader selected ayah highlight (Task 2.05)
     final readerState = context.watch<QuranReaderCubit>().state;
     if (readerState.selectedAyah != null) {
