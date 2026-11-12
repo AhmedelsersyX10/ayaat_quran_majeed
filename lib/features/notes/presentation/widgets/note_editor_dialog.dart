@@ -7,11 +7,11 @@ import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
 import 'package:ayaat_quran_majeed/core/widgets/app_card.dart';
 import 'package:ayaat_quran_majeed/features/notes/domain/entities/note_item.dart';
 import 'package:ayaat_quran_majeed/features/notes/presentation/cubit/notes_cubit.dart';
+import 'package:ayaat_quran_majeed/features/share/presentation/widgets/share_ayah_dialog.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:share_plus/share_plus.dart';
 
 /// Modal dialog for authoring, editing, and sharing notes on a specific Ayah.
 /// Pixel-faithful implementation matching reference screenshot 29_note_editor_dialog.
@@ -53,10 +53,7 @@ class NoteEditorDialog extends StatefulWidget {
           existingNote: existingNote,
         );
         if (cubit != null) {
-          return BlocProvider<NotesCubit>.value(
-            value: cubit,
-            child: content,
-          );
+          return BlocProvider<NotesCubit>.value(value: cubit, child: content);
         }
         return content;
       },
@@ -81,12 +78,15 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
   void initState() {
     super.initState();
     _activeNoteId = widget.existingNote?.id;
-    _controller = TextEditingController(text: widget.existingNote?.noteText ?? '');
+    _controller = TextEditingController(
+      text: widget.existingNote?.noteText ?? '',
+    );
     _focusNode = FocusNode();
 
     _surahName = _meta.getSurahNameArabic(widget.surahNumber);
     _ayahText = _meta.getVerse(widget.surahNumber, widget.verseNumber);
-    _resolvedPage = widget.pageNumber ??
+    _resolvedPage =
+        widget.pageNumber ??
         widget.existingNote?.pageNumber ??
         _meta.getPageNumber(widget.surahNumber, widget.verseNumber);
 
@@ -151,19 +151,15 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
 
   void _onShare() {
     final noteText = _controller.text.trim();
-    final buffer = StringBuffer();
-
-    if (noteText.isNotEmpty) {
-      buffer.writeln(noteText);
-      buffer.writeln();
-    }
-    buffer.writeln('{$_ayahText}');
-    buffer.writeln();
-    buffer.writeln(
-      '[${formatPageAyahLabel(surahName: _surahName, ayahNumber: widget.verseNumber, pageNumber: _resolvedPage)}]',
+    showDialog(
+      context: context,
+      builder: (_) => ShareAyahDialog(
+        surahNumber: widget.surahNumber,
+        verseNumber: widget.verseNumber,
+        pageNumber: _resolvedPage,
+        noteText: noteText.isNotEmpty ? noteText : null,
+      ),
     );
-
-    Share.share(buffer.toString());
   }
 
   Future<void> _onClose() async {
@@ -187,28 +183,20 @@ class _NoteEditorDialogState extends State<NoteEditorDialog> {
       child: Dialog(
         backgroundColor: colors.surface,
         elevation: 6,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadii.radiusLg,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusLg),
         insetPadding: EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         ),
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 420.w,
-            maxHeight: 520.h,
-          ),
+          constraints: BoxConstraints(maxWidth: 420.w, maxHeight: 520.h),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 1. Header Row (Ref 29: Surah & Verse on right, 3 green action icons on left)
               Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 12.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                 child: Row(
                   children: [
                     // Action Icons (left side in RTL)

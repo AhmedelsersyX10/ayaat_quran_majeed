@@ -41,7 +41,7 @@ import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/ayah
 import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
 import 'package:ayaat_quran_majeed/features/today/presentation/widgets/today_ayah_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/controllers/reader_chrome_controller.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/widgets/dialogs/share_ayah_dialog.dart';
+import 'package:ayaat_quran_majeed/features/share/presentation/widgets/share_ayah_dialog.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/settings_bottom_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/common/bismallah.dart';

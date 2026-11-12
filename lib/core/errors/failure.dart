@@ -21,20 +21,24 @@ abstract class Failure {
 
 /// Represents failures originating from remote network operations or APIs.
 class ServerFailure extends Failure {
-  const ServerFailure([String message = 'حدث خطأ في الاتصال بالخادم', String? code])
-      : super(message, code: code);
+  const ServerFailure([
+    String message = 'حدث خطأ في الاتصال بالخادم',
+    String? code,
+  ]) : super(message, code: code);
 }
 
 /// Represents failures originating from local storage/cache (e.g. Hive, SharedPreferences).
 class CacheFailure extends Failure {
-  const CacheFailure([String message = 'حدث خطأ أثناء الوصول للبيانات المخزنة', String? code])
-      : super(message, code: code);
+  const CacheFailure([
+    String message = 'حدث خطأ أثناء الوصول للبيانات المخزنة',
+    String? code,
+  ]) : super(message, code: code);
 }
 
 /// Represents general unexpected application failures.
 class GeneralFailure extends Failure {
   const GeneralFailure([String message = 'حدث خطأ غير متوقع', String? code])
-      : super(message, code: code);
+    : super(message, code: code);
 }
 
 /// Represents failure when a requested Tafsir book or verse is not found.
@@ -69,3 +73,10 @@ class KhatmaFailure extends Failure {
   ]) : super(message, code: code);
 }
 
+/// Represents failure during share, screenshot export, or gallery save operations.
+class ShareFailure extends Failure {
+  const ShareFailure([
+    String message = 'حدث خطأ أثناء المشاركة أو حفظ الصورة',
+    String? code,
+  ]) : super(message, code: code);
+}

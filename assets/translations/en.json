@@ -243,5 +243,20 @@
   "return_home": "Back to Home",
   "network_error": "Network connection failed",
   "cache_error": "Cache error",
-  "server_error": "Server error"
+  "server_error": "Server error",
+  "share_ayah": "Share Ayah",
+  "share_as_text": "Share as Text",
+  "share_as_image": "Share as Image",
+  "card_preview_title": "Card Preview",
+  "save_to_gallery": "Save to Gallery",
+  "share_image_action": "Share Image",
+  "include_tafsir": "Include Tafsir",
+  "include_app_branding": "Include App Branding",
+  "card_theme": "Card Theme",
+  "text_alignment": "Alignment",
+  "image_saved_success": "Image saved to gallery successfully",
+  "image_save_failed": "Failed to save image to gallery",
+  "share_error": "An error occurred while sharing",
+  "app_branding_text": "«Ayaat - Quran Majeed App»",
+  "shared_from_app": "Shared from «Ayaat - Quran Majeed App»"
 }

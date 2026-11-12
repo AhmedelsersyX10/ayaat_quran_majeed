@@ -132,6 +132,24 @@ abstract class AppStrings {
   static const String noteSaved = 'note_saved';
   static const String noteDeleted = 'note_deleted';
 
+  // Share Ayah (Screens 19, 20, 29)
+  static const String shareAyah = 'share_ayah';
+  static const String shareAsText = 'share_as_text';
+  static const String shareAsImage = 'share_as_image';
+  static const String withoutDiacritics = 'withoutdiacritics';
+  static const String cardPreviewTitle = 'card_preview_title';
+  static const String saveToGallery = 'save_to_gallery';
+  static const String shareImageAction = 'share_image_action';
+  static const String includeTafsir = 'include_tafsir';
+  static const String includeAppBranding = 'include_app_branding';
+  static const String cardTheme = 'card_theme';
+  static const String textAlignment = 'text_alignment';
+  static const String imageSavedSuccess = 'image_saved_success';
+  static const String imageSaveFailed = 'image_save_failed';
+  static const String shareError = 'share_error';
+  static const String appBrandingText = 'app_branding_text';
+  static const String sharedFromApp = 'shared_from_app';
+
   // Ayah Options & Recitation Settings (Screens 19, 20, 22, 38, 39, 40)
   static const String ayahOptions = 'ayah_options';
   static const String redBookmark = 'red_bookmark';
@@ -341,6 +359,22 @@ abstract class AppStrings {
     shareNote: 'مشاركة الملاحظة',
     noteSaved: 'تم حفظ الملاحظة',
     noteDeleted: 'تم حذف الملاحظة',
+    shareAyah: 'مشاركة الآية',
+    shareAsText: 'مشاركة كنص',
+    shareAsImage: 'مشاركة كصورة',
+    withoutDiacritics: 'بدون تشكيل؟',
+    cardPreviewTitle: 'معاينة البطاقة',
+    saveToGallery: 'حفظ في الاستوديو',
+    shareImageAction: 'مشاركة الصورة',
+    includeTafsir: 'إضافة التفسير',
+    includeAppBranding: 'إضافة توقيع التطبيق',
+    cardTheme: 'نمط البطاقة',
+    textAlignment: 'المحاذاة',
+    imageSavedSuccess: 'تم حفظ الصورة في الاستوديو بنجاح',
+    imageSaveFailed: 'فشل حفظ الصورة في الاستوديو',
+    shareError: 'حدث خطأ أثناء المشاركة',
+    appBrandingText: '«آيات - تطبيق القرآن الكريم»',
+    sharedFromApp: 'تمت المشاركة من تطبيق «آيات - تطبيق القرآن الكريم»',
     ayahOptions: 'خيارات الآية',
     redBookmark: 'الفاصل الأحمر',
     recitation: 'تلاوة',

@@ -34,6 +34,14 @@ import 'package:ayaat_quran_majeed/features/notes/presentation/cubit/notes_cubit
 import 'package:ayaat_quran_majeed/features/search/data/repositories/search_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
 import 'package:ayaat_quran_majeed/features/search/presentation/cubit/search_cubit.dart';
+import 'package:ayaat_quran_majeed/features/share/data/datasources/share_local_data_source.dart';
+import 'package:ayaat_quran_majeed/features/share/data/repositories/share_repository_impl.dart';
+import 'package:ayaat_quran_majeed/features/share/domain/repositories/share_repository.dart';
+import 'package:ayaat_quran_majeed/features/share/domain/usecases/format_share_text_use_case.dart';
+import 'package:ayaat_quran_majeed/features/share/domain/usecases/save_ayah_image_to_gallery_use_case.dart';
+import 'package:ayaat_quran_majeed/features/share/domain/usecases/share_ayah_image_use_case.dart';
+import 'package:ayaat_quran_majeed/features/share/domain/usecases/share_ayah_text_use_case.dart';
+import 'package:ayaat_quran_majeed/features/share/presentation/cubit/share_cubit.dart';
 import 'package:ayaat_quran_majeed/features/starred/data/datasources/starred_local_data_source.dart';
 import 'package:ayaat_quran_majeed/features/starred/data/repositories/starred_repository_impl.dart';
 import 'package:ayaat_quran_majeed/features/starred/domain/repositories/starred_repository.dart';
@@ -160,6 +168,12 @@ Future<void> initInjection() async {
   if (!sl.isRegistered<KhatmaReminderService>()) {
     sl.registerLazySingleton<KhatmaReminderService>(
       () => KhatmaReminderServiceImpl(),
+    );
+  }
+
+  if (!sl.isRegistered<ShareLocalDataSource>()) {
+    sl.registerLazySingleton<ShareLocalDataSource>(
+      () => const ShareLocalDataSourceImpl(),
     );
   }
 
@@ -292,6 +306,15 @@ Future<void> initInjection() async {
     );
   }
 
+  if (!sl.isRegistered<ShareRepository>()) {
+    sl.registerLazySingleton<ShareRepository>(
+      () => ShareRepositoryImpl(
+        localDataSource: sl<ShareLocalDataSource>(),
+        metadataService: sl<QuranMetadataService>(),
+      ),
+    );
+  }
+
   if (!sl.isRegistered<GetPageTafsirUseCase>()) {
     sl.registerLazySingleton<GetPageTafsirUseCase>(
       () => GetPageTafsirUseCase(
@@ -358,6 +381,30 @@ Future<void> initInjection() async {
   if (!sl.isRegistered<DeleteDownloadedBookUseCase>()) {
     sl.registerLazySingleton<DeleteDownloadedBookUseCase>(
       () => DeleteDownloadedBookUseCase(sl<TafsirRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<FormatShareTextUseCase>()) {
+    sl.registerLazySingleton<FormatShareTextUseCase>(
+      () => FormatShareTextUseCase(sl<ShareRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<ShareAyahTextUseCase>()) {
+    sl.registerLazySingleton<ShareAyahTextUseCase>(
+      () => ShareAyahTextUseCase(sl<ShareRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<ShareAyahImageUseCase>()) {
+    sl.registerLazySingleton<ShareAyahImageUseCase>(
+      () => ShareAyahImageUseCase(sl<ShareRepository>()),
+    );
+  }
+
+  if (!sl.isRegistered<SaveAyahImageToGalleryUseCase>()) {
+    sl.registerLazySingleton<SaveAyahImageToGalleryUseCase>(
+      () => SaveAyahImageToGalleryUseCase(sl<ShareRepository>()),
     );
   }
 
@@ -466,6 +513,21 @@ Future<void> initInjection() async {
       () => KhatmaCubit(
         repository: sl<KhatmaRepository>(),
         reminderService: sl<KhatmaReminderService>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<ShareCubit>()) {
+    sl.registerFactory<ShareCubit>(
+      () => ShareCubit(
+        formatShareTextUseCase: sl<FormatShareTextUseCase>(),
+        shareAyahTextUseCase: sl<ShareAyahTextUseCase>(),
+        shareAyahImageUseCase: sl<ShareAyahImageUseCase>(),
+        saveAyahImageToGalleryUseCase: sl<SaveAyahImageToGalleryUseCase>(),
+        metadataService: sl<QuranMetadataService>(),
+        tafsirRepository: sl.isRegistered<TafsirRepository>()
+            ? sl<TafsirRepository>()
+            : null,
       ),
     );
   }

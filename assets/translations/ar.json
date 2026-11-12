@@ -256,5 +256,20 @@
   "return_home": "العودة للرئيسية",
   "network_error": "فشل الاتصال بالشبكة",
   "cache_error": "خطأ في الذاكرة المؤقتة",
-  "server_error": "خطأ في الخادم"
+  "server_error": "خطأ في الخادم",
+  "share_ayah": "مشاركة الآية",
+  "share_as_text": "مشاركة كنص",
+  "share_as_image": "مشاركة كصورة",
+  "card_preview_title": "معاينة البطاقة",
+  "save_to_gallery": "حفظ في الاستوديو",
+  "share_image_action": "مشاركة الصورة",
+  "include_tafsir": "إضافة التفسير",
+  "include_app_branding": "إضافة توقيع التطبيق",
+  "card_theme": "نمط البطاقة",
+  "text_alignment": "المحاذاة",
+  "image_saved_success": "تم حفظ الصورة في الاستوديو بنجاح",
+  "image_save_failed": "فشل حفظ الصورة في الاستوديو",
+  "share_error": "حدث خطأ أثناء المشاركة",
+  "app_branding_text": "«آيات - تطبيق القرآن الكريم»",
+  "shared_from_app": "تمت المشاركة من تطبيق «آيات - تطبيق القرآن الكريم»"
 }
