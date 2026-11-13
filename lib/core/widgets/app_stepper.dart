@@ -39,18 +39,25 @@ class AppStepper extends StatelessWidget {
           size: AppSizes.stepperButtonSize,
           backgroundColor: canDecrement ? colors.primary : colors.border,
           iconColor: canDecrement ? colors.textOnPrimary : colors.textMuted,
+          tooltip: 'إنقاص',
+          semanticLabel: 'إنقاص',
           onPressed: canDecrement ? () => onChanged(value - step) : null,
         ),
         SizedBox(width: AppSpacing.md),
 
         // Value Display in Arabic-Indic digits
-        Container(
-          constraints: const BoxConstraints(minWidth: 36),
-          alignment: Alignment.center,
-          child: Text(
-            toArabicDigits(value),
-            style: AppTypography.titleMedium.copyWith(
-              fontWeight: FontWeight.w700,
+        Semantics(
+          label: 'العدد: ${toArabicDigits(value)}',
+          child: Container(
+            constraints: const BoxConstraints(minWidth: 36),
+            alignment: Alignment.center,
+            child: ExcludeSemantics(
+              child: Text(
+                toArabicDigits(value),
+                style: AppTypography.titleMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
         ),
@@ -63,6 +70,8 @@ class AppStepper extends StatelessWidget {
           size: AppSizes.stepperButtonSize,
           backgroundColor: canIncrement ? colors.primary : colors.border,
           iconColor: canIncrement ? colors.textOnPrimary : colors.textMuted,
+          tooltip: 'زيادة',
+          semanticLabel: 'زيادة',
           onPressed: canIncrement ? () => onChanged(value + step) : null,
         ),
       ],

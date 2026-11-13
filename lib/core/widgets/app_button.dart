@@ -3,12 +3,7 @@ import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
-enum AppButtonVariant {
-  primary,
-  secondary,
-  destructive,
-  text,
-}
+enum AppButtonVariant { primary, secondary, destructive, text }
 
 /// Standard button primitive used across the entire Ayaat app.
 /// Matches the reference design in screens 10, 23, 26, 29, 31.
@@ -118,8 +113,10 @@ class AppButton extends StatelessWidget {
       case AppButtonVariant.destructive:
         backgroundColor = Colors.transparent;
         foregroundColor = colors.destructive;
-        borderSide =
-            BorderSide(color: colors.destructive.withOpacity(0.5), width: 1.0);
+        borderSide = BorderSide(
+          color: colors.destructive.withOpacity(0.5),
+          width: 1.0,
+        );
         break;
       case AppButtonVariant.text:
         backgroundColor = Colors.transparent;
@@ -145,16 +142,14 @@ class AppButton extends StatelessWidget {
             ),
           )
         else ...[
-          if (icon != null) ...[
-            icon!,
-            SizedBox(width: AppSpacing.sm),
-          ],
+          if (icon != null) ...[icon!, SizedBox(width: AppSpacing.sm)],
           Flexible(
             child: Text(
               text,
               style: AppTypography.labelLarge.copyWith(
-                color:
-                    canTap ? foregroundColor : foregroundColor.withOpacity(0.5),
+                color: canTap
+                    ? foregroundColor
+                    : foregroundColor.withOpacity(0.5),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -164,28 +159,45 @@ class AppButton extends StatelessWidget {
       ],
     );
 
-    return SizedBox(
+    final buttonContent = SizedBox(
       width: width,
-      height: effectiveHeight,
-      child: Material(
-        color: backgroundColor,
-        borderRadius: effectiveRadius,
-        child: InkWell(
-          onTap: canTap ? onPressed : null,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: effectiveHeight,
+          minWidth: width ?? 0,
+        ),
+        child: Material(
+          color: backgroundColor,
           borderRadius: effectiveRadius,
-          child: Container(
-            padding: padding ?? EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            decoration: BoxDecoration(
-              borderRadius: effectiveRadius,
-              border: borderSide != BorderSide.none
-                  ? Border.fromBorderSide(borderSide)
-                  : null,
+          child: InkWell(
+            onTap: canTap ? onPressed : null,
+            borderRadius: effectiveRadius,
+            child: Container(
+              padding:
+                  padding ??
+                  EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.xs,
+                  ),
+              decoration: BoxDecoration(
+                borderRadius: effectiveRadius,
+                border: borderSide != BorderSide.none
+                    ? Border.fromBorderSide(borderSide)
+                    : null,
+              ),
+              alignment: Alignment.center,
+              child: ExcludeSemantics(child: content),
             ),
-            alignment: Alignment.center,
-            child: content,
           ),
         ),
       ),
+    );
+
+    return Semantics(
+      button: true,
+      enabled: canTap,
+      label: text,
+      child: buttonContent,
     );
   }
 }

@@ -60,7 +60,8 @@ class AppBottomSheetShell extends StatelessWidget {
     final colors = context.colors;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
+    final sheet = Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: backgroundColor ?? colors.surface,
         borderRadius: AppRadii.bottomSheetTop,
@@ -107,6 +108,8 @@ class AppBottomSheetShell extends StatelessWidget {
                           icon: const Icon(Iconsax.close_circle),
                           onPressed: () => Navigator.of(context).maybePop(),
                           iconColor: colors.textSecondary,
+                          tooltip: 'إغلاق',
+                          semanticLabel: 'إغلاق',
                           size: 36,
                         )
                       else
@@ -142,6 +145,13 @@ class AppBottomSheetShell extends StatelessWidget {
         ),
       ),
     );
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: sheet,
+      ),
+    );
   }
 }
-

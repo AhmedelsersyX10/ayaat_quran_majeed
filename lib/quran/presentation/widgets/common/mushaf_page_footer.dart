@@ -31,44 +31,47 @@ class MushafPageFooter extends StatelessWidget {
     final String hizbText = metadataService.getHizbTextByPage(pageNumber);
     final String pageArabic = toArabicDigits(pageNumber);
 
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-        child: CustomPaint(
-          painter: const MushafBadgePainter(
-            borderColor: AppColors.mushafOrnament,
-            fillColor: AppColors.mushafBadgeFill,
-          ),
+    return Semantics(
+      label: 'صفحة $pageArabic${hizbText.isNotEmpty ? '، $hizbText' : ''}',
+      readOnly: true,
+      child: ExcludeSemantics(
+        child: Align(
+          alignment: Alignment.centerRight,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 3.h),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: hizbText.isNotEmpty
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          pageArabic,
-                          style: AppTypography.mushafPageFooter,
-                        ),
-                        Container(
-                          margin: EdgeInsets.symmetric(horizontal: 6.w),
-                          width: 1.w,
-                          height: 12.h,
-                          color: AppColors.mushafOrnament.withOpacity(0.55),
-                        ),
-                        Text(
-                          hizbText,
-                          style: AppTypography.mushafPageFooter,
-                        ),
-                      ],
-                    )
-                  : Text(
-                      pageArabic,
-                      style: AppTypography.mushafPageFooter,
-                    ),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+            child: CustomPaint(
+              painter: const MushafBadgePainter(
+                borderColor: AppColors.mushafOrnament,
+                fillColor: AppColors.mushafBadgeFill,
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 3.h),
+                child: Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: hizbText.isNotEmpty
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              pageArabic,
+                              style: AppTypography.mushafPageFooter,
+                            ),
+                            Container(
+                              margin: EdgeInsets.symmetric(horizontal: 6.w),
+                              width: 1.w,
+                              height: 12.h,
+                              color: AppColors.mushafOrnament.withOpacity(0.55),
+                            ),
+                            Text(
+                              hizbText,
+                              style: AppTypography.mushafPageFooter,
+                            ),
+                          ],
+                        )
+                      : Text(pageArabic, style: AppTypography.mushafPageFooter),
+                ),
+              ),
             ),
           ),
         ),
@@ -99,7 +102,10 @@ class MushafBadgePainter extends CustomPainter {
 
     // 1. Background fill
     final Rect mainRect = Rect.fromLTWH(earWidth * 0.5, 0, w - earWidth, h);
-    final RRect mainRRect = RRect.fromRectAndRadius(mainRect, Radius.circular(radius));
+    final RRect mainRRect = RRect.fromRectAndRadius(
+      mainRect,
+      Radius.circular(radius),
+    );
 
     final Paint fillPaint = Paint()
       ..color = fillColor
@@ -152,18 +158,14 @@ class MushafBadgePainter extends CustomPainter {
     final Path path = Path();
     // Outer scroll curve
     path.moveTo(anchorX, h * 0.2);
-    path.quadraticBezierTo(
-      anchorX - dir * earWidth,
-      centerY,
-      anchorX,
-      h * 0.8,
-    );
+    path.quadraticBezierTo(anchorX - dir * earWidth, centerY, anchorX, h * 0.8);
 
     canvas.drawPath(path, paint);
   }
 
   @override
   bool shouldRepaint(covariant MushafBadgePainter oldDelegate) {
-    return oldDelegate.borderColor != borderColor || oldDelegate.fillColor != fillColor;
+    return oldDelegate.borderColor != borderColor ||
+        oldDelegate.fillColor != fillColor;
   }
 }

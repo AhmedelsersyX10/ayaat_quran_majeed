@@ -74,9 +74,10 @@ class _ShareCardPreviewPageState extends State<ShareCardPreviewPage> {
             ),
             leading: IconButton(
               icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
+                Icons.arrow_forward_rounded,
                 color: AppColors.textPrimary,
               ),
+              tooltip: 'رجوع',
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),

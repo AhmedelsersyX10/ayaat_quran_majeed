@@ -68,7 +68,10 @@ class FloatingAudioPlayerState extends State<FloatingAudioPlayer> {
     }
   }
 
-  String _resolveReciterName(BuildContext context, AudioPlaybackState audioState) {
+  String _resolveReciterName(
+    BuildContext context,
+    AudioPlaybackState audioState,
+  ) {
     if (audioState.reciter != null && audioState.reciter!.name.isNotEmpty) {
       return audioState.reciter!.name;
     }
@@ -103,8 +106,20 @@ class FloatingAudioPlayerState extends State<FloatingAudioPlayer> {
             duration: const Duration(milliseconds: 280),
             curve: Curves.easeInOutQuart,
             child: effectivelyExpanded
-                ? _buildExpandedCard(context, audioState, reciterName, isPlaying, isLoading)
-                : _buildCompactPill(context, audioState, reciterName, isPlaying, isLoading),
+                ? _buildExpandedCard(
+                    context,
+                    audioState,
+                    reciterName,
+                    isPlaying,
+                    isLoading,
+                  )
+                : _buildCompactPill(
+                    context,
+                    audioState,
+                    reciterName,
+                    isPlaying,
+                    isLoading,
+                  ),
           ),
         );
       },
@@ -126,7 +141,10 @@ class FloatingAudioPlayerState extends State<FloatingAudioPlayer> {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(24.r),
-          border: Border.all(color: AppColors.border.withOpacity(0.6), width: 1),
+          border: Border.all(
+            color: AppColors.border.withOpacity(0.6),
+            width: 1,
+          ),
           boxShadow: const [
             BoxShadow(
               color: Color(0x18000000),
@@ -139,30 +157,34 @@ class FloatingAudioPlayerState extends State<FloatingAudioPlayer> {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Reciter name and dropdown chevron
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                expand();
-                _openReciterPicker(context);
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.primary,
-                    size: 22.sp,
-                  ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    reciterName,
-                    style: AppTypography.bodyMedium.copyWith(
+            Semantics(
+              button: true,
+              label: 'اختيار القارئ: $reciterName',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  expand();
+                  _openReciterPicker(context);
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
                       color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Cairo',
+                      size: 22.sp,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 4.w),
+                    Text(
+                      reciterName,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             SizedBox(width: 14.w),
@@ -174,29 +196,39 @@ class FloatingAudioPlayerState extends State<FloatingAudioPlayer> {
                   : AppStrings.tr(AppStrings.play),
               child: InkWell(
                 onTap: () => _handlePlayPause(context, audioState),
-                borderRadius: BorderRadius.circular(20.r),
-                child: Container(
-                  width: 36.w,
-                  height: 36.w,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(22.r),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: 44,
                   ),
                   child: Center(
-                    child: isLoading
-                        ? SizedBox(
-                            width: 18.w,
-                            height: 18.w,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2.2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Icon(
-                            isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 24.sp,
-                          ),
+                    child: Container(
+                      width: 36.w,
+                      height: 36.w,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: isLoading
+                            ? SizedBox(
+                                width: 18.w,
+                                height: 18.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Icon(
+                                isPlaying
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 24.sp,
+                              ),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -246,46 +278,58 @@ class FloatingAudioPlayerState extends State<FloatingAudioPlayer> {
                     collapse();
                     widget.onDismiss?.call();
                   },
-                  borderRadius: BorderRadius.circular(16.r),
-                  child: Container(
-                    width: 28.w,
-                    height: 28.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.border.withOpacity(0.35),
-                      shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(22.r),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 44,
                     ),
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: 16.sp,
-                      color: AppColors.textSecondary,
+                    child: Center(
+                      child: Container(
+                        width: 28.w,
+                        height: 28.w,
+                        decoration: BoxDecoration(
+                          color: AppColors.border.withOpacity(0.35),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 16.sp,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
               // Center: Reciter name + chevron dropdown
               Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _openReciterPicker(context),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        reciterName,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Cairo',
+                child: Semantics(
+                  button: true,
+                  label: 'اختيار القارئ: $reciterName',
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _openReciterPicker(context),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          reciterName,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Cairo',
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(width: 4.w),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.primary,
-                        size: 20.sp,
-                      ),
-                    ],
+                        SizedBox(width: 4.w),
+                        Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.primary,
+                          size: 20.sp,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -294,15 +338,24 @@ class FloatingAudioPlayerState extends State<FloatingAudioPlayer> {
                 button: true,
                 label: AppStrings.tr(AppStrings.recitationSettings),
                 child: InkWell(
-                  onTap: widget.onSettingsPressed ??
+                  onTap:
+                      widget.onSettingsPressed ??
                       () => RecitationSettingsSheet.show(context),
-                  borderRadius: BorderRadius.circular(16.r),
-                  child: Padding(
-                    padding: EdgeInsets.all(4.w),
-                    child: Icon(
-                      Icons.more_horiz_rounded,
-                      color: AppColors.textSecondary,
-                      size: 22.sp,
+                  borderRadius: BorderRadius.circular(22.r),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 44,
+                    ),
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(4.w),
+                        child: Icon(
+                          Icons.more_horiz_rounded,
+                          color: AppColors.textSecondary,
+                          size: 22.sp,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -385,9 +438,7 @@ class FloatingAudioPlayerState extends State<FloatingAudioPlayer> {
               color: AppColors.primary,
               shape: BoxShape.circle,
             ),
-            child: Center(
-              child: EqualizerWaveBars(isPlaying: isPlaying),
-            ),
+            child: Center(child: EqualizerWaveBars(isPlaying: isPlaying)),
           ),
           // Controls group: Skip Previous --- Play/Pause --- Skip Next
           Row(
@@ -423,7 +474,9 @@ class FloatingAudioPlayerState extends State<FloatingAudioPlayer> {
                   child: Padding(
                     padding: EdgeInsets.all(4.w),
                     child: Icon(
-                      isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
                       color: AppColors.primary,
                       size: 38.sp,
                     ),

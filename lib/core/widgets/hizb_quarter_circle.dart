@@ -3,12 +3,7 @@ import 'dart:math';
 import 'package:ayaat_quran_majeed/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-enum HizbQuarterType {
-  firstQuarter,
-  half,
-  threeQuarters,
-  full,
-}
+enum HizbQuarterType { firstQuarter, half, threeQuarters, full }
 
 /// Unified indicator for quarters of a Hizb matching screens 04 and 36.
 class HizbQuarterIndicator extends StatelessWidget {
@@ -30,12 +25,32 @@ class HizbQuarterIndicator extends StatelessWidget {
     final effectiveActiveColor = activeColor ?? AppColors.primary;
     final effectiveTrackColor = trackColor ?? AppColors.border;
 
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _HizbQuarterPainter(
-        type: type,
-        activeColor: effectiveActiveColor,
-        trackColor: effectiveTrackColor,
+    final String quarterLabel;
+    switch (type) {
+      case HizbQuarterType.firstQuarter:
+        quarterLabel = 'ربع الحزب الأول';
+        break;
+      case HizbQuarterType.half:
+        quarterLabel = 'نصف الحزب';
+        break;
+      case HizbQuarterType.threeQuarters:
+        quarterLabel = 'ثلاثة أرباع الحزب';
+        break;
+      case HizbQuarterType.full:
+        quarterLabel = 'حزب كامل';
+        break;
+    }
+
+    return Semantics(
+      label: quarterLabel,
+      readOnly: true,
+      child: CustomPaint(
+        size: Size(size, size),
+        painter: _HizbQuarterPainter(
+          type: type,
+          activeColor: effectiveActiveColor,
+          trackColor: effectiveTrackColor,
+        ),
       ),
     );
   }
@@ -132,8 +147,11 @@ class ThreeQuartersCircle extends StatelessWidget {
   final Color color;
   final double size;
 
-  const ThreeQuartersCircle(
-      {super.key, required this.color, required this.size});
+  const ThreeQuartersCircle({
+    super.key,
+    required this.color,
+    required this.size,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -152,8 +170,10 @@ class QuarterCirclePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint = Paint()..color = color;
-    final Rect rect =
-        Rect.fromPoints(const Offset(0, 0), Offset(size.width, size.height));
+    final Rect rect = Rect.fromPoints(
+      const Offset(0, 0),
+      Offset(size.width, size.height),
+    );
     const double startAngle = -pi / 2;
     const double sweepAngle = pi / 2;
 
@@ -172,8 +192,10 @@ class HalfCirclePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint = Paint()..color = color;
-    final Rect rect =
-        Rect.fromPoints(const Offset(0, 0), Offset(size.width, size.height));
+    final Rect rect = Rect.fromPoints(
+      const Offset(0, 0),
+      Offset(size.width, size.height),
+    );
     const double startAngle = -pi / 2;
     const double sweepAngle = pi;
 
@@ -192,8 +214,10 @@ class ThreeQuartersCirclePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint = Paint()..color = color;
-    final Rect rect =
-        Rect.fromPoints(const Offset(0, 0), Offset(size.width, size.height));
+    final Rect rect = Rect.fromPoints(
+      const Offset(0, 0),
+      Offset(size.width, size.height),
+    );
     const double startAngle = -pi / 2;
     const double sweepAngle = 3 * pi / 2;
 

@@ -93,29 +93,47 @@ class AppBottomNav extends StatelessWidget {
               final color = isSelected ? colors.primary : colors.textSecondary;
 
               return Expanded(
-                child: InkWell(
-                  onTap: () => onTap(index),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isSelected ? item.activeIcon : item.icon,
-                        color: color,
-                        size: AppSizes.iconMd,
+                child: Semantics(
+                  button: true,
+                  selected: isSelected,
+                  label: item.label,
+                  child: InkWell(
+                    onTap: () => onTap(index),
+                    child: ExcludeSemantics(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isSelected ? item.activeIcon : item.icon,
+                            color: color,
+                            size: AppSizes.iconMd,
+                          ),
+                          const SizedBox(height: 2),
+                          Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 2.0,
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  item.label,
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: color,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.label,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: color,
-                          fontWeight: isSelected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               );

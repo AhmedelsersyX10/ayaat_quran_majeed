@@ -32,48 +32,49 @@ class AppListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final padding = contentPadding ??
+    final padding =
+        contentPadding ??
         EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         );
 
-    final rowContent = Padding(
-      padding: padding,
-      child: Row(
-        children: [
-          if (leading != null) ...[
-            leading!,
-            SizedBox(width: AppSpacing.md),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DefaultTextStyle(
-                  style: AppTypography.titleMedium.copyWith(
-                    color: isSelected ? colors.primary : colors.textPrimary,
-                  ),
-                  child: title,
-                ),
-                if (subtitle != null) ...[
-                  SizedBox(height: AppSpacing.xxs),
+    final rowContent = ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48),
+      child: Padding(
+        padding: padding,
+        child: Row(
+          children: [
+            if (leading != null) ...[leading!, SizedBox(width: AppSpacing.md)],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   DefaultTextStyle(
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: colors.textSecondary,
+                    style: AppTypography.titleMedium.copyWith(
+                      color: isSelected ? colors.primary : colors.textPrimary,
                     ),
-                    child: subtitle!,
+                    child: title,
                   ),
+                  if (subtitle != null) ...[
+                    SizedBox(height: AppSpacing.xxs),
+                    DefaultTextStyle(
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                      child: subtitle!,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          if (trailing != null) ...[
-            SizedBox(width: AppSpacing.sm),
-            trailing!,
+            if (trailing != null) ...[
+              SizedBox(width: AppSpacing.sm),
+              trailing!,
+            ],
           ],
-        ],
+        ),
       ),
     );
 
@@ -87,11 +88,10 @@ class AppListTile extends StatelessWidget {
         : rowContent;
 
     if (onTap != null) {
-      item = InkWell(
-        onTap: onTap,
-        child: item,
-      );
+      item = InkWell(onTap: onTap, child: item);
     }
+
+    item = Semantics(button: onTap != null, selected: isSelected, child: item);
 
     if (showDivider) {
       return Column(

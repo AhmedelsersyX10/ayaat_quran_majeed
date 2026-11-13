@@ -26,7 +26,9 @@ class MushafPageHeader extends StatelessWidget {
 
     final int juzNumber = metadataService.getJuzNumberForPage(pageNumber);
     final String juzName = metadataService.getJuzNameArabic(juzNumber);
-    final String surahName = metadataService.getSurahNameArabicForPage(pageNumber);
+    final String surahName = metadataService.getSurahNameArabicForPage(
+      pageNumber,
+    );
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -35,13 +37,22 @@ class MushafPageHeader extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'الجزء $juzName',
-              style: AppTypography.mushafPageHeader,
+            Flexible(
+              child: Text(
+                'الجزء $juzName',
+                style: AppTypography.mushafPageHeader,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ),
-            Text(
-              surahName,
-              style: AppTypography.mushafPageHeader,
+            SizedBox(width: 8.w),
+            Flexible(
+              child: Text(
+                surahName,
+                style: AppTypography.mushafPageHeader,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ),
           ],
         ),
@@ -49,4 +60,3 @@ class MushafPageHeader extends StatelessWidget {
     );
   }
 }
-
