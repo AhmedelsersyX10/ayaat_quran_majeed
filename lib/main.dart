@@ -9,10 +9,6 @@ import 'package:ayaat_quran_majeed/quran/data/data_sources/json_asset_service.da
 import 'package:easy_localization/easy_localization.dart' as ez;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:just_audio/just_audio.dart';
-
-/// Backward-compatible global getter referencing DI service locator.
-AudioPlayer get audioPlayer => sl<AudioPlayer>();
 
 /// Global theme mode notifier persisted via [AppPreferences].
 final ValueNotifier<bool> isDarkModeNotifier = ValueNotifier<bool>(false);

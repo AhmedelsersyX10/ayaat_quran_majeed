@@ -1,4 +1,5 @@
 import 'package:ayaat_quran_majeed/core/errors/exceptions.dart';
+import 'package:ayaat_quran_majeed/core/network/cancellation_token.dart';
 import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
 
 import '../../domain/entities/tafsir_book.dart';
@@ -24,9 +25,9 @@ class TafsirRepositoryImpl implements TafsirRepository {
     required TafsirLocalDataSource localDataSource,
     required TafsirRemoteDataSource remoteDataSource,
     AppPreferences? preferences,
-  })  : _localDataSource = localDataSource,
-        _remoteDataSource = remoteDataSource,
-        _preferences = preferences;
+  }) : _localDataSource = localDataSource,
+       _remoteDataSource = remoteDataSource,
+       _preferences = preferences;
 
   String get _currentSelectedId =>
       _preferences?.selectedTafsirBookId ?? _fallbackSelectedId;
@@ -54,7 +55,8 @@ class TafsirRepositoryImpl implements TafsirRepository {
 
   @override
   Future<List<TafsirBook>> getAvailableBooks() async {
-    final downloadedIds = (await _localDataSource.getDownloadedBookIds()).toSet();
+    final downloadedIds = (await _localDataSource.getDownloadedBookIds())
+        .toSet();
 
     return TafsirCatalog.books.map((model) {
       final isDownloaded = model.isBundled || downloadedIds.contains(model.id);
@@ -72,7 +74,8 @@ class TafsirRepositoryImpl implements TafsirRepository {
       await _persistSelectedId(resolvedId);
     }
 
-    final model = TafsirCatalog.findById(resolvedId) ??
+    final model =
+        TafsirCatalog.findById(resolvedId) ??
         TafsirCatalog.findById(TafsirCatalog.defaultBookId)!;
 
     final isDownloaded = await _localDataSource.isBookAvailable(resolvedId);
@@ -88,7 +91,9 @@ class TafsirRepositoryImpl implements TafsirRepository {
 
     final isAvailable = await _localDataSource.isBookAvailable(bookId);
     if (!isAvailable) {
-      throw TafsirNotFoundException('Book $bookId is not downloaded or available locally');
+      throw TafsirNotFoundException(
+        'Book $bookId is not downloaded or available locally',
+      );
     }
 
     await _persistSelectedId(bookId);
@@ -150,7 +155,9 @@ class TafsirRepositoryImpl implements TafsirRepository {
   @override
   Future<void> removeFromMyLibrary(String bookId) async {
     if (bookId == TafsirCatalog.defaultBookId) {
-      throw const CacheException('The default Tafsir book cannot be removed from My Library');
+      throw const CacheException(
+        'The default Tafsir book cannot be removed from My Library',
+      );
     }
 
     final currentIds = List<String>.from(_currentLibraryIds);
@@ -227,7 +234,7 @@ class TafsirRepositoryImpl implements TafsirRepository {
   Future<void> downloadBook(
     String bookId, {
     void Function(int received, int total)? onProgress,
-    dynamic cancelToken,
+    AppCancellationToken? cancelToken,
   }) async {
     final model = TafsirCatalog.findById(bookId);
     if (model == null) {
@@ -240,7 +247,9 @@ class TafsirRepositoryImpl implements TafsirRepository {
 
     final downloadUrl = model.downloadUrl;
     if (downloadUrl == null || downloadUrl.isEmpty) {
-      throw TafsirNotFoundException('No download URL available for book $bookId');
+      throw TafsirNotFoundException(
+        'No download URL available for book $bookId',
+      );
     }
 
     final tempFilePath = await _remoteDataSource.downloadBookFile(

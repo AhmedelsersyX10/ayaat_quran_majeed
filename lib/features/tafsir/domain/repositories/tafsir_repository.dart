@@ -1,3 +1,5 @@
+import 'package:ayaat_quran_majeed/core/network/cancellation_token.dart';
+
 import '../entities/tafsir_book.dart';
 import '../entities/tafsir_verse.dart';
 
@@ -53,7 +55,7 @@ abstract class TafsirRepository {
   Future<void> downloadBook(
     String bookId, {
     void Function(int received, int total)? onProgress,
-    dynamic cancelToken,
+    AppCancellationToken? cancelToken,
   });
 
   /// Deletes a downloaded book from local disk storage.
@@ -63,4 +65,3 @@ abstract class TafsirRepository {
   /// Clears any in-memory parsed caches to release resources.
   void clearMemoryCache();
 }
-

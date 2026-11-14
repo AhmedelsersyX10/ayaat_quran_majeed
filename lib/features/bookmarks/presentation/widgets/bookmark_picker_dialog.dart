@@ -7,6 +7,7 @@ import 'package:ayaat_quran_majeed/core/theme/app_theme_extension.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
 import 'package:ayaat_quran_majeed/core/widgets/app_dialog_shell.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/domain/entities/bookmark_item.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/presentation/extensions/bookmark_color_extension.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/presentation/widgets/bookmark_edit_dialog.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:flutter/material.dart';

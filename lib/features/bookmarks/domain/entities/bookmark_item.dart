@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart' show Color;
-
 /// Represents a Quran bookmark item conforming to Screens 11 & 27.
 ///
 /// Features 4 standard colored bookmarks (Red, Yellow, Green, Blue)
@@ -28,10 +26,10 @@ class BookmarkItem {
   /// Whether this bookmark is currently assigned to a specific Ayah.
   bool get isAssigned => surahNumber != null && verseNumber != null;
 
-  /// Parsed Flutter [Color] from the hex string.
-  Color get color {
+  /// Parsed ARGB color integer value from the hex string.
+  int get colorValue {
     final cleanHex = colorHex.replaceFirst('#', '').padLeft(8, 'f');
-    return Color(int.parse(cleanHex, radix: 16));
+    return int.parse(cleanHex, radix: 16);
   }
 
   /// Backward compatibility alias for legacy code.

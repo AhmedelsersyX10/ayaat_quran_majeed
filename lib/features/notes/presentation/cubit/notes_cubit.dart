@@ -1,3 +1,4 @@
+import 'package:ayaat_quran_majeed/core/errors/failure.dart';
 import 'package:ayaat_quran_majeed/features/notes/domain/entities/note_item.dart';
 import 'package:ayaat_quran_majeed/features/notes/domain/entities/note_surah_group.dart';
 import 'package:ayaat_quran_majeed/features/notes/domain/repositories/notes_repository.dart';
@@ -12,9 +13,9 @@ class NotesCubit extends Cubit<NotesState> {
   NotesCubit({
     required NotesRepository repository,
     QuranMetadataService? metadataService,
-  })  : _repository = repository,
-        _metadataService = metadataService ?? const QuranMetadataService(),
-        super(NotesState.initial());
+  }) : _repository = repository,
+       _metadataService = metadataService ?? const QuranMetadataService(),
+       super(NotesState.initial());
 
   /// Loads all stored notes and computes groups and index maps.
   Future<void> loadNotes() async {
@@ -22,11 +23,12 @@ class NotesCubit extends Cubit<NotesState> {
     try {
       final items = await _repository.getNotes();
       _emitUpdatedNotes(items);
-    } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString(),
-      ));
+    } on Failure catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.message));
+    } catch (_) {
+      emit(
+        state.copyWith(isLoading: false, errorMessage: 'تعذر تحميل الملاحظات'),
+      );
     }
   }
 
@@ -51,8 +53,8 @@ class NotesCubit extends Cubit<NotesState> {
     }
 
     final now = DateTime.now();
-    final resolvedPage = pageNumber ??
-        _metadataService.getPageNumber(surahNumber, verseNumber);
+    final resolvedPage =
+        pageNumber ?? _metadataService.getPageNumber(surahNumber, verseNumber);
 
     NoteItem targetNote;
     if (id != null && id.isNotEmpty) {
@@ -73,7 +75,8 @@ class NotesCubit extends Cubit<NotesState> {
         updatedAt: now,
       );
     } else {
-      final newId = '${surahNumber}_${verseNumber}_${now.microsecondsSinceEpoch}';
+      final newId =
+          '${surahNumber}_${verseNumber}_${now.microsecondsSinceEpoch}';
       targetNote = NoteItem(
         id: newId,
         surahNumber: surahNumber,
@@ -125,13 +128,14 @@ class NotesCubit extends Cubit<NotesState> {
       notesByAyah[key]!.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     }
 
-    emit(state.copyWith(
-      isLoading: false,
-      notes: List.unmodifiable(items),
-      groups: List.unmodifiable(groups),
-      notesByAyah: Map.unmodifiable(notesByAyah),
-      errorMessage: null,
-    ));
+    emit(
+      state.copyWith(
+        isLoading: false,
+        notes: List.unmodifiable(items),
+        groups: List.unmodifiable(groups),
+        notesByAyah: Map.unmodifiable(notesByAyah),
+        errorMessage: null,
+      ),
+    );
   }
 }
-

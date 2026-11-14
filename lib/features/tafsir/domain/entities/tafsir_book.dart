@@ -4,6 +4,9 @@ import 'tafsir_source_attribution.dart';
 /// Domain entity representing a Tafsir or Translation book.
 /// Pure Dart — no Flutter framework dependencies.
 class TafsirBook {
+  /// Default readable book ID across the application (Al-Tafsir Al-Muyassar).
+  static const String defaultBookId = 'ar_muyassar';
+
   /// Unique identifier (e.g. 'ar_muyassar', 'en_sahih', 'sa3dy').
   final String id;
 
@@ -120,6 +123,6 @@ class TafsirBook {
       attribution.hashCode;
 
   @override
-  String toString() => 'TafsirBook(id: $id, name: $name, isDownloaded: $isDownloaded)';
+  String toString() =>
+      'TafsirBook(id: $id, name: $name, isDownloaded: $isDownloaded)';
 }
-

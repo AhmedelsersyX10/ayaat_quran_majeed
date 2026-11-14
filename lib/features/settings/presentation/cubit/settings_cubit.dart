@@ -1,3 +1,4 @@
+import 'package:ayaat_quran_majeed/core/errors/failure.dart';
 import 'package:ayaat_quran_majeed/features/settings/domain/repositories/settings_repository.dart';
 import 'package:ayaat_quran_majeed/features/settings/presentation/cubit/settings_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,8 +17,10 @@ class SettingsCubit extends Cubit<SettingsState> {
       final settings = _repository.getSettings();
       final sources = _repository.getSourcesAndAttributions();
       emit(SettingsLoaded(settings: settings, sources: sources));
-    } catch (e) {
-      emit(SettingsFailure(e.toString()));
+    } on Failure catch (e) {
+      emit(SettingsFailure(e.message));
+    } catch (_) {
+      emit(const SettingsFailure('تعذر تحميل الإعدادات'));
     }
   }
 
@@ -36,8 +39,10 @@ class SettingsCubit extends Cubit<SettingsState> {
       } else {
         loadSettings();
       }
-    } catch (e) {
-      emit(SettingsFailure(e.toString()));
+    } on Failure catch (e) {
+      emit(SettingsFailure(e.message));
+    } catch (_) {
+      emit(const SettingsFailure('تعذر حفظ إعداد إبقاء الشاشة مفعلة'));
     }
   }
 
@@ -56,8 +61,10 @@ class SettingsCubit extends Cubit<SettingsState> {
       } else {
         loadSettings();
       }
-    } catch (e) {
-      emit(SettingsFailure(e.toString()));
+    } on Failure catch (e) {
+      emit(SettingsFailure(e.message));
+    } catch (_) {
+      emit(const SettingsFailure('تعذر تعديل التاريخ الهجري'));
     }
   }
 
@@ -76,8 +83,10 @@ class SettingsCubit extends Cubit<SettingsState> {
       } else {
         loadSettings();
       }
-    } catch (e) {
-      emit(SettingsFailure(e.toString()));
+    } on Failure catch (e) {
+      emit(SettingsFailure(e.message));
+    } catch (_) {
+      emit(const SettingsFailure('تعذر تعديل حجم الخط'));
     }
   }
 }

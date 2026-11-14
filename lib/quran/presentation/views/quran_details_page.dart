@@ -27,13 +27,14 @@ import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/get_trans
     as get_translation_data;
 import 'package:ayaat_quran_majeed/quran/data/data_sources/translation/translationdata.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/domain/entities/bookmark_item.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/presentation/extensions/bookmark_color_extension.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/presentation/widgets/bookmark_picker_dialog.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/presentation/widgets/mushaf_bookmark_marker.dart';
+import 'package:ayaat_quran_majeed/features/index/presentation/widgets/index_bottom_sheet.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/json_asset_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/utils/convert_number_to_ar.dart';
 import 'package:ayaat_quran_majeed/quran/data/utils/remove_html_tags.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/views/quran_sura_list.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/ayah_options_sheet.dart'
     show AyahOptionsSheet;
 import 'package:ayaat_quran_majeed/quran/presentation/widgets/bottom_sheets/ayah_picker_sheet.dart';
@@ -68,7 +69,6 @@ import 'package:flutter/material.dart' as m;
 import 'package:flutter/services.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:just_audio/just_audio.dart';
 part 'alignment_views/verse_by_verse_view.dart';
 part 'alignment_views/vertical_view.dart';
 part 'alignment_views/page_view.dart';
@@ -162,8 +162,6 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
   // ==================== Full Surah Playback ====================
   int? currentSurahNumber;
   int? currentPlayingVerse = 0; // الآية التي يتم تشغيلها حالياً
-  StreamSubscription<SequenceState?>? positionSubscription;
-  StreamSubscription<ProcessingState>? processingSubscription;
   Timer? verseTrackingTimer;
   Timer? _debounceTimer; // Debouncer for scroll updates
   bool isTrackingStarted = false; // flag لمنع بدء التتبع مرتين
@@ -569,10 +567,6 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
     verseHighlightTimer?.cancel();
 
     _navHighlightController.dispose();
-
-    // Cancel subscriptions
-    positionSubscription?.cancel();
-    processingSubscription?.cancel();
 
     // Remove listeners
     _scrollController.removeListener(_scrollListener);
@@ -1091,35 +1085,7 @@ class QuranDetailsPageState extends State<QuranDetailsPage>
 
   static Future<dynamic> showSurahNavigatorSheet(BuildContext context) {
     if (!context.mounted) return Future.value(null);
-    // Capture cubits to pass them into the modal route
-    final bookmarkCubit = context.read<BookmarkCubit>();
-    final quranReaderCubit = context.read<QuranReaderCubit>();
-
-    return showModalBottomSheet<dynamic>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      useSafeArea: true,
-      sheetAnimationStyle: const AnimationStyle(
-        duration: Duration(milliseconds: 500),
-        curve: Curves.easeInOutQuart,
-      ),
-      builder: (sheetContext) {
-        return MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: bookmarkCubit),
-            BlocProvider.value(value: quranReaderCubit),
-          ],
-          child: Padding(
-            padding: const EdgeInsets.only(top: 100),
-            child: SurahListPage(
-              jsonData: JsonAssetService.surahsData,
-              quarterjsonData: JsonAssetService.quartersData,
-            ),
-          ),
-        );
-      },
-    );
+    return IndexBottomSheet.show(context);
   }
 
   /// Displays the pixel-faithful Ayah Picker sheet (Ref 38 & 39).

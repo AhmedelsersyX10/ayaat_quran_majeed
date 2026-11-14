@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:ayaat_quran_majeed/core/errors/exceptions.dart';
 import 'package:ayaat_quran_majeed/core/errors/failure.dart';
+import 'package:ayaat_quran_majeed/core/network/cancellation_token.dart';
+import 'package:ayaat_quran_majeed/core/network/cancellation_token_dio_adapter.dart';
 import 'package:ayaat_quran_majeed/core/storage/app_preferences.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_cache_data_source.dart';
 import 'package:ayaat_quran_majeed/features/audio/data/datasources/audio_remote_data_source.dart';
@@ -296,7 +298,7 @@ class AudioRepositoryImpl implements AudioRepository {
     required Moshaf moshaf,
     required int surahNumber,
     void Function(int received, int total)? onProgress,
-    dynamic cancelToken,
+    AppCancellationToken? cancelToken,
   }) async {
     final finalPath = await _getSurahFilePath(moshaf.id, surahNumber);
     final tempAudioPath = '$finalPath.part';
@@ -320,7 +322,7 @@ class AudioRepositoryImpl implements AudioRepository {
           reportedTotal = total;
           onProgress?.call(received, total);
         },
-        cancelToken: cancelToken,
+        cancelToken: cancelToken?.toDioCancelToken(),
       );
 
       // 3. Integrity and size validation

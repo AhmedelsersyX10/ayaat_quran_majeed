@@ -73,10 +73,7 @@ import 'package:ayaat_quran_majeed/features/settings/domain/repositories/setting
 import 'package:ayaat_quran_majeed/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
-import 'package:ayaat_quran_majeed/quran/data/repositories/quran_search_repository.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_search_cubit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -240,12 +237,6 @@ Future<void> initInjection() async {
         ),
         metadataService: sl<QuranMetadataService>(),
       ),
-    );
-  }
-
-  if (!sl.isRegistered<QuranSearchRepository>()) {
-    sl.registerLazySingleton<QuranSearchRepository>(
-      () => QuranSearchRepository(metadataService: sl<QuranMetadataService>()),
     );
   }
 
@@ -433,12 +424,6 @@ Future<void> initInjection() async {
   // ---------------------------------------------------------
   // 3. Presentation / Cubits & Blocs (Factories)
   // ---------------------------------------------------------
-  if (!sl.isRegistered<QuranPagePlayerBloc>()) {
-    sl.registerFactory<QuranPagePlayerBloc>(
-      () => QuranPagePlayerBloc(metadataService: sl<QuranMetadataService>()),
-    );
-  }
-
   if (!sl.isRegistered<QuranReaderCubit>()) {
     sl.registerFactory<QuranReaderCubit>(
       () => QuranReaderCubit(
@@ -466,12 +451,6 @@ Future<void> initInjection() async {
         repository: sl<NotesRepository>(),
         metadataService: sl<QuranMetadataService>(),
       ),
-    );
-  }
-
-  if (!sl.isRegistered<QuranSearchCubit>()) {
-    sl.registerFactory<QuranSearchCubit>(
-      () => QuranSearchCubit(sl<QuranSearchRepository>()),
     );
   }
 

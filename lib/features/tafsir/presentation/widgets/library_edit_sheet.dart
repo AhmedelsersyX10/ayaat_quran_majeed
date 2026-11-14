@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../data/models/tafsir_catalog.dart';
 import '../../domain/entities/tafsir_book.dart';
 import '../../domain/entities/tafsir_category.dart';
 import '../cubit/library_cubit.dart';
@@ -84,7 +83,10 @@ class LibraryEditSheet extends StatelessWidget {
                 // Top drag handle
                 Center(
                   child: Container(
-                    margin: EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
+                    margin: EdgeInsets.only(
+                      top: AppSpacing.sm,
+                      bottom: AppSpacing.xs,
+                    ),
                     width: AppSizes.dragHandleWidth,
                     height: AppSizes.dragHandleHeight,
                     decoration: BoxDecoration(
@@ -132,25 +134,34 @@ class LibraryEditSheet extends StatelessWidget {
 
                 // Content
                 Expanded(
-                  child: state.status == LibraryStatus.loading && state.myLibraryBooks.isEmpty
+                  child:
+                      state.status == LibraryStatus.loading &&
+                          state.myLibraryBooks.isEmpty
                       ? const Center(
-                          child: CircularProgressIndicator(color: AppColors.primary),
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
                         )
                       : CustomScrollView(
                           physics: const ClampingScrollPhysics(),
                           slivers: [
                             // 1. "مكتبتي" Section
                             SliverToBoxAdapter(
-                              child: _buildSectionBanner(AppStrings.tr(AppStrings.myLibrary)),
+                              child: _buildSectionBanner(
+                                AppStrings.tr(AppStrings.myLibrary),
+                              ),
                             ),
 
                             SliverToBoxAdapter(
-                              child: _buildMyLibraryList(context, state.myLibraryBooks),
+                              child: _buildMyLibraryList(
+                                context,
+                                state.myLibraryBooks,
+                              ),
                             ),
 
                             // 2. Available Books by Category
                             ..._buildCategorizedSections(context, state),
-                            
+
                             SliverToBoxAdapter(
                               child: SizedBox(height: AppSpacing.xxl),
                             ),
@@ -195,10 +206,11 @@ class LibraryEditSheet extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       buildDefaultDragHandles: false,
       itemCount: books.length,
-      onReorder: (oldIndex, newIndex) => cubit.reorderMyLibrary(oldIndex, newIndex),
+      onReorder: (oldIndex, newIndex) =>
+          cubit.reorderMyLibrary(oldIndex, newIndex),
       itemBuilder: (context, index) {
         final book = books[index];
-        final isDefault = book.id == TafsirCatalog.defaultBookId;
+        final isDefault = book.id == TafsirBook.defaultBookId;
 
         return Column(
           key: ValueKey('my_lib_${book.id}'),
@@ -247,10 +259,13 @@ class LibraryEditSheet extends StatelessWidget {
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        if (book.author.isNotEmpty || book.description.isNotEmpty) ...[
+                        if (book.author.isNotEmpty ||
+                            book.description.isNotEmpty) ...[
                           SizedBox(height: 3.h),
                           Text(
-                            book.author.isNotEmpty ? book.author : book.description,
+                            book.author.isNotEmpty
+                                ? book.author
+                                : book.description,
                             style: AppTypography.bodySmall.copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 12.sp,
@@ -288,7 +303,10 @@ class LibraryEditSheet extends StatelessWidget {
   }
 
   /// Categorized available books matching Reference 34 (ARABIC, ARABIC: GRAMMAR, ENGLISH, etc.).
-  List<Widget> _buildCategorizedSections(BuildContext context, LibraryState state) {
+  List<Widget> _buildCategorizedSections(
+    BuildContext context,
+    LibraryState state,
+  ) {
     final categorized = state.categorizedAvailableBooks;
     final slivers = <Widget>[];
 
@@ -308,22 +326,15 @@ class LibraryEditSheet extends StatelessWidget {
       if (books.isEmpty) continue;
 
       // Section Banner
-      slivers.add(
-        SliverToBoxAdapter(
-          child: _buildSectionBanner(bannerTitle),
-        ),
-      );
+      slivers.add(SliverToBoxAdapter(child: _buildSectionBanner(bannerTitle)));
 
       // Book rows
       slivers.add(
         SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final book = books[index];
-              return _buildAvailableBookRow(context, book, state);
-            },
-            childCount: books.length,
-          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final book = books[index];
+            return _buildAvailableBookRow(context, book, state);
+          }, childCount: books.length),
         ),
       );
     }
@@ -393,11 +404,7 @@ class LibraryEditSheet extends StatelessWidget {
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 16.r,
-                    ),
+                    child: Icon(Icons.add, color: Colors.white, size: 16.r),
                   ),
                 ),
 
@@ -415,7 +422,8 @@ class LibraryEditSheet extends StatelessWidget {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    if (book.author.isNotEmpty || book.description.isNotEmpty) ...[
+                    if (book.author.isNotEmpty ||
+                        book.description.isNotEmpty) ...[
                       SizedBox(height: 3.h),
                       Text(
                         book.author.isNotEmpty ? book.author : book.description,

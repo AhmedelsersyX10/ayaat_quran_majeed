@@ -1,4 +1,5 @@
 import 'package:ayaat_quran_majeed/features/bookmarks/domain/entities/bookmark_item.dart';
+import 'package:ayaat_quran_majeed/features/bookmarks/presentation/extensions/bookmark_color_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -54,6 +55,7 @@ void main() {
 
     test('color property parses hex string cleanly into Color', () {
       const item = BookmarkItem(id: 'red', name: 'الأحمر', colorHex: '#C9484A');
+      expect(item.colorValue, equals(0xFFC9484A));
       expect(item.color, equals(const Color(0xFFC9484A)));
 
       const itemWithoutHash = BookmarkItem(
@@ -61,6 +63,7 @@ void main() {
         name: 'الأخضر',
         colorHex: '62A77B',
       );
+      expect(itemWithoutHash.colorValue, equals(0xFF62A77B));
       expect(itemWithoutHash.color, equals(const Color(0xFF62A77B)));
     });
 

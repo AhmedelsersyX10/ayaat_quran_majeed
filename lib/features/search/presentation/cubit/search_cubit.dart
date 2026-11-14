@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:ayaat_quran_majeed/core/errors/failure.dart';
 import 'package:ayaat_quran_majeed/features/search/domain/repositories/search_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'search_state.dart';
@@ -50,8 +51,10 @@ class SearchCubit extends Cubit<SearchState> {
     try {
       final result = await _repository.search(query);
       emit(SearchLoaded(result));
-    } catch (e) {
-      emit(SearchError(e.toString()));
+    } on Failure catch (e) {
+      emit(SearchError(e.message));
+    } catch (_) {
+      emit(const SearchError('حدث خطأ أثناء البحث'));
     }
   }
 

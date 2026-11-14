@@ -1,5 +1,4 @@
-import 'package:ayaat_quran_majeed/features/tafsir/data/models/tafsir_catalog.dart';
-import 'package:dio/dio.dart';
+import 'package:ayaat_quran_majeed/core/network/cancellation_token.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/tafsir_book.dart';
@@ -22,7 +21,7 @@ class LibraryCubit extends Cubit<LibraryState> {
   final DownloadTafsirBookUseCase _downloadTafsirBookUseCase;
   final DeleteDownloadedBookUseCase _deleteDownloadedBookUseCase;
 
-  final Map<String, CancelToken> _cancelTokens = {};
+  final Map<String, AppCancellationToken> _cancelTokens = {};
 
   LibraryCubit({
     required GetMyLibraryBooksUseCase getMyLibraryBooksUseCase,
@@ -32,14 +31,14 @@ class LibraryCubit extends Cubit<LibraryState> {
     required RemoveFromMyLibraryUseCase removeFromMyLibraryUseCase,
     required DownloadTafsirBookUseCase downloadTafsirBookUseCase,
     required DeleteDownloadedBookUseCase deleteDownloadedBookUseCase,
-  })  : _getMyLibraryBooksUseCase = getMyLibraryBooksUseCase,
-        _getAllCatalogBooksUseCase = getAllCatalogBooksUseCase,
-        _updateMyLibraryOrderUseCase = updateMyLibraryOrderUseCase,
-        _addToMyLibraryUseCase = addToMyLibraryUseCase,
-        _removeFromMyLibraryUseCase = removeFromMyLibraryUseCase,
-        _downloadTafsirBookUseCase = downloadTafsirBookUseCase,
-        _deleteDownloadedBookUseCase = deleteDownloadedBookUseCase,
-        super(LibraryState.initial());
+  }) : _getMyLibraryBooksUseCase = getMyLibraryBooksUseCase,
+       _getAllCatalogBooksUseCase = getAllCatalogBooksUseCase,
+       _updateMyLibraryOrderUseCase = updateMyLibraryOrderUseCase,
+       _addToMyLibraryUseCase = addToMyLibraryUseCase,
+       _removeFromMyLibraryUseCase = removeFromMyLibraryUseCase,
+       _downloadTafsirBookUseCase = downloadTafsirBookUseCase,
+       _deleteDownloadedBookUseCase = deleteDownloadedBookUseCase,
+       super(LibraryState.initial());
 
   /// Loads pinned library books and all available catalog books.
   Future<void> loadLibrary({bool showLoadingIndicator = true}) async {
@@ -51,16 +50,20 @@ class LibraryCubit extends Cubit<LibraryState> {
       final myBooks = await _getMyLibraryBooksUseCase();
       final allBooks = await _getAllCatalogBooksUseCase();
 
-      emit(state.copyWith(
-        status: LibraryStatus.loaded,
-        myLibraryBooks: myBooks,
-        availableBooks: allBooks,
-      ));
+      emit(
+        state.copyWith(
+          status: LibraryStatus.loaded,
+          myLibraryBooks: myBooks,
+          availableBooks: allBooks,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        status: LibraryStatus.failure,
-        errorMessage: 'تعذر تحميل بيانات المكتبة',
-      ));
+      emit(
+        state.copyWith(
+          status: LibraryStatus.failure,
+          errorMessage: 'تعذر تحميل بيانات المكتبة',
+        ),
+      );
     }
   }
 
@@ -92,10 +95,13 @@ class LibraryCubit extends Cubit<LibraryState> {
   /// Removes a book from "مكتبتي".
   /// Strictly protects the default readable book (Al-Tafsir Al-Muyassar).
   Future<void> removeFromMyLibrary(String bookId) async {
-    if (bookId == TafsirCatalog.defaultBookId) {
-      emit(state.copyWith(
-        userNotice: 'لا يمكن حذف التفسير الميسر لأنه التفسير الافتراضي للمصحف',
-      ));
+    if (bookId == TafsirBook.defaultBookId) {
+      emit(
+        state.copyWith(
+          userNotice:
+              'لا يمكن حذف التفسير الميسر لأنه التفسير الافتراضي للمصحف',
+        ),
+      );
       return;
     }
 
@@ -104,9 +110,7 @@ class LibraryCubit extends Cubit<LibraryState> {
       // Reload both lists so the unpinned book returns to the available list
       await loadLibrary(showLoadingIndicator: false);
     } catch (e) {
-      emit(state.copyWith(
-        errorMessage: 'تعذر حذف الكتاب من مكتبتي',
-      ));
+      emit(state.copyWith(errorMessage: 'تعذر حذف الكتاب من مكتبتي'));
     }
   }
 
@@ -138,7 +142,7 @@ class LibraryCubit extends Cubit<LibraryState> {
 
   /// Downloads a remote book and pins it to "مكتبتي" upon completion.
   Future<void> downloadAndAddToLibrary(String bookId) async {
-    final cancelToken = CancelToken();
+    final cancelToken = AppCancellationToken();
     _cancelTokens[bookId] = cancelToken;
 
     final progressMap = Map<String, double>.from(state.downloadingProgress);
@@ -147,11 +151,13 @@ class LibraryCubit extends Cubit<LibraryState> {
     final failedMap = Map<String, String>.from(state.failedDownloads);
     failedMap.remove(bookId);
 
-    emit(state.copyWith(
-      downloadingProgress: progressMap,
-      failedDownloads: failedMap,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(
+        downloadingProgress: progressMap,
+        failedDownloads: failedMap,
+        clearError: true,
+      ),
+    );
 
     try {
       await _downloadTafsirBookUseCase(
@@ -160,7 +166,9 @@ class LibraryCubit extends Cubit<LibraryState> {
         onProgress: (received, total) {
           if (total > 0) {
             final progress = (received / total).clamp(0.0, 1.0);
-            final updatedProgress = Map<String, double>.from(state.downloadingProgress);
+            final updatedProgress = Map<String, double>.from(
+              state.downloadingProgress,
+            );
             updatedProgress[bookId] = progress;
             emit(state.copyWith(downloadingProgress: updatedProgress));
           }
@@ -171,20 +179,25 @@ class LibraryCubit extends Cubit<LibraryState> {
       await _addToMyLibraryUseCase(bookId);
 
       _cancelTokens.remove(bookId);
-      final finalProgress = Map<String, double>.from(state.downloadingProgress)..remove(bookId);
+      final finalProgress = Map<String, double>.from(state.downloadingProgress)
+        ..remove(bookId);
       emit(state.copyWith(downloadingProgress: finalProgress));
 
       await loadLibrary(showLoadingIndicator: false);
     } catch (e) {
       _cancelTokens.remove(bookId);
-      final finalProgress = Map<String, double>.from(state.downloadingProgress)..remove(bookId);
+      final finalProgress = Map<String, double>.from(state.downloadingProgress)
+        ..remove(bookId);
       final updatedFailed = Map<String, String>.from(state.failedDownloads);
-      updatedFailed[bookId] = 'تعذر تنزيل الكتاب. يرجى التحقق من اتصال الإنترنت';
+      updatedFailed[bookId] =
+          'تعذر تنزيل الكتاب. يرجى التحقق من اتصال الإنترنت';
 
-      emit(state.copyWith(
-        downloadingProgress: finalProgress,
-        failedDownloads: updatedFailed,
-      ));
+      emit(
+        state.copyWith(
+          downloadingProgress: finalProgress,
+          failedDownloads: updatedFailed,
+        ),
+      );
     }
   }
 
@@ -193,7 +206,8 @@ class LibraryCubit extends Cubit<LibraryState> {
     final token = _cancelTokens.remove(bookId);
     token?.cancel('Download cancelled by user');
 
-    final progressMap = Map<String, double>.from(state.downloadingProgress)..remove(bookId);
+    final progressMap = Map<String, double>.from(state.downloadingProgress)
+      ..remove(bookId);
     emit(state.copyWith(downloadingProgress: progressMap));
   }
 
@@ -221,4 +235,3 @@ class LibraryCubit extends Cubit<LibraryState> {
     return super.close();
   }
 }
-

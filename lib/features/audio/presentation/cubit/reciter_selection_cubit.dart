@@ -11,24 +11,23 @@ import 'reciter_selection_state.dart';
 class ReciterSelectionCubit extends Cubit<ReciterSelectionState> {
   final AudioRepository _audioRepository;
 
-  ReciterSelectionCubit({
-    required AudioRepository audioRepository,
-  })  : _audioRepository = audioRepository,
-        super(const ReciterSelectionInitial());
+  ReciterSelectionCubit({required AudioRepository audioRepository})
+    : _audioRepository = audioRepository,
+      super(const ReciterSelectionInitial());
 
   /// Loads reciters, filters for only those meeting the timing policy (0.01),
   /// sorts them alphabetically, and resolves the selected reciter & moshaf.
   Future<void> loadReciters({bool forceRefresh = false}) async {
     emit(const ReciterSelectionLoading());
     try {
-      final allReciters =
-          await _audioRepository.getReciters(forceRefresh: forceRefresh);
+      final allReciters = await _audioRepository.getReciters(
+        forceRefresh: forceRefresh,
+      );
 
       // Task-specific constraint: Only list reciters meeting the timing policy from 0.01.
-      final qualifiedReciters = allReciters
-          .where((r) => r.hasAnyTimingSupport)
-          .toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
+      final qualifiedReciters =
+          allReciters.where((r) => r.hasAnyTimingSupport).toList()
+            ..sort((a, b) => a.name.compareTo(b.name));
 
       if (qualifiedReciters.isEmpty) {
         emit(const ReciterSelectionEmpty());
@@ -39,26 +38,31 @@ class ReciterSelectionCubit extends Cubit<ReciterSelectionState> {
       final savedMoshaf = await _audioRepository.getSelectedMoshaf();
 
       // Ensure the selected reciter is among the qualified ones, or fall back
-      final effectiveReciter = (savedReciter != null &&
+      final effectiveReciter =
+          (savedReciter != null &&
               qualifiedReciters.any((r) => r.id == savedReciter.id))
           ? qualifiedReciters.firstWhere((r) => r.id == savedReciter.id)
           : qualifiedReciters.first;
 
-      final effectiveMoshaf = (savedMoshaf != null &&
-              effectiveReciter.moshafs
-                  .any((m) => m.id == savedMoshaf.id && m.hasTiming))
+      final effectiveMoshaf =
+          (savedMoshaf != null &&
+              effectiveReciter.moshafs.any(
+                (m) => m.id == savedMoshaf.id && m.hasTiming,
+              ))
           ? effectiveReciter.moshafs.firstWhere((m) => m.id == savedMoshaf.id)
           : (effectiveReciter.defaultMoshaf ?? effectiveReciter.moshafs.first);
 
-      emit(ReciterSelectionSuccess(
-        reciters: qualifiedReciters,
-        selectedReciter: effectiveReciter,
-        selectedMoshaf: effectiveMoshaf,
-      ));
+      emit(
+        ReciterSelectionSuccess(
+          reciters: qualifiedReciters,
+          selectedReciter: effectiveReciter,
+          selectedMoshaf: effectiveMoshaf,
+        ),
+      );
     } on Failure catch (e) {
       emit(ReciterSelectionFailure(e.message));
-    } catch (e) {
-      emit(ReciterSelectionFailure(e.toString()));
+    } catch (_) {
+      emit(const ReciterSelectionFailure('تعذر تحميل بيانات القراء'));
     }
   }
 
@@ -75,15 +79,17 @@ class ReciterSelectionCubit extends Cubit<ReciterSelectionState> {
 
       final currentState = state;
       if (currentState is ReciterSelectionSuccess) {
-        emit(currentState.copyWith(
-          selectedReciter: reciter,
-          selectedMoshaf: moshaf,
-        ));
+        emit(
+          currentState.copyWith(
+            selectedReciter: reciter,
+            selectedMoshaf: moshaf,
+          ),
+        );
       }
     } on Failure catch (e) {
       emit(ReciterSelectionFailure(e.message));
-    } catch (e) {
-      emit(ReciterSelectionFailure(e.toString()));
+    } catch (_) {
+      emit(const ReciterSelectionFailure('تعذر حفظ اختيار القارئ'));
     }
   }
 }

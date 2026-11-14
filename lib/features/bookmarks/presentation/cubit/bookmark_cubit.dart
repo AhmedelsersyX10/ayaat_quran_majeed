@@ -1,4 +1,4 @@
-import 'package:ayaat_quran_majeed/features/bookmarks/data/models/bookmark_model.dart';
+import 'package:ayaat_quran_majeed/core/errors/failure.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/domain/entities/bookmark_item.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/domain/repositories/bookmark_repository.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/presentation/cubit/bookmark_state.dart';
@@ -31,7 +31,12 @@ class BookmarkCubit extends Cubit<BookmarkState> {
         ),
       );
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: e is Failure ? e.message : 'تعذر تحميل الفواصل',
+        ),
+      );
     }
   }
 
@@ -88,7 +93,11 @@ class BookmarkCubit extends Cubit<BookmarkState> {
       final refreshed = await _repository.getBookmarks();
       emit(state.copyWith(bookmarks: refreshed));
     } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          errorMessage: e is Failure ? e.message : 'تعذر تعيين الفاصل',
+        ),
+      );
     }
   }
 
@@ -99,7 +108,11 @@ class BookmarkCubit extends Cubit<BookmarkState> {
       final refreshed = await _repository.getBookmarks();
       emit(state.copyWith(bookmarks: refreshed));
     } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          errorMessage: e is Failure ? e.message : 'تعذر إلغاء تعيين الفاصل',
+        ),
+      );
     }
   }
 
@@ -118,7 +131,11 @@ class BookmarkCubit extends Cubit<BookmarkState> {
       final refreshed = await _repository.getBookmarks();
       emit(state.copyWith(bookmarks: refreshed));
     } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          errorMessage: e is Failure ? e.message : 'تعذر تحديث الفاصل',
+        ),
+      );
     }
   }
 
@@ -129,7 +146,11 @@ class BookmarkCubit extends Cubit<BookmarkState> {
       final refreshed = await _repository.getBookmarks();
       emit(state.copyWith(bookmarks: refreshed));
     } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          errorMessage: e is Failure ? e.message : 'تعذر إضافة الفاصل',
+        ),
+      );
     }
   }
 
@@ -140,7 +161,11 @@ class BookmarkCubit extends Cubit<BookmarkState> {
       final refreshed = await _repository.getBookmarks();
       emit(state.copyWith(bookmarks: refreshed));
     } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          errorMessage: e is Failure ? e.message : 'تعذر حذف الفاصل',
+        ),
+      );
     }
   }
 
@@ -187,8 +212,6 @@ class BookmarkCubit extends Cubit<BookmarkState> {
   Future<void> addBookmark(dynamic bookmark) async {
     if (bookmark is BookmarkItem) {
       await addCustomBookmark(bookmark);
-    } else if (bookmark is BookmarkModel) {
-      await addCustomBookmark(bookmark.toEntity());
     }
   }
 

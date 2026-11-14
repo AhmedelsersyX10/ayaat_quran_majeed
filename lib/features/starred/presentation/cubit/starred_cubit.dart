@@ -1,3 +1,4 @@
+import 'package:ayaat_quran_majeed/core/errors/failure.dart';
 import 'package:ayaat_quran_majeed/features/starred/domain/entities/starred_ayah_item.dart';
 import 'package:ayaat_quran_majeed/features/starred/domain/entities/starred_surah_group.dart';
 import 'package:ayaat_quran_majeed/features/starred/domain/repositories/starred_repository.dart';
@@ -23,7 +24,9 @@ class StarredCubit extends Cubit<StarredState> {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: e.toString(),
+          errorMessage: e is Failure
+              ? e.message
+              : 'تعذر تحميل الآيات المميزة بنجمة',
         ),
       );
     }
@@ -97,4 +100,3 @@ class StarredCubit extends Cubit<StarredState> {
     );
   }
 }
-

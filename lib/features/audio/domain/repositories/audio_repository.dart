@@ -1,3 +1,5 @@
+import 'package:ayaat_quran_majeed/core/network/cancellation_token.dart';
+
 import '../entities/ayah_timing.dart';
 import '../entities/moshaf.dart';
 import '../entities/reciter.dart';
@@ -57,7 +59,7 @@ abstract class AudioRepository {
     required Moshaf moshaf,
     required int surahNumber,
     void Function(int received, int total)? onProgress,
-    dynamic cancelToken,
+    AppCancellationToken? cancelToken,
   });
 
   /// Deletes the downloaded surah file from local storage.

@@ -19,7 +19,6 @@ import 'package:ayaat_quran_majeed/features/starred/presentation/cubit/starred_c
 import 'package:ayaat_quran_majeed/features/starred/presentation/views/starred_tab_view.dart';
 import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/views/quran_details_page.dart';
 import 'package:flutter/material.dart';
@@ -74,9 +73,6 @@ abstract class AppRouter {
                 ),
                 BlocProvider<ReciterSelectionCubit>(
                   create: (_) => sl<ReciterSelectionCubit>()..loadReciters(),
-                ),
-                BlocProvider<QuranPagePlayerBloc>(
-                  create: (_) => sl<QuranPagePlayerBloc>(),
                 ),
                 BlocProvider<QuranReaderCubit>(
                   create: (_) {

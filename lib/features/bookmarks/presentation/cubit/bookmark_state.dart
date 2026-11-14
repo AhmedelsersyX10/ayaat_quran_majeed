@@ -1,4 +1,3 @@
-import 'package:ayaat_quran_majeed/features/bookmarks/data/models/bookmark_model.dart';
 import 'package:ayaat_quran_majeed/features/bookmarks/domain/entities/bookmark_item.dart';
 
 /// State representation for bookmarks.
@@ -22,10 +21,6 @@ class BookmarkState {
       isEditMode: false,
     );
   }
-
-  /// Backward-compatibility getter for legacy views expecting `List<BookmarkModel>`.
-  List<BookmarkModel> get legacyBookmarks =>
-      bookmarks.map(BookmarkModel.fromEntity).toList();
 
   BookmarkState copyWith({
     bool? isLoading,

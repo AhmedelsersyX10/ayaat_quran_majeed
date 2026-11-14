@@ -38,11 +38,8 @@ import 'package:ayaat_quran_majeed/features/today/presentation/cubit/today_cubit
 import 'package:ayaat_quran_majeed/quran/data/data_sources/quran_metadata_service.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/bookmark_repository.dart';
 import 'package:ayaat_quran_majeed/quran/data/repositories/quran_reading_repository.dart';
-import 'package:ayaat_quran_majeed/quran/data/repositories/quran_search_repository.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/bookmark_cubit.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_page_player_bloc.dart';
 import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_reading_cubit.dart';
-import 'package:ayaat_quran_majeed/quran/presentation/cubit/quran_search_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -72,7 +69,6 @@ void main() {
         expect(sl.isRegistered<BookmarkRepository>(), isTrue);
         expect(sl.isRegistered<StarredRepository>(), isTrue);
         expect(sl.isRegistered<NotesRepository>(), isTrue);
-        expect(sl.isRegistered<QuranSearchRepository>(), isTrue);
         expect(sl.isRegistered<SearchRepository>(), isTrue);
         expect(sl.isRegistered<TodayRepository>(), isTrue);
         expect(sl.isRegistered<IndexRepository>(), isTrue);
@@ -94,12 +90,10 @@ void main() {
         expect(sl.isRegistered<SetSelectedTafsirBookUseCase>(), isTrue);
         expect(sl.isRegistered<GetAvailableTafsirBooksUseCase>(), isTrue);
 
-        expect(sl.isRegistered<QuranPagePlayerBloc>(), isTrue);
         expect(sl.isRegistered<QuranReaderCubit>(), isTrue);
         expect(sl.isRegistered<BookmarkCubit>(), isTrue);
         expect(sl.isRegistered<StarredCubit>(), isTrue);
         expect(sl.isRegistered<NotesCubit>(), isTrue);
-        expect(sl.isRegistered<QuranSearchCubit>(), isTrue);
         expect(sl.isRegistered<SearchCubit>(), isTrue);
         expect(sl.isRegistered<TodayCubit>(), isTrue);
         expect(sl.isRegistered<IndexCubit>(), isTrue);

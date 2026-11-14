@@ -1,8 +1,8 @@
 import 'package:ayaat_quran_majeed/core/errors/failure.dart';
+import 'package:ayaat_quran_majeed/core/network/cancellation_token.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/entities/moshaf.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/entities/reciter_surah.dart';
 import 'package:ayaat_quran_majeed/features/audio/domain/repositories/audio_repository.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'reciter_surahs_state.dart';
@@ -11,19 +11,15 @@ import 'reciter_surahs_state.dart';
 /// progress notifications, cancellation, and retry for Reference 36.
 class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
   final AudioRepository _audioRepository;
-  final Map<int, CancelToken> _cancelTokens = {};
+  final Map<int, AppCancellationToken> _cancelTokens = {};
 
-  ReciterSurahsCubit({
-    required AudioRepository audioRepository,
-  })  : _audioRepository = audioRepository,
-        super(const ReciterSurahsInitial());
+  ReciterSurahsCubit({required AudioRepository audioRepository})
+    : _audioRepository = audioRepository,
+      super(const ReciterSurahsInitial());
 
   /// Loads reciter info and available surahs for [reciterId] and [moshafId],
   /// grouped by starting Juz.
-  Future<void> loadSurahs({
-    required int reciterId,
-    int? moshafId,
-  }) async {
+  Future<void> loadSurahs({required int reciterId, int? moshafId}) async {
     emit(const ReciterSurahsLoading());
 
     try {
@@ -48,7 +44,8 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
       if (moshafId != null) {
         moshaf = nonNullReciter.moshafs.firstWhere(
           (m) => m.id == moshafId,
-          orElse: () => nonNullReciter.defaultMoshaf ?? nonNullReciter.moshafs.first,
+          orElse: () =>
+              nonNullReciter.defaultMoshaf ?? nonNullReciter.moshafs.first,
         );
       } else {
         moshaf = nonNullReciter.defaultMoshaf ?? nonNullReciter.moshafs.first;
@@ -68,17 +65,19 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
 
       final juzGroups = _groupByJuz(surahs);
 
-      emit(ReciterSurahsLoaded(
-        reciter: reciter,
-        moshaf: moshaf,
-        surahs: surahs,
-        juzGroups: juzGroups,
-        downloadStatuses: downloadStatuses,
-      ));
+      emit(
+        ReciterSurahsLoaded(
+          reciter: reciter,
+          moshaf: moshaf,
+          surahs: surahs,
+          juzGroups: juzGroups,
+          downloadStatuses: downloadStatuses,
+        ),
+      );
     } on Failure catch (e) {
       emit(ReciterSurahsFailure(e.message));
-    } catch (e) {
-      emit(ReciterSurahsFailure(e.toString()));
+    } catch (_) {
+      emit(const ReciterSurahsFailure('تعذر تحميل سور القارئ'));
     }
   }
 
@@ -92,23 +91,25 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
       return;
     }
 
-    final cancelToken = CancelToken();
+    final cancelToken = AppCancellationToken();
     _cancelTokens[surahNumber] = cancelToken;
 
-    final updatedStatuses =
-        Map<int, SurahDownloadStatus>.from(currentState.downloadStatuses)
-          ..[surahNumber] = SurahDownloadStatus.downloading;
-    final updatedProgresses =
-        Map<int, double>.from(currentState.downloadProgresses)
-          ..[surahNumber] = 0.0;
-    final updatedErrors =
-        Map<int, String>.from(currentState.errorMessages)..remove(surahNumber);
+    final updatedStatuses = Map<int, SurahDownloadStatus>.from(
+      currentState.downloadStatuses,
+    )..[surahNumber] = SurahDownloadStatus.downloading;
+    final updatedProgresses = Map<int, double>.from(
+      currentState.downloadProgresses,
+    )..[surahNumber] = 0.0;
+    final updatedErrors = Map<int, String>.from(currentState.errorMessages)
+      ..remove(surahNumber);
 
-    emit(currentState.copyWith(
-      downloadStatuses: updatedStatuses,
-      downloadProgresses: updatedProgresses,
-      errorMessages: updatedErrors,
-    ));
+    emit(
+      currentState.copyWith(
+        downloadStatuses: updatedStatuses,
+        downloadProgresses: updatedProgresses,
+        errorMessages: updatedErrors,
+      ),
+    );
 
     try {
       await _audioRepository.downloadSurah(
@@ -119,9 +120,9 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
           final current = state;
           if (current is ReciterSurahsLoaded && total > 0) {
             final progress = (received / total).clamp(0.0, 1.0);
-            final newProgresses =
-                Map<int, double>.from(current.downloadProgresses)
-                  ..[surahNumber] = progress;
+            final newProgresses = Map<int, double>.from(
+              current.downloadProgresses,
+            )..[surahNumber] = progress;
             emit(current.copyWith(downloadProgresses: newProgresses));
           }
         },
@@ -133,12 +134,12 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
       if (isClosed) return;
       final current = state;
       if (current is ReciterSurahsLoaded) {
-        final finalStatuses =
-            Map<int, SurahDownloadStatus>.from(current.downloadStatuses)
-              ..[surahNumber] = SurahDownloadStatus.downloaded;
-        final finalProgresses =
-            Map<int, double>.from(current.downloadProgresses)
-              ..[surahNumber] = 1.0;
+        final finalStatuses = Map<int, SurahDownloadStatus>.from(
+          current.downloadStatuses,
+        )..[surahNumber] = SurahDownloadStatus.downloaded;
+        final finalProgresses = Map<int, double>.from(
+          current.downloadProgresses,
+        )..[surahNumber] = 1.0;
 
         // Also update the surahs list localFilePath/isDownloaded
         final updatedSurahs = current.surahs.map((s) {
@@ -148,12 +149,14 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
           return s;
         }).toList();
 
-        emit(current.copyWith(
-          surahs: updatedSurahs,
-          juzGroups: _groupByJuz(updatedSurahs),
-          downloadStatuses: finalStatuses,
-          downloadProgresses: finalProgresses,
-        ));
+        emit(
+          current.copyWith(
+            surahs: updatedSurahs,
+            juzGroups: _groupByJuz(updatedSurahs),
+            downloadStatuses: finalStatuses,
+            downloadProgresses: finalProgresses,
+          ),
+        );
       }
     } catch (e) {
       _cancelTokens.remove(surahNumber);
@@ -161,7 +164,8 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
       if (isClosed) return;
       final current = state;
       if (current is ReciterSurahsLoaded) {
-        final isCancelled = cancelToken.isCancelled ||
+        final isCancelled =
+            cancelToken.isCancelled ||
             (e is Failure && e.message.toLowerCase().contains('cancel'));
 
         final finalStatuses =
@@ -172,14 +176,17 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
 
         final finalErrors = Map<int, String>.from(current.errorMessages);
         if (!isCancelled) {
-          finalErrors[surahNumber] =
-              e is Failure ? e.message : e.toString();
+          finalErrors[surahNumber] = e is Failure
+              ? e.message
+              : 'فشل تحميل السورة';
         }
 
-        emit(current.copyWith(
-          downloadStatuses: finalStatuses,
-          errorMessages: finalErrors,
-        ));
+        emit(
+          current.copyWith(
+            downloadStatuses: finalStatuses,
+            errorMessages: finalErrors,
+          ),
+        );
       }
     }
   }
@@ -193,17 +200,19 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
 
     final current = state;
     if (current is ReciterSurahsLoaded) {
-      final updatedStatuses =
-          Map<int, SurahDownloadStatus>.from(current.downloadStatuses)
-            ..[surahNumber] = SurahDownloadStatus.notDownloaded;
-      final updatedProgresses =
-          Map<int, double>.from(current.downloadProgresses)
-            ..remove(surahNumber);
+      final updatedStatuses = Map<int, SurahDownloadStatus>.from(
+        current.downloadStatuses,
+      )..[surahNumber] = SurahDownloadStatus.notDownloaded;
+      final updatedProgresses = Map<int, double>.from(
+        current.downloadProgresses,
+      )..remove(surahNumber);
 
-      emit(current.copyWith(
-        downloadStatuses: updatedStatuses,
-        downloadProgresses: updatedProgresses,
-      ));
+      emit(
+        current.copyWith(
+          downloadStatuses: updatedStatuses,
+          downloadProgresses: updatedProgresses,
+        ),
+      );
     }
   }
 
@@ -218,12 +227,12 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
         surahNumber: surahNumber,
       );
 
-      final updatedStatuses =
-          Map<int, SurahDownloadStatus>.from(current.downloadStatuses)
-            ..[surahNumber] = SurahDownloadStatus.notDownloaded;
-      final updatedProgresses =
-          Map<int, double>.from(current.downloadProgresses)
-            ..remove(surahNumber);
+      final updatedStatuses = Map<int, SurahDownloadStatus>.from(
+        current.downloadStatuses,
+      )..[surahNumber] = SurahDownloadStatus.notDownloaded;
+      final updatedProgresses = Map<int, double>.from(
+        current.downloadProgresses,
+      )..remove(surahNumber);
 
       final updatedSurahs = current.surahs.map((s) {
         if (s.surahNumber == surahNumber) {
@@ -232,12 +241,14 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
         return s;
       }).toList();
 
-      emit(current.copyWith(
-        surahs: updatedSurahs,
-        juzGroups: _groupByJuz(updatedSurahs),
-        downloadStatuses: updatedStatuses,
-        downloadProgresses: updatedProgresses,
-      ));
+      emit(
+        current.copyWith(
+          surahs: updatedSurahs,
+          juzGroups: _groupByJuz(updatedSurahs),
+          downloadStatuses: updatedStatuses,
+          downloadProgresses: updatedProgresses,
+        ),
+      );
     } catch (_) {}
   }
 
@@ -250,10 +261,7 @@ class ReciterSurahsCubit extends Cubit<ReciterSurahsState> {
 
     final sortedKeys = groupsMap.keys.toList()..sort();
     return sortedKeys
-        .map((juz) => ReciterJuzGroup(
-              juzNumber: juz,
-              surahs: groupsMap[juz]!,
-            ))
+        .map((juz) => ReciterJuzGroup(juzNumber: juz, surahs: groupsMap[juz]!))
         .toList();
   }
 

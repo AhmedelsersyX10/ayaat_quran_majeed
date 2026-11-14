@@ -1,3 +1,4 @@
+import 'package:ayaat_quran_majeed/core/errors/failure.dart';
 import 'package:ayaat_quran_majeed/features/settings/domain/entities/app_settings.dart';
 import 'package:ayaat_quran_majeed/features/settings/domain/entities/content_source.dart';
 import 'package:ayaat_quran_majeed/features/settings/domain/repositories/settings_repository.dart';
@@ -11,25 +12,33 @@ class MockSettingsRepository implements SettingsRepository {
 
   @override
   AppSettings getSettings() {
-    if (shouldThrow) throw Exception('Failed to load settings');
+    if (shouldThrow) {
+      throw const ServerFailure('Failed to load settings');
+    }
     return settings;
   }
 
   @override
   Future<void> setKeepScreenAwake(bool value) async {
-    if (shouldThrow) throw Exception('Failed to save keepScreenAwake');
+    if (shouldThrow) {
+      throw const ServerFailure('Failed to save keepScreenAwake');
+    }
     settings = settings.copyWith(keepScreenAwake: value);
   }
 
   @override
   Future<void> setHijriOffset(int offset) async {
-    if (shouldThrow) throw Exception('Failed to save hijriOffset');
+    if (shouldThrow) {
+      throw const ServerFailure('Failed to save hijriOffset');
+    }
     settings = settings.copyWith(hijriOffset: offset);
   }
 
   @override
   Future<void> setMushafFontSize(double fontSize) async {
-    if (shouldThrow) throw Exception('Failed to save mushafFontSize');
+    if (shouldThrow) {
+      throw const ServerFailure('Failed to save mushafFontSize');
+    }
     settings = settings.copyWith(mushafFontSize: fontSize);
   }
 
