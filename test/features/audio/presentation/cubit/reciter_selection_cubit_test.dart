@@ -49,7 +49,9 @@ class FakeAudioRepository implements AudioRepository {
   Future<Reciter?> getReciterById(int reciterId) async => null;
 
   @override
-  Future<List<int>> getTimingSupportedMoshafIds({bool forceRefresh = false}) async => [];
+  Future<List<int>> getTimingSupportedMoshafIds({
+    bool forceRefresh = false,
+  }) async => [];
 
   @override
   Future<List<int>> getTimingSurahListForRead(int readId) async => [];
@@ -58,29 +60,25 @@ class FakeAudioRepository implements AudioRepository {
   Future<List<AyahTiming>> getAyahTiming({
     required int readId,
     required int surahNumber,
-  }) async =>
-      [];
+  }) async => [];
 
   @override
   Future<List<ReciterSurah>> getSurahsForMoshaf({
     required int reciterId,
     required Moshaf moshaf,
-  }) async =>
-      [];
+  }) async => [];
 
   @override
   Future<bool> isSurahDownloaded({
     required int readId,
     required int surahNumber,
-  }) async =>
-      false;
+  }) async => false;
 
   @override
   Future<String> getPlayableAudioUri({
     required Moshaf moshaf,
     required int surahNumber,
-  }) async =>
-      '';
+  }) async => '';
 
   @override
   Future<void> downloadSurah({
@@ -95,6 +93,12 @@ class FakeAudioRepository implements AudioRepository {
     required int readId,
     required int surahNumber,
   }) async {}
+
+  @override
+  Future<int> cleanOrphanedTempFiles() async => 0;
+
+  @override
+  Future<int> getAudioStorageUsageBytes() async => 0;
 }
 
 void main() {
@@ -166,80 +170,101 @@ void main() {
       expect(cubit.state, equals(const ReciterSelectionInitial()));
     });
 
-    test('loadReciters emits [Loading, Success] filtering only qualified reciters (timing policy)', () async {
-      repository.recitersResponse = [reciterNoTiming, reciterHosary, reciterGhamadi];
-      repository.selectedReciterResponse = reciterHosary;
-      repository.selectedMoshafResponse = moshafTiming1;
+    test(
+      'loadReciters emits [Loading, Success] filtering only qualified reciters (timing policy)',
+      () async {
+        repository.recitersResponse = [
+          reciterNoTiming,
+          reciterHosary,
+          reciterGhamadi,
+        ];
+        repository.selectedReciterResponse = reciterHosary;
+        repository.selectedMoshafResponse = moshafTiming1;
 
-      final states = <ReciterSelectionState>[];
-      cubit.stream.listen(states.add);
+        final states = <ReciterSelectionState>[];
+        cubit.stream.listen(states.add);
 
-      await cubit.loadReciters();
-      await pumpEventQueue();
+        await cubit.loadReciters();
+        await pumpEventQueue();
 
-      expect(states.length, equals(2));
-      expect(states[0], isA<ReciterSelectionLoading>());
-      expect(states[1], isA<ReciterSelectionSuccess>());
+        expect(states.length, equals(2));
+        expect(states[0], isA<ReciterSelectionLoading>());
+        expect(states[1], isA<ReciterSelectionSuccess>());
 
-      final success = states[1] as ReciterSelectionSuccess;
-      // Qualified reciters must NOT contain reciterNoTiming
-      expect(success.reciters.contains(reciterNoTiming), isFalse);
-      expect(success.reciters.length, equals(2));
-      // Must be sorted alphabetically: 'سعد الغامدي' before 'محمود خليل الحصري'
-      expect(success.reciters[0].name, equals('سعد الغامدي'));
-      expect(success.reciters[1].name, equals('محمود خليل الحصري'));
-      expect(success.selectedReciter, equals(reciterHosary));
-      expect(success.selectedMoshaf, equals(moshafTiming1));
-    });
+        final success = states[1] as ReciterSelectionSuccess;
+        // Qualified reciters must NOT contain reciterNoTiming
+        expect(success.reciters.contains(reciterNoTiming), isFalse);
+        expect(success.reciters.length, equals(2));
+        // Must be sorted alphabetically: 'سعد الغامدي' before 'محمود خليل الحصري'
+        expect(success.reciters[0].name, equals('سعد الغامدي'));
+        expect(success.reciters[1].name, equals('محمود خليل الحصري'));
+        expect(success.selectedReciter, equals(reciterHosary));
+        expect(success.selectedMoshaf, equals(moshafTiming1));
+      },
+    );
 
-    test('loadReciters emits [Loading, Empty] when no reciters meet timing policy', () async {
-      repository.recitersResponse = [reciterNoTiming];
+    test(
+      'loadReciters emits [Loading, Empty] when no reciters meet timing policy',
+      () async {
+        repository.recitersResponse = [reciterNoTiming];
 
-      final states = <ReciterSelectionState>[];
-      cubit.stream.listen(states.add);
+        final states = <ReciterSelectionState>[];
+        cubit.stream.listen(states.add);
 
-      await cubit.loadReciters();
-      await pumpEventQueue();
+        await cubit.loadReciters();
+        await pumpEventQueue();
 
-      expect(states.length, equals(2));
-      expect(states[0], isA<ReciterSelectionLoading>());
-      expect(states[1], isA<ReciterSelectionEmpty>());
-    });
+        expect(states.length, equals(2));
+        expect(states[0], isA<ReciterSelectionLoading>());
+        expect(states[1], isA<ReciterSelectionEmpty>());
+      },
+    );
 
-    test('loadReciters emits [Loading, Failure] when repository throws Failure', () async {
-      repository.failureToThrow = const ServerFailure('خطأ في الاتصال بالخادم');
+    test(
+      'loadReciters emits [Loading, Failure] when repository throws Failure',
+      () async {
+        repository.failureToThrow = const ServerFailure(
+          'خطأ في الاتصال بالخادم',
+        );
 
-      final states = <ReciterSelectionState>[];
-      cubit.stream.listen(states.add);
+        final states = <ReciterSelectionState>[];
+        cubit.stream.listen(states.add);
 
-      await cubit.loadReciters();
-      await pumpEventQueue();
+        await cubit.loadReciters();
+        await pumpEventQueue();
 
-      expect(states.length, equals(2));
-      expect(states[0], isA<ReciterSelectionLoading>());
-      expect(states[1], isA<ReciterSelectionFailure>());
-      expect((states[1] as ReciterSelectionFailure).message, contains('خطأ في الاتصال'));
-    });
+        expect(states.length, equals(2));
+        expect(states[0], isA<ReciterSelectionLoading>());
+        expect(states[1], isA<ReciterSelectionFailure>());
+        expect(
+          (states[1] as ReciterSelectionFailure).message,
+          contains('خطأ في الاتصال'),
+        );
+      },
+    );
 
-    test('selectReciterAndMoshaf updates state and saves choice to repository', () async {
-      repository.recitersResponse = [reciterHosary, reciterGhamadi];
-      repository.selectedReciterResponse = reciterHosary;
-      repository.selectedMoshafResponse = moshafTiming1;
+    test(
+      'selectReciterAndMoshaf updates state and saves choice to repository',
+      () async {
+        repository.recitersResponse = [reciterHosary, reciterGhamadi];
+        repository.selectedReciterResponse = reciterHosary;
+        repository.selectedMoshafResponse = moshafTiming1;
 
-      await cubit.loadReciters();
+        await cubit.loadReciters();
 
-      final targetMoshaf = reciterGhamadi.moshafs.first;
-      await cubit.selectReciterAndMoshaf(
-        reciter: reciterGhamadi,
-        moshaf: targetMoshaf,
-      );
+        final targetMoshaf = reciterGhamadi.moshafs.first;
+        await cubit.selectReciterAndMoshaf(
+          reciter: reciterGhamadi,
+          moshaf: targetMoshaf,
+        );
 
-      expect(repository.lastSavedReciterId, equals(2));
-      expect(repository.lastSavedMoshafId, equals(30));
+        expect(repository.lastSavedReciterId, equals(2));
+        expect(repository.lastSavedMoshafId, equals(30));
 
-      final state = cubit.state as ReciterSelectionSuccess;
-      expect(state.selectedReciter, equals(reciterGhamadi));
-      expect(state.selectedMoshaf, equals(targetMoshaf));
-    });
+        final state = cubit.state as ReciterSelectionSuccess;
+        expect(state.selectedReciter, equals(reciterGhamadi));
+        expect(state.selectedMoshaf, equals(targetMoshaf));
+      },
+    );
   });
 }

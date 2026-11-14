@@ -92,14 +92,21 @@ class _MockAudioRepository implements AudioRepository {
   Future<List<int>> getTimingSurahListForRead(int readId) async => const [];
 
   @override
-  Future<List<int>> getTimingSupportedMoshafIds({bool forceRefresh = false}) async =>
-      const [];
+  Future<List<int>> getTimingSupportedMoshafIds({
+    bool forceRefresh = false,
+  }) async => const [];
 
   @override
   Future<void> setSelectedReciterAndMoshaf({
     required int reciterId,
     required int moshafId,
   }) async {}
+
+  @override
+  Future<int> cleanOrphanedTempFiles() async => 0;
+
+  @override
+  Future<int> getAudioStorageUsageBytes() async => 0;
 }
 
 void main() {
@@ -166,35 +173,38 @@ void main() {
       expect(cubit.state, isA<ReciterSurahsInitial>());
     });
 
-    test('loadSurahs emits Loading then Loaded with surahs grouped by starting Juz', () async {
-      final states = <ReciterSurahsState>[];
-      cubit.stream.listen((s) {
-        states.add(s);
-      });
+    test(
+      'loadSurahs emits Loading then Loaded with surahs grouped by starting Juz',
+      () async {
+        final states = <ReciterSurahsState>[];
+        cubit.stream.listen((s) {
+          states.add(s);
+        });
 
-      await cubit.loadSurahs(reciterId: 1);
-      // Wait for any pending microtasks
-      await Future<void>.delayed(Duration.zero);
+        await cubit.loadSurahs(reciterId: 1);
+        // Wait for any pending microtasks
+        await Future<void>.delayed(Duration.zero);
 
-      expect(states.length, 2);
-      expect(states[0], isA<ReciterSurahsLoading>());
-      expect(states[1], isA<ReciterSurahsLoaded>());
+        expect(states.length, 2);
+        expect(states[0], isA<ReciterSurahsLoading>());
+        expect(states[1], isA<ReciterSurahsLoaded>());
 
-      final loaded = states[1] as ReciterSurahsLoaded;
-      expect(loaded.reciter.name, 'أحمد النفيس');
-      expect(loaded.surahs.length, 3);
-      // Grouped by Juz: Juz 1 (Fatiha, Baqarah), Juz 3 (Ali 'Imran)
-      expect(loaded.juzGroups.length, 2);
-      expect(loaded.juzGroups[0].juzNumber, 1);
-      expect(loaded.juzGroups[0].surahs.length, 2);
-      expect(loaded.juzGroups[1].juzNumber, 3);
-      expect(loaded.juzGroups[1].surahs.length, 1);
+        final loaded = states[1] as ReciterSurahsLoaded;
+        expect(loaded.reciter.name, 'أحمد النفيس');
+        expect(loaded.surahs.length, 3);
+        // Grouped by Juz: Juz 1 (Fatiha, Baqarah), Juz 3 (Ali 'Imran)
+        expect(loaded.juzGroups.length, 2);
+        expect(loaded.juzGroups[0].juzNumber, 1);
+        expect(loaded.juzGroups[0].surahs.length, 2);
+        expect(loaded.juzGroups[1].juzNumber, 3);
+        expect(loaded.juzGroups[1].surahs.length, 1);
 
-      // Verify download statuses
-      expect(loaded.downloadStatuses[1], SurahDownloadStatus.notDownloaded);
-      expect(loaded.downloadStatuses[2], SurahDownloadStatus.notDownloaded);
-      expect(loaded.downloadStatuses[3], SurahDownloadStatus.downloaded);
-    });
+        // Verify download statuses
+        expect(loaded.downloadStatuses[1], SurahDownloadStatus.notDownloaded);
+        expect(loaded.downloadStatuses[2], SurahDownloadStatus.notDownloaded);
+        expect(loaded.downloadStatuses[3], SurahDownloadStatus.downloaded);
+      },
+    );
 
     test('loadSurahs emits Failure when reciter is not found', () async {
       mockRepo.reciterToReturn = null;
@@ -211,20 +221,26 @@ void main() {
       expect(states[1], isA<ReciterSurahsFailure>());
     });
 
-    test('downloadSurah updates progress and completes with downloaded status', () async {
-      await cubit.loadSurahs(reciterId: 1);
+    test(
+      'downloadSurah updates progress and completes with downloaded status',
+      () async {
+        await cubit.loadSurahs(reciterId: 1);
 
-      final states = <ReciterSurahsState>[];
-      cubit.stream.listen(states.add);
+        final states = <ReciterSurahsState>[];
+        cubit.stream.listen(states.add);
 
-      await cubit.downloadSurah(1);
+        await cubit.downloadSurah(1);
 
-      expect(mockRepo.downloadCallCount, 1);
-      final finalState = cubit.state as ReciterSurahsLoaded;
-      expect(finalState.downloadStatuses[1], SurahDownloadStatus.downloaded);
-      expect(finalState.downloadProgresses[1], 1.0);
-      expect(finalState.surahs.firstWhere((s) => s.surahNumber == 1).isDownloaded, isTrue);
-    });
+        expect(mockRepo.downloadCallCount, 1);
+        final finalState = cubit.state as ReciterSurahsLoaded;
+        expect(finalState.downloadStatuses[1], SurahDownloadStatus.downloaded);
+        expect(finalState.downloadProgresses[1], 1.0);
+        expect(
+          finalState.surahs.firstWhere((s) => s.surahNumber == 1).isDownloaded,
+          isTrue,
+        );
+      },
+    );
 
     test('downloadSurah handles failure and sets failed status', () async {
       mockRepo.failDownload = true;
@@ -237,27 +253,42 @@ void main() {
       expect(state.errorMessages[1], 'Download server error');
     });
 
-    test('cancelDownload stops download and resets status to notDownloaded', () async {
-      await cubit.loadSurahs(reciterId: 1);
+    test(
+      'cancelDownload stops download and resets status to notDownloaded',
+      () async {
+        await cubit.loadSurahs(reciterId: 1);
 
-      cubit.cancelDownload(1);
+        cubit.cancelDownload(1);
 
-      final state = cubit.state as ReciterSurahsLoaded;
-      expect(state.downloadStatuses[1], SurahDownloadStatus.notDownloaded);
-      expect(state.downloadProgresses[1], isNull);
-    });
+        final state = cubit.state as ReciterSurahsLoaded;
+        expect(state.downloadStatuses[1], SurahDownloadStatus.notDownloaded);
+        expect(state.downloadProgresses[1], isNull);
+      },
+    );
 
-    test('deleteDownloadedSurah removes local download and resets status', () async {
-      await cubit.loadSurahs(reciterId: 1);
-      final initialLoaded = cubit.state as ReciterSurahsLoaded;
-      expect(initialLoaded.downloadStatuses[3], SurahDownloadStatus.downloaded);
+    test(
+      'deleteDownloadedSurah removes local download and resets status',
+      () async {
+        await cubit.loadSurahs(reciterId: 1);
+        final initialLoaded = cubit.state as ReciterSurahsLoaded;
+        expect(
+          initialLoaded.downloadStatuses[3],
+          SurahDownloadStatus.downloaded,
+        );
 
-      await cubit.deleteDownloadedSurah(3);
+        await cubit.deleteDownloadedSurah(3);
 
-      expect(mockRepo.deleteCallCount, 1);
-      final finalState = cubit.state as ReciterSurahsLoaded;
-      expect(finalState.downloadStatuses[3], SurahDownloadStatus.notDownloaded);
-      expect(finalState.surahs.firstWhere((s) => s.surahNumber == 3).isDownloaded, isFalse);
-    });
+        expect(mockRepo.deleteCallCount, 1);
+        final finalState = cubit.state as ReciterSurahsLoaded;
+        expect(
+          finalState.downloadStatuses[3],
+          SurahDownloadStatus.notDownloaded,
+        );
+        expect(
+          finalState.surahs.firstWhere((s) => s.surahNumber == 3).isDownloaded,
+          isFalse,
+        );
+      },
+    );
   });
 }

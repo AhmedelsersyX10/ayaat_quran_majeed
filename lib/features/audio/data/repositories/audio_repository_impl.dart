@@ -31,15 +31,18 @@ class AudioRepositoryImpl implements AudioRepository {
     required QuranMetadataService metadataService,
     AppPreferences? preferences,
     Future<String> Function()? documentsPathProvider,
-  })  : _remoteDataSource = remoteDataSource,
-        _cacheDataSource = cacheDataSource,
-        _metadataService = metadataService,
-        _preferences = preferences,
-        _documentsPathProvider = documentsPathProvider ??
-            (() async => (await getApplicationDocumentsDirectory()).path);
+  }) : _remoteDataSource = remoteDataSource,
+       _cacheDataSource = cacheDataSource,
+       _metadataService = metadataService,
+       _preferences = preferences,
+       _documentsPathProvider =
+           documentsPathProvider ??
+           (() async => (await getApplicationDocumentsDirectory()).path);
 
   @override
-  Future<List<int>> getTimingSupportedMoshafIds({bool forceRefresh = false}) async {
+  Future<List<int>> getTimingSupportedMoshafIds({
+    bool forceRefresh = false,
+  }) async {
     if (!forceRefresh) {
       try {
         final cached = await _cacheDataSource.getCachedTimingReadIds();
@@ -139,7 +142,9 @@ class AudioRepositoryImpl implements AudioRepository {
     } catch (_) {}
 
     try {
-      final surahIds = await _remoteDataSource.getTimingSurahListForRead(readId);
+      final surahIds = await _remoteDataSource.getTimingSurahListForRead(
+        readId,
+      );
       await _cacheDataSource.cacheTimingSurahIds(readId, surahIds);
       return surahIds;
     } catch (_) {
@@ -156,7 +161,10 @@ class AudioRepositoryImpl implements AudioRepository {
   }) async {
     // 1. Check local Hive cache
     try {
-      final cached = await _cacheDataSource.getCachedAyahTiming(readId, surahNumber);
+      final cached = await _cacheDataSource.getCachedAyahTiming(
+        readId,
+        surahNumber,
+      );
       if (cached != null && cached.isNotEmpty) {
         return cached.map((m) => m.toEntity()).toList();
       }
@@ -170,7 +178,11 @@ class AudioRepositoryImpl implements AudioRepository {
         final content = await timingFile.readAsString();
         final List<dynamic> list = jsonDecode(content) as List<dynamic>;
         final models = list
-            .map((item) => AyahTimingModel.fromJson(Map<String, dynamic>.from(item as Map)))
+            .map(
+              (item) => AyahTimingModel.fromJson(
+                Map<String, dynamic>.from(item as Map),
+              ),
+            )
             .toList();
         if (models.isNotEmpty) {
           // Re-populate cache for faster subsequent lookups
@@ -195,7 +207,10 @@ class AudioRepositoryImpl implements AudioRepository {
     } catch (_) {
       // If timing is unavailable or network error occurs, return empty list
       // so audio can play without misleading highlight.
-      final cached = await _cacheDataSource.getCachedAyahTiming(readId, surahNumber);
+      final cached = await _cacheDataSource.getCachedAyahTiming(
+        readId,
+        surahNumber,
+      );
       if (cached != null) {
         return cached.map((m) => m.toEntity()).toList();
       }
@@ -351,7 +366,11 @@ class AudioRepositoryImpl implements AudioRepository {
               await timingTempFile.rename(finalTimingPath);
             }
             // Also cache in memory / Hive
-            await _cacheDataSource.cacheAyahTiming(moshaf.id, surahNumber, timings);
+            await _cacheDataSource.cacheAyahTiming(
+              moshaf.id,
+              surahNumber,
+              timings,
+            );
           }
         } catch (_) {
           // If timing fetch fails remotely, proceed with audio
@@ -400,6 +419,54 @@ class AudioRepositoryImpl implements AudioRepository {
       }
     } catch (e) {
       throw CacheFailure('Failed to delete downloaded surah: $e');
+    }
+  }
+
+  @override
+  Future<int> cleanOrphanedTempFiles() async {
+    try {
+      final baseDir = await _documentsPathProvider();
+      final audioBase = Directory('$baseDir/quran_audio');
+      if (!audioBase.existsSync()) return 0;
+
+      int cleanedCount = 0;
+      final entities = audioBase.listSync(recursive: true, followLinks: false);
+      for (final entity in entities) {
+        if (entity is File) {
+          final path = entity.path;
+          if (path.endsWith('.part') || path.endsWith('.tmp')) {
+            try {
+              entity.deleteSync();
+              cleanedCount++;
+            } catch (_) {}
+          }
+        }
+      }
+      return cleanedCount;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  @override
+  Future<int> getAudioStorageUsageBytes() async {
+    try {
+      final baseDir = await _documentsPathProvider();
+      final audioBase = Directory('$baseDir/quran_audio');
+      if (!audioBase.existsSync()) return 0;
+
+      int totalBytes = 0;
+      final entities = audioBase.listSync(recursive: true, followLinks: false);
+      for (final entity in entities) {
+        if (entity is File) {
+          try {
+            totalBytes += entity.lengthSync();
+          } catch (_) {}
+        }
+      }
+      return totalBytes;
+    } catch (e) {
+      return 0;
     }
   }
 

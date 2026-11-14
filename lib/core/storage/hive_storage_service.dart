@@ -29,6 +29,12 @@ abstract class HiveStorageService {
   /// Clears all entries from the box without deleting the box file.
   Future<void> clearBox(String boxName);
 
+  /// Compacts a box by [boxName] to release dead disk space from deleted/updated keys.
+  Future<void> compactBox(String boxName);
+
+  /// Compacts all currently opened boxes.
+  Future<void> compactAll();
+
   /// Closes all currently opened boxes.
   Future<void> closeAll();
 }
@@ -51,7 +57,9 @@ class HiveStorageServiceImpl implements HiveStorageService {
       }
       _isInitialized = true;
     } catch (e) {
-      throw CacheException('Failed to initialize Hive at path "$storagePath": $e');
+      throw CacheException(
+        'Failed to initialize Hive at path "$storagePath": $e',
+      );
     }
   }
 
@@ -138,6 +146,31 @@ class HiveStorageServiceImpl implements HiveStorageService {
       await box.clear();
     } catch (e) {
       throw CacheException('Failed to clear box "$boxName": $e');
+    }
+  }
+
+  @override
+  Future<void> compactBox(String boxName) async {
+    try {
+      if (isBoxOpen(boxName)) {
+        final box = getBox(boxName);
+        await box.compact();
+      }
+    } catch (e) {
+      throw CacheException('Failed to compact box "$boxName": $e');
+    }
+  }
+
+  @override
+  Future<void> compactAll() async {
+    try {
+      for (final box in _openBoxes.values) {
+        if (box.isOpen) {
+          await box.compact();
+        }
+      }
+    } catch (e) {
+      throw CacheException('Failed to compact all Hive boxes: $e');
     }
   }
 

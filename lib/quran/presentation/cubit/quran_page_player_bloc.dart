@@ -1,5 +1,6 @@
 // ignore_for_file: unnecessary_null_comparison, avoid_print
 
+import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:ayaat_quran_majeed/main.dart';
@@ -10,20 +11,24 @@ import 'package:just_audio/just_audio.dart';
 part 'quran_page_player_event.dart';
 part 'quran_page_player_state.dart';
 
-class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerState> {
+class QuranPagePlayerBloc
+    extends Bloc<QuranPagePlayerEvent, QuranPagePlayerState> {
   final QuranMetadataService _metadataService;
+  StreamSubscription<PlaybackEvent>? _playbackEventSubscription;
 
   QuranPagePlayerBloc({
     QuranMetadataService metadataService = const QuranMetadataService(),
-  })  : _metadataService = metadataService,
-        super(QuranPagePlayerInitial()) {
+  }) : _metadataService = metadataService,
+       super(QuranPagePlayerInitial()) {
     on<QuranPagePlayerEvent>((event, emit) async {
       if (event is PlayFromVerse) {
         final player = audioPlayer;
 
         try {
           // 🔹 Verify reciter
-          final reciterMatch = _metadataService.getReciter(event.reciterIdentifier);
+          final reciterMatch = _metadataService.getReciter(
+            event.reciterIdentifier,
+          );
           if (reciterMatch == null) {
             print("❌ Reciter not found: ${event.reciterIdentifier}");
             return;
@@ -43,7 +48,8 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
           await session.configure(const AudioSessionConfiguration.music());
 
           // 🔹 Handle playback
-          player.playbackEventStream.listen(
+          await _playbackEventSubscription?.cancel();
+          _playbackEventSubscription = player.playbackEventStream.listen(
             (event) {},
             onError: (Object e, StackTrace stackTrace) {
               print('❌ Playback error: $e');
@@ -57,7 +63,8 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
               tag: MediaItem(
                 id: event.suraName,
                 album: reciterMatch["englishName"],
-                title: "${_metadataService.getSurahNameArabic(event.surahNumber)} - Verse ${event.verse}",
+                title:
+                    "${_metadataService.getSurahNameArabic(event.surahNumber)} - Verse ${event.verse}",
                 artUri: Uri.parse(
                   "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
                 ),
@@ -68,25 +75,28 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
           await player.play();
           print("▶️ Now playing verse from URL");
 
-          emit(QuranPagePlayerPlaying(
-            player: player,
-            audioPlayerStream: player.positionStream,
-            suraNumber: event.surahNumber,
-            reciter: reciterMatch,
-            durations: [],
-          ));
+          emit(
+            QuranPagePlayerPlaying(
+              player: player,
+              audioPlayerStream: player.positionStream,
+              suraNumber: event.surahNumber,
+              reciter: reciterMatch,
+              durations: [],
+            ),
+          );
         } catch (e) {
           print("🔥 Error in PlayFromVerse: $e");
         }
       }
-
       // 🔹 Play full surah
       else if (event is PlayFullSurah) {
         final player = audioPlayer;
 
         try {
           // 🔹 Verify reciter
-          final reciterMatch = _metadataService.getReciter(event.reciterIdentifier);
+          final reciterMatch = _metadataService.getReciter(
+            event.reciterIdentifier,
+          );
           if (reciterMatch == null) {
             print("❌ Reciter not found: ${event.reciterIdentifier}");
             return;
@@ -109,7 +119,8 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
                 tag: MediaItem(
                   id: '${event.surahNumber}-$verseNumber',
                   album: reciterMatch["englishName"],
-                  title: "${_metadataService.getSurahNameArabic(event.surahNumber)} - Verse $verseNumber",
+                  title:
+                      "${_metadataService.getSurahNameArabic(event.surahNumber)} - Verse $verseNumber",
                   artUri: Uri.parse(
                     "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
                   ),
@@ -118,14 +129,17 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
             );
           }
 
-          print('🎧 Playing full surah from playlist with ${playList.length} verses');
+          print(
+            '🎧 Playing full surah from playlist with ${playList.length} verses',
+          );
 
           // 🔹 Configure audio session
           final session = await AudioSession.instance;
           await session.configure(const AudioSessionConfiguration.music());
 
           // 🔹 Handle playback
-          player.playbackEventStream.listen(
+          await _playbackEventSubscription?.cancel();
+          _playbackEventSubscription = player.playbackEventStream.listen(
             (event) {},
             onError: (Object e, StackTrace stackTrace) {
               print('❌ Playback error: $e');
@@ -140,18 +154,19 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
           await player.play();
           print("▶️ Now playing full surah from playlist");
 
-          emit(QuranPagePlayerPlaying(
-            player: player,
-            audioPlayerStream: player.positionStream,
-            suraNumber: event.surahNumber,
-            reciter: reciterMatch,
-            durations: [],
-          ));
+          emit(
+            QuranPagePlayerPlaying(
+              player: player,
+              audioPlayerStream: player.positionStream,
+              suraNumber: event.surahNumber,
+              reciter: reciterMatch,
+              durations: [],
+            ),
+          );
         } catch (e) {
           print("🔥 Error in PlayFullSurah: $e");
         }
       }
-
       // 🔹 Stop
       else if (event is StopPlaying) {
         if (audioPlayer != null) {
@@ -160,7 +175,6 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
         }
         emit(QuranPagePlayerInitial());
       }
-
       // 🔹 Kill player
       else if (event is KillPlayerEvent) {
         if (audioPlayer != null) {
@@ -169,14 +183,15 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
         }
         emit(QuranPagePlayerInitial());
       }
-
       // 🔹 Play a cross-surah range of ayahs with optional repeat
       else if (event is PlayRangeWithRepeat) {
         final player = audioPlayer;
 
         try {
           // Verify reciter
-          final reciterMatch = _metadataService.getReciter(event.reciterIdentifier);
+          final reciterMatch = _metadataService.getReciter(
+            event.reciterIdentifier,
+          );
           if (reciterMatch == null) {
             print("❌ Reciter not found: ${event.reciterIdentifier}");
             return;
@@ -186,18 +201,27 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
           List<AudioSource> rangeList = [];
 
           for (int s = event.startSurahNumber; s <= event.endSurahNumber; s++) {
-            final firstVerse = (s == event.startSurahNumber) ? event.startVerse : 1;
-            final lastVerse = (s == event.endSurahNumber) ? event.endVerse : _metadataService.getVerseCount(s);
+            final firstVerse = (s == event.startSurahNumber)
+                ? event.startVerse
+                : 1;
+            final lastVerse = (s == event.endSurahNumber)
+                ? event.endVerse
+                : _metadataService.getVerseCount(s);
 
             for (int v = firstVerse; v <= lastVerse; v++) {
-              final url = _metadataService.getAudioURLByVerse(s, v, event.reciterIdentifier);
+              final url = _metadataService.getAudioURLByVerse(
+                s,
+                v,
+                event.reciterIdentifier,
+              );
               rangeList.add(
                 AudioSource.uri(
                   Uri.parse(url),
                   tag: MediaItem(
                     id: '$s-$v',
                     album: reciterMatch["englishName"],
-                    title: "${_metadataService.getSurahNameArabic(s)} - Verse $v",
+                    title:
+                        "${_metadataService.getSurahNameArabic(s)} - Verse $v",
                     artUri: Uri.parse(
                       "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
                     ),
@@ -217,19 +241,32 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
             fullPlaylist = [];
             final times = event.repeatCount!;
             for (int rep = 0; rep < times; rep++) {
-              for (int s = event.startSurahNumber; s <= event.endSurahNumber; s++) {
-                final firstVerse = (s == event.startSurahNumber) ? event.startVerse : 1;
-                final lastVerse = (s == event.endSurahNumber) ? event.endVerse : _metadataService.getVerseCount(s);
+              for (
+                int s = event.startSurahNumber;
+                s <= event.endSurahNumber;
+                s++
+              ) {
+                final firstVerse = (s == event.startSurahNumber)
+                    ? event.startVerse
+                    : 1;
+                final lastVerse = (s == event.endSurahNumber)
+                    ? event.endVerse
+                    : _metadataService.getVerseCount(s);
 
                 for (int v = firstVerse; v <= lastVerse; v++) {
-                  final url = _metadataService.getAudioURLByVerse(s, v, event.reciterIdentifier);
+                  final url = _metadataService.getAudioURLByVerse(
+                    s,
+                    v,
+                    event.reciterIdentifier,
+                  );
                   fullPlaylist.add(
                     AudioSource.uri(
                       Uri.parse(url),
                       tag: MediaItem(
                         id: '$s-$v-rep$rep',
                         album: reciterMatch["englishName"],
-                        title: "${_metadataService.getSurahNameArabic(s)} - Verse $v",
+                        title:
+                            "${_metadataService.getSurahNameArabic(s)} - Verse $v",
                         artUri: Uri.parse(
                           "https://images.pexels.com/photos/318451/pexels-photo-318451.jpeg",
                         ),
@@ -241,17 +278,20 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
             }
           }
 
-          print('🔁 PlayRangeWithRepeat: '
-              '${event.startSurahNumber}:${event.startVerse} → '
-              '${event.endSurahNumber}:${event.endVerse}, '
-              'repeat=${event.repeatCount ?? "∞"}, tracks=${fullPlaylist.length}');
+          print(
+            '🔁 PlayRangeWithRepeat: '
+            '${event.startSurahNumber}:${event.startVerse} → '
+            '${event.endSurahNumber}:${event.endVerse}, '
+            'repeat=${event.repeatCount ?? "∞"}, tracks=${fullPlaylist.length}',
+          );
 
           // Configure audio session
           final session = await AudioSession.instance;
           await session.configure(const AudioSessionConfiguration.music());
 
           // Error listener
-          player.playbackEventStream.listen(
+          await _playbackEventSubscription?.cancel();
+          _playbackEventSubscription = player.playbackEventStream.listen(
             (event) {},
             onError: (Object e, StackTrace stackTrace) {
               print('❌ Playback error: $e');
@@ -269,17 +309,26 @@ class QuranPagePlayerBloc extends Bloc<QuranPagePlayerEvent, QuranPagePlayerStat
 
           print("▶️ Now playing cross-surah range with repeat");
 
-          emit(QuranPagePlayerPlaying(
-            player: player,
-            audioPlayerStream: player.positionStream,
-            suraNumber: event.startSurahNumber,
-            reciter: reciterMatch,
-            durations: [],
-          ));
+          emit(
+            QuranPagePlayerPlaying(
+              player: player,
+              audioPlayerStream: player.positionStream,
+              suraNumber: event.startSurahNumber,
+              reciter: reciterMatch,
+              durations: [],
+            ),
+          );
         } catch (e) {
           print("🔥 Error in PlayRangeWithRepeat: $e");
         }
       }
     });
+  }
+
+  @override
+  Future<void> close() async {
+    await _playbackEventSubscription?.cancel();
+    _playbackEventSubscription = null;
+    return super.close();
   }
 }

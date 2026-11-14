@@ -141,127 +141,209 @@ void main() {
   });
 
   group('AudioRepositoryImpl — Atomic Download & Integrity', () {
-    test('downloads surah atomically, verifies size > 1KB, caches timing JSON', () async {
-      remote.timingModels = const [
-        AyahTimingModel(ayah: 1, startTime: 0, endTime: 3000),
-        AyahTimingModel(ayah: 2, startTime: 3000, endTime: 6000),
-      ];
+    test(
+      'downloads surah atomically, verifies size > 1KB, caches timing JSON',
+      () async {
+        remote.timingModels = const [
+          AyahTimingModel(ayah: 1, startTime: 0, endTime: 3000),
+          AyahTimingModel(ayah: 2, startTime: 3000, endTime: 6000),
+        ];
 
-      int progressReceived = 0;
-      int progressTotal = 0;
+        int progressReceived = 0;
+        int progressTotal = 0;
 
-      await repository.downloadSurah(
-        moshaf: testMoshaf,
-        surahNumber: 1,
-        onProgress: (received, total) {
-          progressReceived = received;
-          progressTotal = total;
-        },
-      );
+        await repository.downloadSurah(
+          moshaf: testMoshaf,
+          surahNumber: 1,
+          onProgress: (received, total) {
+            progressReceived = received;
+            progressTotal = total;
+          },
+        );
 
-      expect(progressReceived, 2048);
-      expect(progressTotal, 2048);
+        expect(progressReceived, 2048);
+        expect(progressTotal, 2048);
 
-      final isDownloaded = await repository.isSurahDownloaded(
-        readId: testMoshaf.id,
-        surahNumber: 1,
-      );
-      expect(isDownloaded, isTrue);
+        final isDownloaded = await repository.isSurahDownloaded(
+          readId: testMoshaf.id,
+          surahNumber: 1,
+        );
+        expect(isDownloaded, isTrue);
 
-      // Verify final file exists
-      final audioFile = File('${tempDir.path}/quran_audio/1/001.mp3');
-      expect(audioFile.existsSync(), isTrue);
-      expect(audioFile.lengthSync(), 2048);
+        // Verify final file exists
+        final audioFile = File('${tempDir.path}/quran_audio/1/001.mp3');
+        expect(audioFile.existsSync(), isTrue);
+        expect(audioFile.lengthSync(), 2048);
 
-      // Verify temp part file was cleaned up / renamed
-      final partFile = File('${tempDir.path}/quran_audio/1/001.mp3.part');
-      expect(partFile.existsSync(), isFalse);
+        // Verify temp part file was cleaned up / renamed
+        final partFile = File('${tempDir.path}/quran_audio/1/001.mp3.part');
+        expect(partFile.existsSync(), isFalse);
 
-      // Verify timing JSON file exists on disk alongside audio
-      final timingFile = File('${tempDir.path}/quran_audio/1/001.mp3.timing.json');
-      expect(timingFile.existsSync(), isTrue);
+        // Verify timing JSON file exists on disk alongside audio
+        final timingFile = File(
+          '${tempDir.path}/quran_audio/1/001.mp3.timing.json',
+        );
+        expect(timingFile.existsSync(), isTrue);
 
-      // Verify timing was also cached in Hive
-      expect(cache.cachedTiming['1_1'], isNotNull);
-      expect(cache.cachedTiming['1_1']!.length, 2);
-    });
+        // Verify timing was also cached in Hive
+        expect(cache.cachedTiming['1_1'], isNotNull);
+        expect(cache.cachedTiming['1_1']!.length, 2);
+      },
+    );
 
-    test('rejects corrupted file smaller than 1024 bytes and cleans up .part file', () async {
-      remote.simulateDownloadedBytes = 500; // Too small, invalid!
+    test(
+      'rejects corrupted file smaller than 1024 bytes and cleans up .part file',
+      () async {
+        remote.simulateDownloadedBytes = 500; // Too small, invalid!
 
-      expect(
-        () => repository.downloadSurah(moshaf: testMoshaf, surahNumber: 1),
-        throwsA(isA<ServerFailure>()),
-      );
+        expect(
+          () => repository.downloadSurah(moshaf: testMoshaf, surahNumber: 1),
+          throwsA(isA<ServerFailure>()),
+        );
 
-      final audioFile = File('${tempDir.path}/quran_audio/1/001.mp3');
-      expect(audioFile.existsSync(), isFalse);
+        final audioFile = File('${tempDir.path}/quran_audio/1/001.mp3');
+        expect(audioFile.existsSync(), isFalse);
 
-      final partFile = File('${tempDir.path}/quran_audio/1/001.mp3.part');
-      expect(partFile.existsSync(), isFalse);
+        final partFile = File('${tempDir.path}/quran_audio/1/001.mp3.part');
+        expect(partFile.existsSync(), isFalse);
 
-      final isDownloaded = await repository.isSurahDownloaded(
-        readId: testMoshaf.id,
-        surahNumber: 1,
-      );
-      expect(isDownloaded, isFalse);
-    });
+        final isDownloaded = await repository.isSurahDownloaded(
+          readId: testMoshaf.id,
+          surahNumber: 1,
+        );
+        expect(isDownloaded, isFalse);
+      },
+    );
 
-    test('handles download cancellation: cleans up temp files and throws GeneralFailure', () async {
-      remote.cancelDownload = true;
+    test(
+      'handles download cancellation: cleans up temp files and throws GeneralFailure',
+      () async {
+        remote.cancelDownload = true;
 
-      expect(
-        () => repository.downloadSurah(moshaf: testMoshaf, surahNumber: 1),
-        throwsA(isA<GeneralFailure>().having((f) => f.message, 'message', contains('cancelled'))),
-      );
+        expect(
+          () => repository.downloadSurah(moshaf: testMoshaf, surahNumber: 1),
+          throwsA(
+            isA<GeneralFailure>().having(
+              (f) => f.message,
+              'message',
+              contains('cancelled'),
+            ),
+          ),
+        );
 
-      final partFile = File('${tempDir.path}/quran_audio/1/001.mp3.part');
-      expect(partFile.existsSync(), isFalse);
+        final partFile = File('${tempDir.path}/quran_audio/1/001.mp3.part');
+        expect(partFile.existsSync(), isFalse);
 
-      final isDownloaded = await repository.isSurahDownloaded(
-        readId: testMoshaf.id,
-        surahNumber: 1,
-      );
-      expect(isDownloaded, isFalse);
-    });
+        final isDownloaded = await repository.isSurahDownloaded(
+          readId: testMoshaf.id,
+          surahNumber: 1,
+        );
+        expect(isDownloaded, isFalse);
+      },
+    );
 
-    test('resolves timing from local JSON file when Hive cache is empty (offline support)', () async {
-      // 1. Download surah with timing
-      remote.timingModels = const [
-        AyahTimingModel(ayah: 1, startTime: 0, endTime: 4000),
-      ];
-      await repository.downloadSurah(moshaf: testMoshaf, surahNumber: 1);
+    test(
+      'resolves timing from local JSON file when Hive cache is empty (offline support)',
+      () async {
+        // 1. Download surah with timing
+        remote.timingModels = const [
+          AyahTimingModel(ayah: 1, startTime: 0, endTime: 4000),
+        ];
+        await repository.downloadSurah(moshaf: testMoshaf, surahNumber: 1);
 
-      // 2. Clear Hive cache to simulate fresh offline startup
-      await cache.clearCache();
-      expect(await cache.getCachedAyahTiming(1, 1), isNull);
+        // 2. Clear Hive cache to simulate fresh offline startup
+        await cache.clearCache();
+        expect(await cache.getCachedAyahTiming(1, 1), isNull);
 
-      // 3. getAyahTiming should read from disk .timing.json and re-populate cache
-      final timings = await repository.getAyahTiming(readId: 1, surahNumber: 1);
-      expect(timings.length, 1);
-      expect(timings.first.ayah, 1);
-      expect(timings.first.endTimeMs, 4000);
-      expect(await cache.getCachedAyahTiming(1, 1), isNotNull);
-    });
+        // 3. getAyahTiming should read from disk .timing.json and re-populate cache
+        final timings = await repository.getAyahTiming(
+          readId: 1,
+          surahNumber: 1,
+        );
+        expect(timings.length, 1);
+        expect(timings.first.ayah, 1);
+        expect(timings.first.endTimeMs, 4000);
+        expect(await cache.getCachedAyahTiming(1, 1), isNotNull);
+      },
+    );
 
-    test('deleting surah deletes both audio file and timing json file', () async {
-      remote.timingModels = const [
-        AyahTimingModel(ayah: 1, startTime: 0, endTime: 4000),
-      ];
-      await repository.downloadSurah(moshaf: testMoshaf, surahNumber: 1);
+    test(
+      'deleting surah deletes both audio file and timing json file',
+      () async {
+        remote.timingModels = const [
+          AyahTimingModel(ayah: 1, startTime: 0, endTime: 4000),
+        ];
+        await repository.downloadSurah(moshaf: testMoshaf, surahNumber: 1);
 
-      final audioFile = File('${tempDir.path}/quran_audio/1/001.mp3');
-      final timingFile = File('${tempDir.path}/quran_audio/1/001.mp3.timing.json');
-      expect(audioFile.existsSync(), isTrue);
-      expect(timingFile.existsSync(), isTrue);
+        final audioFile = File('${tempDir.path}/quran_audio/1/001.mp3');
+        final timingFile = File(
+          '${tempDir.path}/quran_audio/1/001.mp3.timing.json',
+        );
+        expect(audioFile.existsSync(), isTrue);
+        expect(timingFile.existsSync(), isTrue);
 
-      await repository.deleteDownloadedSurah(readId: 1, surahNumber: 1);
+        await repository.deleteDownloadedSurah(readId: 1, surahNumber: 1);
 
-      expect(audioFile.existsSync(), isFalse);
-      expect(timingFile.existsSync(), isFalse);
+        expect(audioFile.existsSync(), isFalse);
+        expect(timingFile.existsSync(), isFalse);
 
-      final isDownloaded = await repository.isSurahDownloaded(readId: 1, surahNumber: 1);
-      expect(isDownloaded, isFalse);
-    });
+        final isDownloaded = await repository.isSurahDownloaded(
+          readId: 1,
+          surahNumber: 1,
+        );
+        expect(isDownloaded, isFalse);
+      },
+    );
+
+    test(
+      'cleanOrphanedTempFiles deletes .part and .tmp files and preserves valid files',
+      () async {
+        final audioDir = Directory('${tempDir.path}/quran_audio/1');
+        await audioDir.create(recursive: true);
+
+        final validMp3 = File('${audioDir.path}/001.mp3');
+        final validTiming = File('${audioDir.path}/001.mp3.timing.json');
+        final orphanPart = File('${audioDir.path}/002.mp3.part');
+        final orphanTmp = File('${audioDir.path}/002.mp3.timing.json.tmp');
+
+        await validMp3.writeAsString('audio-bytes');
+        await validTiming.writeAsString('timing-json');
+        await orphanPart.writeAsString('incomplete-audio');
+        await orphanTmp.writeAsString('incomplete-timing');
+
+        final cleanedCount = await repository.cleanOrphanedTempFiles();
+
+        expect(cleanedCount, 2);
+        expect(validMp3.existsSync(), isTrue);
+        expect(validTiming.existsSync(), isTrue);
+        expect(orphanPart.existsSync(), isFalse);
+        expect(orphanTmp.existsSync(), isFalse);
+      },
+    );
+
+    test(
+      'cleanOrphanedTempFiles returns 0 when no directory or orphan files exist',
+      () async {
+        expect(await repository.cleanOrphanedTempFiles(), 0);
+      },
+    );
+
+    test(
+      'getAudioStorageUsageBytes calculates accurate storage bytes',
+      () async {
+        expect(await repository.getAudioStorageUsageBytes(), 0);
+
+        final audioDir = Directory('${tempDir.path}/quran_audio/1');
+        await audioDir.create(recursive: true);
+
+        final file1 = File('${audioDir.path}/001.mp3');
+        await file1.writeAsBytes(List<int>.filled(500, 1));
+        final file2 = File('${audioDir.path}/002.mp3');
+        await file2.writeAsBytes(List<int>.filled(1200, 2));
+
+        final totalBytes = await repository.getAudioStorageUsageBytes();
+        expect(totalBytes, 1700);
+      },
+    );
   });
 }

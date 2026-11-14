@@ -66,6 +66,13 @@ abstract class AudioRepository {
     required int surahNumber,
   });
 
+  /// Scans local audio storage and removes any orphaned temporary files (.part, .tmp).
+  /// Returns the number of files deleted.
+  Future<int> cleanOrphanedTempFiles();
+
+  /// Calculates total bytes used by downloaded audio files and metadata.
+  Future<int> getAudioStorageUsageBytes();
+
   /// Retrieves the persisted selected reciter, or default if none chosen yet.
   Future<Reciter?> getSelectedReciter();
 

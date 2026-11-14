@@ -66,6 +66,24 @@ void main() {
       expect(service.isBoxOpen('close_box'), isFalse);
     });
 
+    test('compactBox compacts an opened box cleanly', () async {
+      final box = await service.openBox<String>('compact_box');
+      await box.put('k1', 'v1');
+      await box.delete('k1');
+      await service.compactBox('compact_box');
+      expect(box.isOpen, isTrue);
+    });
+
+    test('compactAll compacts all open boxes cleanly', () async {
+      final b1 = await service.openBox<String>('box_one');
+      final b2 = await service.openBox<String>('box_two');
+      await b1.put('k1', 'v1');
+      await b2.put('k2', 'v2');
+      await service.compactAll();
+      expect(b1.isOpen, isTrue);
+      expect(b2.isOpen, isTrue);
+    });
+
     test('throws CacheException when getting an unopened box', () {
       expect(
         () => service.getBox('unopened_box'),
@@ -98,8 +116,10 @@ void main() {
 
       // 4. Verify the recovered box is completely functional for new writes
       await recoveredBox.put('post_recovery_key', 'post_recovery_value');
-      expect(recoveredBox.get('post_recovery_key'), equals('post_recovery_value'));
+      expect(
+        recoveredBox.get('post_recovery_key'),
+        equals('post_recovery_value'),
+      );
     });
   });
 }
-

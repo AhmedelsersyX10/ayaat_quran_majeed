@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:ayaat_quran_majeed/GlobalHelpers/constants.dart';
 import 'package:ayaat_quran_majeed/GlobalHelpers/initializeData.dart';
 import 'package:ayaat_quran_majeed/core/localization/app_strings.dart';
@@ -8,7 +7,6 @@ import 'package:ayaat_quran_majeed/core/theme/app_spacing.dart';
 import 'package:ayaat_quran_majeed/core/theme/app_typography.dart';
 import 'package:ayaat_quran_majeed/core/widgets/app_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:go_router/go_router.dart';
 import 'package:qcf_quran_plus/qcf_quran_plus.dart';
 
@@ -43,7 +41,9 @@ class _SplashScreenState extends State<SplashScreen> {
           debugPrint('[QcfFontLoader] ${(progress * 100).toStringAsFixed(1)}%');
         },
       );
-      debugPrint('[QcfFontLoader] Fonts initialized in ${sw.elapsedMilliseconds} ms');
+      debugPrint(
+        '[QcfFontLoader] Fonts initialized in ${sw.elapsedMilliseconds} ms',
+      );
     } catch (e) {
       debugPrint('[QcfFontLoader] Font initialization error: $e');
       if (mounted) {
@@ -52,18 +52,6 @@ class _SplashScreenState extends State<SplashScreen> {
         });
       }
       return;
-    }
-
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    // Load jsonData and quarterjsonData from assets so SurahListPage shows the same data
-    try {
-      final surahsString = await rootBundle.loadString('assets/json/surahs.json');
-      final quartersString = await rootBundle.loadString('assets/json/quarters.json');
-      json.decode(surahsString);
-      json.decode(quartersString);
-    } catch (e) {
-      debugPrint('Error loading surah/quarter json from assets: $e');
     }
 
     if (mounted) {
@@ -91,11 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Image.asset(
-                  "assets/images/ayaat.png",
-                  height: 160,
-                  width: 160,
-                ),
+                Image.asset("assets/images/ayaat.png", height: 160, width: 160),
                 SizedBox(height: AppSpacing.xxl),
                 if (_fontFailed) ...[
                   Text(

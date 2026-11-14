@@ -57,16 +57,22 @@ class _FakeAudioRepository implements AudioRepository {
   }
 
   @override
-  Future<bool> isSurahDownloaded({required int readId, required int surahNumber}) async =>
-      false;
+  Future<bool> isSurahDownloaded({
+    required int readId,
+    required int surahNumber,
+  }) async => false;
 
   @override
-  Future<String> getPlayableAudioUri({required Moshaf moshaf, required int surahNumber}) async =>
-      'https://server.mp3quran.net/001.mp3';
+  Future<String> getPlayableAudioUri({
+    required Moshaf moshaf,
+    required int surahNumber,
+  }) async => 'https://server.mp3quran.net/001.mp3';
 
   @override
-  Future<List<AyahTiming>> getAyahTiming({required int readId, required int surahNumber}) async =>
-      const [];
+  Future<List<AyahTiming>> getAyahTiming({
+    required int readId,
+    required int surahNumber,
+  }) async => const [];
 
   @override
   Future<Moshaf?> getSelectedMoshaf() async => null;
@@ -78,14 +84,21 @@ class _FakeAudioRepository implements AudioRepository {
   Future<List<int>> getTimingSurahListForRead(int readId) async => const [];
 
   @override
-  Future<List<int>> getTimingSupportedMoshafIds({bool forceRefresh = false}) async =>
-      const [];
+  Future<List<int>> getTimingSupportedMoshafIds({
+    bool forceRefresh = false,
+  }) async => const [];
 
   @override
   Future<void> setSelectedReciterAndMoshaf({
     required int reciterId,
     required int moshafId,
   }) async {}
+
+  @override
+  Future<int> cleanOrphanedTempFiles() async => 0;
+
+  @override
+  Future<int> getAudioStorageUsageBytes() async => 0;
 }
 
 class _FakePlaybackRepository implements PlaybackRepository {
@@ -98,7 +111,8 @@ class _FakePlaybackRepository implements PlaybackRepository {
   Stream<PlaybackSession> get sessionStream => _controller.stream;
 
   @override
-  PlaybackSession get currentSession => const PlaybackSession(status: PlaybackStatus.idle);
+  PlaybackSession get currentSession =>
+      const PlaybackSession(status: PlaybackStatus.idle);
 
   @override
   Future<void> playSurah({
@@ -111,10 +125,17 @@ class _FakePlaybackRepository implements PlaybackRepository {
   }
 
   @override
-  Future<void> playAyah({required int surahNumber, required int ayahNumber, RepeatSettings? repeatSettings}) async {}
+  Future<void> playAyah({
+    required int surahNumber,
+    required int ayahNumber,
+    RepeatSettings? repeatSettings,
+  }) async {}
 
   @override
-  Future<void> playRange({required PlaybackRange range, RepeatSettings? repeatSettings}) async {}
+  Future<void> playRange({
+    required PlaybackRange range,
+    RepeatSettings? repeatSettings,
+  }) async {}
 
   @override
   Future<void> updateRange(PlaybackRange range) async {}
@@ -204,7 +225,9 @@ void main() {
     fakePlaybackRepo = _FakePlaybackRepository();
 
     reciterSurahsCubit = ReciterSurahsCubit(audioRepository: fakeAudioRepo);
-    audioPlaybackCubit = AudioPlaybackCubit(playbackRepository: fakePlaybackRepo);
+    audioPlaybackCubit = AudioPlaybackCubit(
+      playbackRepository: fakePlaybackRepo,
+    );
   });
 
   tearDown(() async {
@@ -229,7 +252,9 @@ void main() {
   }
 
   group('ReciterSurahsPage Widget Tests (Reference 36)', () {
-    testWidgets('renders top bar with reciter name and green back arrow', (tester) async {
+    testWidgets('renders top bar with reciter name and green back arrow', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestWidget());
       await reciterSurahsCubit.loadSurahs(reciterId: 10);
       await tester.pumpAndSettle();
@@ -241,7 +266,9 @@ void main() {
       expect(find.byIcon(Icons.arrow_forward_rounded), findsOneWidget);
     });
 
-    testWidgets('renders Juz headers ("الجزء ١", "الجزء ٣") and surah rows', (tester) async {
+    testWidgets('renders Juz headers ("الجزء ١", "الجزء ٣") and surah rows', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestWidget());
       await reciterSurahsCubit.loadSurahs(reciterId: 10);
       await tester.pumpAndSettle();
@@ -256,19 +283,24 @@ void main() {
       expect(find.text('آل عمران'), findsOneWidget);
     });
 
-    testWidgets('renders cloud icon for un-downloaded and green checkmark for downloaded surah', (tester) async {
-      await tester.pumpWidget(buildTestWidget());
-      await reciterSurahsCubit.loadSurahs(reciterId: 10);
-      await tester.pumpAndSettle();
+    testWidgets(
+      'renders cloud icon for un-downloaded and green checkmark for downloaded surah',
+      (tester) async {
+        await tester.pumpWidget(buildTestWidget());
+        await reciterSurahsCubit.loadSurahs(reciterId: 10);
+        await tester.pumpAndSettle();
 
-      // Surah 1 & 2 are not downloaded -> cloud download outline icon
-      expect(find.byIcon(Icons.cloud_download_outlined), findsNWidgets(2));
+        // Surah 1 & 2 are not downloaded -> cloud download outline icon
+        expect(find.byIcon(Icons.cloud_download_outlined), findsNWidgets(2));
 
-      // Surah 3 is downloaded -> green checkmark ("وعلامة خضراء للمكتمل")
-      expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
-    });
+        // Surah 3 is downloaded -> green checkmark ("وعلامة خضراء للمكتمل")
+        expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+      },
+    );
 
-    testWidgets('tapping cloud icon calls downloadSurah on cubit', (tester) async {
+    testWidgets('tapping cloud icon calls downloadSurah on cubit', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestWidget());
       await reciterSurahsCubit.loadSurahs(reciterId: 10);
       await tester.pumpAndSettle();
@@ -280,7 +312,9 @@ void main() {
       expect(fakeAudioRepo.downloadCalls, 1);
     });
 
-    testWidgets('tapping surah row initiates audio playback for that surah', (tester) async {
+    testWidgets('tapping surah row initiates audio playback for that surah', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestWidget());
       await reciterSurahsCubit.loadSurahs(reciterId: 10);
       await tester.pumpAndSettle();

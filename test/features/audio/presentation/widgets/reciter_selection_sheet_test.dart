@@ -53,7 +53,9 @@ class StubAudioRepository implements AudioRepository {
   Future<Reciter?> getReciterById(int reciterId) async => null;
 
   @override
-  Future<List<int>> getTimingSupportedMoshafIds({bool forceRefresh = false}) async => [];
+  Future<List<int>> getTimingSupportedMoshafIds({
+    bool forceRefresh = false,
+  }) async => [];
 
   @override
   Future<List<int>> getTimingSurahListForRead(int readId) async => [];
@@ -62,29 +64,25 @@ class StubAudioRepository implements AudioRepository {
   Future<List<AyahTiming>> getAyahTiming({
     required int readId,
     required int surahNumber,
-  }) async =>
-      [];
+  }) async => [];
 
   @override
   Future<List<ReciterSurah>> getSurahsForMoshaf({
     required int reciterId,
     required Moshaf moshaf,
-  }) async =>
-      [];
+  }) async => [];
 
   @override
   Future<bool> isSurahDownloaded({
     required int readId,
     required int surahNumber,
-  }) async =>
-      false;
+  }) async => false;
 
   @override
   Future<String> getPlayableAudioUri({
     required Moshaf moshaf,
     required int surahNumber,
-  }) async =>
-      '';
+  }) async => '';
 
   @override
   Future<void> downloadSurah({
@@ -99,6 +97,12 @@ class StubAudioRepository implements AudioRepository {
     required int readId,
     required int surahNumber,
   }) async {}
+
+  @override
+  Future<int> cleanOrphanedTempFiles() async => 0;
+
+  @override
+  Future<int> getAudioStorageUsageBytes() async => 0;
 }
 
 void main() {
@@ -173,9 +177,7 @@ void main() {
         home: Scaffold(
           body: BlocProvider.value(
             value: testCubit,
-            child: ReciterSelectionSheet(
-              onReciterInfoTap: onReciterInfoTap,
-            ),
+            child: ReciterSelectionSheet(onReciterInfoTap: onReciterInfoTap),
           ),
         ),
       ),
@@ -183,8 +185,9 @@ void main() {
   }
 
   group('ReciterSelectionSheet Widget Tests (Reference 18)', () {
-    testWidgets('renders RTL layout with header, green close ✕, and title',
-        (tester) async {
+    testWidgets('renders RTL layout with header, green close ✕, and title', (
+      tester,
+    ) async {
       await cubit.loadReciters();
 
       await tester.pumpWidget(buildTestWidget(testCubit: cubit));
@@ -192,10 +195,12 @@ void main() {
 
       // RTL Directionality check inside sheet
       final directionality = tester.widget<Directionality>(
-        find.descendant(
-          of: find.byType(ReciterSelectionSheet),
-          matching: find.byType(Directionality),
-        ).first,
+        find
+            .descendant(
+              of: find.byType(ReciterSelectionSheet),
+              matching: find.byType(Directionality),
+            )
+            .first,
       );
       expect(directionality.textDirection, equals(TextDirection.rtl));
 
@@ -206,51 +211,61 @@ void main() {
       expect(find.byIcon(Icons.close_rounded), findsOneWidget);
     });
 
-    testWidgets('excludes audio-tafsir section and contains no photo dependencies',
-        (tester) async {
-      await cubit.loadReciters();
+    testWidgets(
+      'excludes audio-tafsir section and contains no photo dependencies',
+      (tester) async {
+        await cubit.loadReciters();
 
-      await tester.pumpWidget(buildTestWidget(testCubit: cubit));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestWidget(testCubit: cubit));
+        await tester.pumpAndSettle();
 
-      // Audio-tafsir cancelled items must NOT be present
-      expect(find.text('المختصر الصوتي'), findsNothing);
-      expect(find.text('التفسير'), findsNothing);
+        // Audio-tafsir cancelled items must NOT be present
+        expect(find.text('المختصر الصوتي'), findsNothing);
+        expect(find.text('التفسير'), findsNothing);
 
-      // No image widgets should be used for reciters (text/icon treatment only)
-      expect(find.byType(Image), findsNothing);
-    });
+        // No image widgets should be used for reciters (text/icon treatment only)
+        expect(find.byType(Image), findsNothing);
+      },
+    );
 
-    testWidgets('renders section header "التلاوات" and qualified reciters with speaker and info icons',
-        (tester) async {
-      await cubit.loadReciters();
+    testWidgets(
+      'renders section header "التلاوات" and qualified reciters with speaker and info icons',
+      (tester) async {
+        await cubit.loadReciters();
 
-      await tester.pumpWidget(buildTestWidget(testCubit: cubit));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestWidget(testCubit: cubit));
+        await tester.pumpAndSettle();
 
-      // Section header "التلاوات"
-      expect(find.text('التلاوات'), findsOneWidget);
+        // Section header "التلاوات"
+        expect(find.text('التلاوات'), findsOneWidget);
 
-      // Both qualified reciters present
-      expect(find.text('محمود خليل الحصري'), findsOneWidget);
-      expect(find.text('سعد الغامدي'), findsOneWidget);
+        // Both qualified reciters present
+        expect(find.text('محمود خليل الحصري'), findsOneWidget);
+        expect(find.text('سعد الغامدي'), findsOneWidget);
 
-      // Speaker icons on the right (at least 2 for the 2 reciter tiles)
-      expect(find.byIcon(Icons.volume_up_outlined), findsAtLeastNWidgets(2));
+        // Speaker icons on the right (at least 2 for the 2 reciter tiles)
+        expect(find.byIcon(Icons.volume_up_outlined), findsAtLeastNWidgets(2));
 
-      // Info (i) icons on the left in green (at least 2 for the 2 reciter tiles)
-      expect(find.byIcon(Icons.info_outline_rounded), findsAtLeastNWidgets(2));
-    });
+        // Info (i) icons on the left in green (at least 2 for the 2 reciter tiles)
+        expect(
+          find.byIcon(Icons.info_outline_rounded),
+          findsAtLeastNWidgets(2),
+        );
+      },
+    );
 
-    testWidgets('tapping info (i) icon triggers onReciterInfoTap callback',
-        (tester) async {
+    testWidgets('tapping info (i) icon triggers onReciterInfoTap callback', (
+      tester,
+    ) async {
       Reciter? tappedReciter;
       await cubit.loadReciters();
 
-      await tester.pumpWidget(buildTestWidget(
-        testCubit: cubit,
-        onReciterInfoTap: (r) => tappedReciter = r,
-      ));
+      await tester.pumpWidget(
+        buildTestWidget(
+          testCubit: cubit,
+          onReciterInfoTap: (r) => tappedReciter = r,
+        ),
+      );
       await tester.pumpAndSettle();
 
       // Tap info icon for Saad Al-Ghamadi
@@ -261,23 +276,26 @@ void main() {
       expect(tappedReciter, isNotNull);
     });
 
-    testWidgets('tapping reciter with single moshaf selects and persists choice',
-        (tester) async {
-      await cubit.loadReciters();
+    testWidgets(
+      'tapping reciter with single moshaf selects and persists choice',
+      (tester) async {
+        await cubit.loadReciters();
 
-      await tester.pumpWidget(buildTestWidget(testCubit: cubit));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestWidget(testCubit: cubit));
+        await tester.pumpAndSettle();
 
-      // Saad Al-Ghamadi has 1 qualified moshaf (id: 30)
-      await tester.tap(find.text('سعد الغامدي'));
-      await tester.pumpAndSettle();
+        // Saad Al-Ghamadi has 1 qualified moshaf (id: 30)
+        await tester.tap(find.text('سعد الغامدي'));
+        await tester.pumpAndSettle();
 
-      expect(repository.savedReciterId, equals(2));
-      expect(repository.savedMoshafId, equals(30));
-    });
+        expect(repository.savedReciterId, equals(2));
+        expect(repository.savedMoshafId, equals(30));
+      },
+    );
 
-    testWidgets('tapping reciter with multiple moshafs opens edition picker',
-        (tester) async {
+    testWidgets('tapping reciter with multiple moshafs opens edition picker', (
+      tester,
+    ) async {
       await cubit.loadReciters();
 
       await tester.pumpWidget(buildTestWidget(testCubit: cubit));
